@@ -57,9 +57,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\gba\apu.cpp">
       <Filter>Source Files\gba</Filter>
     </ClCompile>
@@ -306,6 +303,69 @@
     <ClCompile Include="src\sgb\z80.cpp">
       <Filter>Source Files\sgb</Filter>
     </ClCompile>
+    <ClCompile Include="src\qt\cgfx.cpp">
+      <Filter>Source Files\qt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qt\cheat_menu.cpp">
+      <Filter>Source Files\qt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qt\con_ir_menu.cpp">
+      <Filter>Source Files\qt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qt\data_dialog.cpp">
+      <Filter>Source Files\qt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qt\debug_dmg.cpp">
+      <Filter>Source Files\qt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qt\general_settings.cpp">
+      <Filter>Source Files\qt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qt\magic_reader_menu.cpp">
+      <Filter>Source Files\qt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qt\main.cpp">
+      <Filter>Source Files\qt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qt\main_menu.cpp">
+      <Filter>Source Files\qt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qt\mpos_menu.cpp">
+      <Filter>Source Files\qt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qt\mw_menu.cpp">
+      <Filter>Source Files\qt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qt\ogl_manager.cpp">
+      <Filter>Source Files\qt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qt\pp2_menu.cpp">
+      <Filter>Source Files\qt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qt\ps_menu.cpp">
+      <Filter>Source Files\qt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qt\qt_common.cpp">
+      <Filter>Source Files\qt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qt\render.cpp">
+      <Filter>Source Files\qt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qt\rtc_menu.cpp">
+      <Filter>Source Files\qt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qt\screens.cpp">
+      <Filter>Source Files\qt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qt\tbf_menu.cpp">
+      <Filter>Source Files\qt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qt\utp_menu.cpp">
+      <Filter>Source Files\qt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qt\zzh_menu.cpp">
+      <Filter>Source Files\qt</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dmg\apu.h">
@@ -341,14 +401,8 @@
     <ClInclude Include="src\nds\arm9.h">
       <Filter>Header Files\nds</Filter>
     </ClInclude>
-    <ClInclude Include="src\qt\cgfx.h">
-      <Filter>Header Files\qt</Filter>
-    </ClInclude>
     <ClInclude Include="src\common\cgfx_common.h">
       <Filter>Header Files\common</Filter>
-    </ClInclude>
-    <ClInclude Include="src\qt\cheat_menu.h">
-      <Filter>Header Files\qt</Filter>
     </ClInclude>
     <ClInclude Include="src\min\common.h">
       <Filter>Header Files\min</Filter>
@@ -361,9 +415,6 @@
     </ClInclude>
     <ClInclude Include="src\nds\common.h">
       <Filter>Header Files\nds</Filter>
-    </ClInclude>
-    <ClInclude Include="src\qt\con_ir_menu.h">
-      <Filter>Header Files\qt</Filter>
     </ClInclude>
     <ClInclude Include="src\common\common.h">
       <Filter>Header Files\common</Filter>
@@ -395,12 +446,6 @@
     <ClInclude Include="src\dmg\custom_graphics_data.h">
       <Filter>Header Files\dmg</Filter>
     </ClInclude>
-    <ClInclude Include="src\qt\data_dialog.h">
-      <Filter>Header Files\qt</Filter>
-    </ClInclude>
-    <ClInclude Include="src\qt\debug_dmg.h">
-      <Filter>Header Files\qt</Filter>
-    </ClInclude>
     <ClInclude Include="src\common\dmg_core_pad.h">
       <Filter>Header Files\common</Filter>
     </ClInclude>
@@ -418,9 +463,6 @@
     </ClInclude>
     <ClInclude Include="src\nds\gamepad.h">
       <Filter>Header Files\nds</Filter>
-    </ClInclude>
-    <ClInclude Include="src\qt\general_settings.h">
-      <Filter>Header Files\qt</Filter>
     </ClInclude>
     <ClInclude Include="src\common\gx_util.h">
       <Filter>Header Files\common</Filter>
@@ -455,12 +497,6 @@
     <ClInclude Include="src\min\lcd_data.h">
       <Filter>Header Files\min</Filter>
     </ClInclude>
-    <ClInclude Include="src\qt\magic_reader_menu.h">
-      <Filter>Header Files\qt</Filter>
-    </ClInclude>
-    <ClInclude Include="src\qt\main_menu.h">
-      <Filter>Header Files\qt</Filter>
-    </ClInclude>
     <ClInclude Include="src\min\mmu.h">
       <Filter>Header Files\min</Filter>
     </ClInclude>
@@ -473,19 +509,7 @@
     <ClInclude Include="src\nds\mmu.h">
       <Filter>Header Files\nds</Filter>
     </ClInclude>
-    <ClInclude Include="src\qt\mpos_menu.h">
-      <Filter>Header Files\qt</Filter>
-    </ClInclude>
-    <ClInclude Include="src\qt\mw_menu.h">
-      <Filter>Header Files\qt</Filter>
-    </ClInclude>
     <ClInclude Include="src\qt\ogl_manager.h">
-      <Filter>Header Files\qt</Filter>
-    </ClInclude>
-    <ClInclude Include="src\qt\pp2_menu.h">
-      <Filter>Header Files\qt</Filter>
-    </ClInclude>
-    <ClInclude Include="src\qt\ps_menu.h">
       <Filter>Header Files\qt</Filter>
     </ClInclude>
     <ClInclude Include="src\qt\qt_common.h">
@@ -494,14 +518,8 @@
     <ClInclude Include="src\qt\render.h">
       <Filter>Header Files\qt</Filter>
     </ClInclude>
-    <ClInclude Include="src\qt\rtc_menu.h">
-      <Filter>Header Files\qt</Filter>
-    </ClInclude>
     <ClInclude Include="src\min\s1c88.h">
       <Filter>Header Files\min</Filter>
-    </ClInclude>
-    <ClInclude Include="src\qt\screens.h">
-      <Filter>Header Files\qt</Filter>
     </ClInclude>
     <ClInclude Include="src\gba\sio.h">
       <Filter>Header Files\gba</Filter>
@@ -515,9 +533,6 @@
     <ClInclude Include="src\dmg\sio_data.h">
       <Filter>Header Files\dmg</Filter>
     </ClInclude>
-    <ClInclude Include="src\qt\tbf_menu.h">
-      <Filter>Header Files\qt</Filter>
-    </ClInclude>
     <ClInclude Include="src\min\timer.h">
       <Filter>Header Files\min</Filter>
     </ClInclude>
@@ -530,17 +545,11 @@
     <ClInclude Include="src\common\util.h">
       <Filter>Header Files\common</Filter>
     </ClInclude>
-    <ClInclude Include="src\qt\utp_menu.h">
-      <Filter>Header Files\qt</Filter>
-    </ClInclude>
     <ClInclude Include="src\sgb\z80.h">
       <Filter>Header Files\sgb</Filter>
     </ClInclude>
     <ClInclude Include="src\dmg\z80.h">
       <Filter>Header Files\dmg</Filter>
-    </ClInclude>
-    <ClInclude Include="src\qt\zzh_menu.h">
-      <Filter>Header Files\qt</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -920,68 +929,59 @@
     <None Include="src\docs\technical\dandocs.html" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="src\qt\zzh_menu.cpp">
-      <Filter>Source Files\qt</Filter>
+    <CustomBuild Include="src\main.cpp">
+      <Filter>Source Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="src\qt\utp_menu.cpp">
-      <Filter>Source Files\qt</Filter>
+    <CustomBuild Include="src\qt\cgfx.h">
+      <Filter>Header Files\qt</Filter>
     </CustomBuild>
-    <CustomBuild Include="src\qt\cgfx.cpp">
-      <Filter>Source Files\qt</Filter>
+    <CustomBuild Include="src\qt\cheat_menu.h">
+      <Filter>Header Files\qt</Filter>
     </CustomBuild>
-    <CustomBuild Include="src\qt\cheat_menu.cpp">
-      <Filter>Source Files\qt</Filter>
+    <CustomBuild Include="src\qt\con_ir_menu.h">
+      <Filter>Header Files\qt</Filter>
     </CustomBuild>
-    <CustomBuild Include="src\qt\con_ir_menu.cpp">
-      <Filter>Source Files\qt</Filter>
+    <CustomBuild Include="src\qt\data_dialog.h">
+      <Filter>Header Files\qt</Filter>
     </CustomBuild>
-    <CustomBuild Include="src\qt\data_dialog.cpp">
-      <Filter>Source Files\qt</Filter>
+    <CustomBuild Include="src\qt\debug_dmg.h">
+      <Filter>Header Files\qt</Filter>
     </CustomBuild>
-    <CustomBuild Include="src\qt\debug_dmg.cpp">
-      <Filter>Source Files\qt</Filter>
+    <CustomBuild Include="src\qt\general_settings.h">
+      <Filter>Header Files\qt</Filter>
     </CustomBuild>
-    <CustomBuild Include="src\qt\general_settings.cpp">
-      <Filter>Source Files\qt</Filter>
+    <CustomBuild Include="src\qt\magic_reader_menu.h">
+      <Filter>Header Files\qt</Filter>
     </CustomBuild>
-    <CustomBuild Include="src\qt\magic_reader_menu.cpp">
-      <Filter>Source Files\qt</Filter>
+    <CustomBuild Include="src\qt\main_menu.h">
+      <Filter>Header Files\qt</Filter>
     </CustomBuild>
-    <CustomBuild Include="src\qt\main.cpp">
-      <Filter>Source Files\qt</Filter>
+    <CustomBuild Include="src\qt\mpos_menu.h">
+      <Filter>Header Files\qt</Filter>
     </CustomBuild>
-    <CustomBuild Include="src\qt\main_menu.cpp">
-      <Filter>Source Files\qt</Filter>
+    <CustomBuild Include="src\qt\mw_menu.h">
+      <Filter>Header Files\qt</Filter>
     </CustomBuild>
-    <CustomBuild Include="src\qt\mpos_menu.cpp">
-      <Filter>Source Files\qt</Filter>
+    <CustomBuild Include="src\qt\pp2_menu.h">
+      <Filter>Header Files\qt</Filter>
     </CustomBuild>
-    <CustomBuild Include="src\qt\mw_menu.cpp">
-      <Filter>Source Files\qt</Filter>
+    <CustomBuild Include="src\qt\ps_menu.h">
+      <Filter>Header Files\qt</Filter>
     </CustomBuild>
-    <CustomBuild Include="src\qt\ogl_manager.cpp">
-      <Filter>Source Files\qt</Filter>
+    <CustomBuild Include="src\qt\rtc_menu.h">
+      <Filter>Header Files\qt</Filter>
     </CustomBuild>
-    <CustomBuild Include="src\qt\pp2_menu.cpp">
-      <Filter>Source Files\qt</Filter>
+    <CustomBuild Include="src\qt\screens.h">
+      <Filter>Header Files\qt</Filter>
     </CustomBuild>
-    <CustomBuild Include="src\qt\ps_menu.cpp">
-      <Filter>Source Files\qt</Filter>
+    <CustomBuild Include="src\qt\tbf_menu.h">
+      <Filter>Header Files\qt</Filter>
     </CustomBuild>
-    <CustomBuild Include="src\qt\qt_common.cpp">
-      <Filter>Source Files\qt</Filter>
+    <CustomBuild Include="src\qt\utp_menu.h">
+      <Filter>Header Files\qt</Filter>
     </CustomBuild>
-    <CustomBuild Include="src\qt\render.cpp">
-      <Filter>Source Files\qt</Filter>
-    </CustomBuild>
-    <CustomBuild Include="src\qt\rtc_menu.cpp">
-      <Filter>Source Files\qt</Filter>
-    </CustomBuild>
-    <CustomBuild Include="src\qt\screens.cpp">
-      <Filter>Source Files\qt</Filter>
-    </CustomBuild>
-    <CustomBuild Include="src\qt\tbf_menu.cpp">
-      <Filter>Source Files\qt</Filter>
+    <CustomBuild Include="src\qt\zzh_menu.h">
+      <Filter>Header Files\qt</Filter>
     </CustomBuild>
   </ItemGroup>
 </Project>

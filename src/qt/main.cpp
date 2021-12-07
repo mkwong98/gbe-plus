@@ -8,11 +8,11 @@
 //
 // This is main. It all begins here ;)
 
-#include "render.h"
- 
+#include "render.h" 
+
 #include <SDL2/SDL_main.h>
 
-int main(int argc, char* args[]) 
+int main(int argc, char* args[])
 {
 	std::cout<<"GBE+ 1.5 [Qt]\n";
 
