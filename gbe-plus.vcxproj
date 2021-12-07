@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <ProjectGuid>{A4FA35CD-40D4-4FE2-84C4-4E09FC94F6ED}</ProjectGuid>
-    <Keyword>Win32Proj</Keyword>
+    <Keyword>QtVS_v304</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -44,7 +44,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" /><PropertyGroup Condition="'$(QtMsBuild)'=='' or !Exists('$(QtMsBuild)\qt.targets')"><QtMsBuild>$(MSBuildProjectDirectory)\QtMsBuild</QtMsBuild></PropertyGroup><Target Name="QtMsBuildNotFound" BeforeTargets="CustomBuild;ClCompile" Condition="!Exists('$(QtMsBuild)\qt.targets') or !Exists('$(QtMsBuild)\qt.props')"><Message Importance="High" Text="QtMsBuild: could not locate qt.targets, qt.props; project may not build correctly." /></Target><ImportGroup Condition="Exists('$(QtMsBuild)\qt.props')"><Import Project="$(QtMsBuild)\qt.props" /></ImportGroup>
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <ImportGroup Label="Shared">
@@ -64,23 +64,26 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtOpenGL;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtWidgets;C:\Users\user\Documents\GitHub\gbe-plus\src;C:\Users\user\Documents\GitHub\SDL2-2.0.18\x86_64-w64-mingw32\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Qt\Qt5.12.12\5.12.12\msvc2017\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017\include\QtOpenGL;C:\Qt\Qt5.12.12\5.12.12\msvc2017\include\QtWidgets;C:\Users\user\Documents\GitHub\gbe-plus\src;C:\Users\user\Documents\GitHub\SDL2-2.0.18\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Qt\Qt5.12.12\5.12.12\msvc2017\lib;C:\Users\user\Documents\GitHub\SDL2-2.0.18\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;GBE_QT_5;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;GBE_QT_5;GBE_OGL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
-    </ClCompile>
+    <MultiProcessorCompilation>true</MultiProcessorCompilation></ClCompile>
     <Link>
       <TargetMachine>MachineX86</TargetMachine>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
+      <AdditionalLibraryDirectories>C:\Qt\Qt5.12.12\5.12.12\msvc2017\lib;C:\Users\user\Documents\GitHub\SDL2-2.0.18\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Qt5Core.lib;Qt5Widgets.lib;Qt5OpenGL.lib;SDL2main.lib;SDL2.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -89,7 +92,7 @@
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-    </ClCompile>
+    <MultiProcessorCompilation>true</MultiProcessorCompilation></ClCompile>
     <Link>
       <TargetMachine>MachineX86</TargetMachine>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -109,16 +112,28 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
     <ClCompile Include="src\dmg\camera.cpp" />
-    <ClCompile Include="src\dmg\core.cpp" />
+    <ClCompile Include="src\dmg\core.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="src\dmg\custom_graphics.cpp" />
-    <ClCompile Include="src\dmg\debug.cpp" />
+    <ClCompile Include="src\dmg\debug.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="src\dmg\dmg07.cpp" />
-    <ClCompile Include="src\dmg\gamepad.cpp" />
-    <ClCompile Include="src\dmg\gbma.cpp" />
+    <ClCompile Include="src\dmg\gamepad.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\dmg\gbma.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="src\dmg\huc1.cpp" />
     <ClCompile Include="src\dmg\huc3.cpp" />
-    <ClCompile Include="src\dmg\infrared.cpp" />
-    <ClCompile Include="src\dmg\lcd.cpp" />
+    <ClCompile Include="src\dmg\infrared.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\dmg\lcd.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="src\dmg\mbc1.cpp" />
     <ClCompile Include="src\dmg\mbc2.cpp" />
     <ClCompile Include="src\dmg\mbc3.cpp" />
@@ -126,64 +141,129 @@
     <ClCompile Include="src\dmg\mbc6.cpp" />
     <ClCompile Include="src\dmg\mbc7.cpp" />
     <ClCompile Include="src\dmg\mmm01.cpp" />
-    <ClCompile Include="src\dmg\mmu.cpp" />
-    <ClCompile Include="src\dmg\opengl.cpp" />
-    <ClCompile Include="src\dmg\sio.cpp" />
+    <ClCompile Include="src\dmg\mmu.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\dmg\opengl.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\dmg\sio.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="src\dmg\tama5.cpp" />
-    <ClCompile Include="src\dmg\z80.cpp" />
+    <ClCompile Include="src\dmg\z80.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="src\gba\apu.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
-    <ClCompile Include="src\gba\arm7.cpp" />
+    <ClCompile Include="src\gba\arm7.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="src\gba\arm_instr.cpp" />
     <ClCompile Include="src\gba\cheats.cpp" />
-    <ClCompile Include="src\gba\core.cpp" />
-    <ClCompile Include="src\gba\debug.cpp" />
-    <ClCompile Include="src\gba\dma.cpp" />
-    <ClCompile Include="src\gba\gamepad.cpp" />
-    <ClCompile Include="src\gba\gbma.cpp" />
+    <ClCompile Include="src\gba\core.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\gba\debug.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\gba\dma.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\gba\gamepad.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\gba\gbma.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="src\gba\gpio.cpp" />
-    <ClCompile Include="src\gba\lcd.cpp" />
-    <ClCompile Include="src\gba\mmu.cpp" />
-    <ClCompile Include="src\gba\opengl.cpp" />
-    <ClCompile Include="src\gba\sio.cpp" />
-    <ClCompile Include="src\gba\swi.cpp" />
+    <ClCompile Include="src\gba\lcd.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\gba\mmu.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\gba\opengl.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\gba\sio.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\gba\swi.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="src\gba\thumb_instr.cpp" />
-    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\main.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="src\min\apu.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
-    <ClCompile Include="src\min\core.cpp" />
-    <ClCompile Include="src\min\debug.cpp" />
-    <ClCompile Include="src\min\gamepad.cpp" />
-    <ClCompile Include="src\min\infrared.cpp" />
-    <ClCompile Include="src\min\lcd.cpp" />
-    <ClCompile Include="src\min\mmu.cpp" />
-    <ClCompile Include="src\min\opengl.cpp" />
+    <ClCompile Include="src\min\core.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\min\debug.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\min\gamepad.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\min\infrared.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\min\lcd.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\min\mmu.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\min\opengl.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="src\min\s1c88.cpp" />
     <ClCompile Include="src\nds\apu.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
-    <ClCompile Include="src\nds\arm7.cpp" />
+    <ClCompile Include="src\nds\arm7.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="src\nds\arm7_arm_instr.cpp" />
     <ClCompile Include="src\nds\arm7_thumb_instr.cpp" />
     <ClCompile Include="src\nds\arm9.cpp" />
     <ClCompile Include="src\nds\arm9_arm_instr.cpp" />
     <ClCompile Include="src\nds\arm9_thumb_instr.cpp" />
-    <ClCompile Include="src\nds\core.cpp" />
+    <ClCompile Include="src\nds\core.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="src\nds\cp15.cpp" />
-    <ClCompile Include="src\nds\debug.cpp" />
-    <ClCompile Include="src\nds\dma.cpp" />
+    <ClCompile Include="src\nds\debug.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\nds\dma.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="src\nds\gamecard.cpp" />
-    <ClCompile Include="src\nds\gamepad.cpp" />
+    <ClCompile Include="src\nds\gamepad.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="src\nds\gx_render.cpp" />
-    <ClCompile Include="src\nds\lcd.cpp" />
-    <ClCompile Include="src\nds\mmu.cpp" />
+    <ClCompile Include="src\nds\lcd.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\nds\mmu.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="src\nds\ntr_027.cpp" />
-    <ClCompile Include="src\nds\opengl.cpp" />
+    <ClCompile Include="src\nds\opengl.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="src\nds\rtc.cpp" />
     <ClCompile Include="src\nds\slot2.cpp" />
-    <ClCompile Include="src\nds\swi.cpp" />
+    <ClCompile Include="src\nds\swi.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="src\qt\cgfx.cpp" />
     <ClCompile Include="src\qt\cheat_menu.cpp" />
     <ClCompile Include="src\qt\con_ir_menu.cpp" />
@@ -191,7 +271,9 @@
     <ClCompile Include="src\qt\debug_dmg.cpp" />
     <ClCompile Include="src\qt\general_settings.cpp" />
     <ClCompile Include="src\qt\magic_reader_menu.cpp" />
-    <ClCompile Include="src\qt\main.cpp" />
+    <ClCompile Include="src\qt\main.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="src\qt\main_menu.cpp" />
     <ClCompile Include="src\qt\mpos_menu.cpp" />
     <ClCompile Include="src\qt\mw_menu.cpp" />
@@ -205,12 +287,24 @@
     <ClCompile Include="src\qt\tbf_menu.cpp" />
     <ClCompile Include="src\qt\utp_menu.cpp" />
     <ClCompile Include="src\qt\zzh_menu.cpp" />
-    <ClCompile Include="src\sgb\core.cpp" />
-    <ClCompile Include="src\sgb\debug.cpp" />
-    <ClCompile Include="src\sgb\gamepad.cpp" />
-    <ClCompile Include="src\sgb\lcd.cpp" />
-    <ClCompile Include="src\sgb\opengl.cpp" />
-    <ClCompile Include="src\sgb\z80.cpp" />
+    <ClCompile Include="src\sgb\core.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\sgb\debug.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\sgb\gamepad.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\sgb\lcd.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\sgb\opengl.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\sgb\z80.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\cgfx_common.h" />
@@ -420,7 +514,7 @@
     <None Include="src\data\zzh_db.bin" />
     <None Include="src\docs\technical\dandocs.html" />
   </ItemGroup>
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" /><ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')"><Import Project="$(QtMsBuild)\qt.targets" /></ImportGroup>
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>
