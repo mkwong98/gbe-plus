@@ -78,7 +78,7 @@ void DMG_MMU::reset()
 	if(cart.flash_stat != 0x40) { cart.flash_cnt = 0x0; }
 	cart.flash_cmd = 0;
 	if(cart.flash_stat != 0x40) { cart.flash_stat = 0x6; }
-	cart.flash_io_bank = 0;
+	if(cart.flash_stat != 0x40) { cart.flash_io_bank = 0; }
 	cart.flash_get_id = false;
 
 	for(int x = 0; x < 5; x++)
@@ -106,6 +106,11 @@ void DMG_MMU::reset()
 	for(u32 x = 0; x < 256; x++) { cart.tama_ram[x] = 0; }
 	cart.tama_cmd = 0;
 	cart.tama_out = 0;
+
+	if(cart.flash_stat != 0x40)
+	{
+		for(u32 x = 0; x < 128; x++) { cart.gb_mem_map[x] = 0xFF; }
+	} 
 
 	ir_signal = 0;
 	ir_send = false;
@@ -2001,6 +2006,10 @@ bool DMG_MMU::read_file(std::string filename)
 	if((config::cart_type == DMG_GBMEM) && (cart.flash_stat != 0x40) && (file_size >= 0x100000))
 	{
 		cart.rom_size = 1024;
+
+		//Read map file for GB Memory Cartridge
+		std::string m_file = filename + ".map";
+		gb_mem_read_map(m_file);
 	}
 
 	//Let MBC1S access cart RAM area for MBC registers
@@ -2246,10 +2255,32 @@ bool DMG_MMU::load_backup(std::string filename)
 			//Read MBC RAM
 			if((cart.mbc_type != ROM_ONLY) && (cart.mbc_type != MBC7) && (cart.mbc_type != TAMA5))
 			{
-				for(int x = 0; x < 0x10; x++)
+				//Read GB Memory Cartridge save according to map data
+				if(config::cart_type == DMG_GBMEM)
 				{
-					u8* ex_ram = &random_access_bank[x][0];
-					sram.read((char*)ex_ram, 0x2000); 
+					u8 map_index = (cart.flash_io_bank * 3);
+					u8 sram_index = cart.gb_mem_map[map_index + 2] & 0xF;
+
+					u8 block_size = ((cart.gb_mem_map[map_index] & 0x3) << 1) | ((cart.gb_mem_map[map_index + 1] & 0x80) >> 7);
+					if((block_size != 0) && (block_size != 3)) { block_size = 1; }
+
+					sram.seekg(0x2000 * sram_index);
+
+					for(int x = 0; x < block_size; x++)
+					{
+						u8* ex_ram = &random_access_bank[x][0];
+						sram.read((char*)ex_ram, 0x2000); 
+					}
+				}
+				
+				//Read save data normally
+				else
+				{	
+					for(int x = 0; x < 0x10; x++)
+					{
+						u8* ex_ram = &random_access_bank[x][0];
+						sram.read((char*)ex_ram, 0x2000); 
+					}
 				}
 			}
 
@@ -2308,6 +2339,9 @@ bool DMG_MMU::save_backup(std::string filename)
 
 	if(cart.battery)
 	{
+		//Rearrange GB Memory Cartridge save data into regular a format that can be saved to disk
+		if(config::cart_type == DMG_GBMEM) { gb_mem_format_save(filename); }
+
 		std::ofstream sram(filename.c_str(), std::ios::binary);
 
 		if(!sram.is_open()) 
@@ -2404,7 +2438,7 @@ void DMG_MMU::gb_mem_remap()
 	//Make sure GB Memory Cartridge ROM with menu is at least 1024KB
 	if(read_only_bank.size() < 64)
 	{
-		std::cout<<"MMU::Error - GB Memory Cartridge file is less than 1024KB\n";
+		std::cout<<"MMU::Error - GB Memory Cartridge ROM file is less than 1024KB\n";
 		return;
 	}
 	
@@ -2460,7 +2494,85 @@ void DMG_MMU::gb_mem_remap()
 	{
 		std::cout<<"MMU::Error - No index found in GB Memory Cartridge menu data\n";
 	}
-} 
+}
+
+/****** Reads 128-byte map file used for GB Memory Cartridge ******/
+bool DMG_MMU::gb_mem_read_map(std::string filename)
+{
+	std::ifstream map_file(filename.c_str(), std::ios::binary);
+
+	if(!map_file.is_open()) 
+	{ 
+		std::cout<<"MMU::Error - GB Memory Cartridge Map File " << filename << " could not be opened. Check file path or permissions.\n";
+		return false;
+	}
+
+	//Validate file size
+	map_file.seekg(0, map_file.end);
+	u32 map_size = map_file.tellg();
+	map_file.seekg(0, map_file.beg);
+
+	if(map_size != 128)
+	{
+		std::cout<<"MMU::Error - GB Memory Cartridge Map File size is " << std::dec << map_size << " bytes instead of 128 bytes.\n" << std::hex;
+		return false;
+	}
+
+	u8* ex_dat = &cart.gb_mem_map[0];
+	map_file.read((char*)ex_dat, 0x80);
+	map_file.close();
+
+	std::cout<<"MMU::Loaded GB Memory Cartridge Map File " << filename << "\n";
+
+	return true;
+}
+
+/****** Reads existing save data and updates it correctly for games stored on the GB Memory Cartridge ******/
+void DMG_MMU::gb_mem_format_save(std::string filename)
+{
+	u8 map_index = (cart.flash_io_bank * 3);
+	u8 sram_index = cart.gb_mem_map[map_index + 2] & 0xF;
+
+	u8 block_size = ((cart.gb_mem_map[map_index] & 0x3) << 1) | ((cart.gb_mem_map[map_index + 1] & 0x80) >> 7);
+	if((block_size != 0) && (block_size != 3)) { block_size = 1; }
+
+	//Read current save data (32KB max)
+	u8 temp_sram[4][0x2000];
+	std::ifstream temp_file(filename.c_str(), std::ios::binary);
+
+	for(int x = 0; x < block_size; x++)
+	{
+		for(int y = 0; y < 0x2000; y++)
+		{
+			temp_sram[x][y] = random_access_bank[x][y];
+		}
+	}
+
+	//Read existing save data if available
+	random_access_bank.clear();
+	random_access_bank.resize(0x10);
+	for(int x = 0; x < 0x10; x++) { random_access_bank[x].resize(0x2000, 0); }
+
+	if(temp_file.is_open())
+	{
+		for(int x = 0; x < 0x10; x++)
+		{
+			u8* ex_ram = &random_access_bank[x][0];
+			temp_file.read((char*)ex_ram, 0x2000); 
+		}
+	}
+
+	temp_file.close();
+
+	//Merge existing save data with current save data
+	for(int x = 0; x < block_size; x++)
+	{
+		for(int y = 0; y < 0x2000; y++)
+		{
+			random_access_bank[sram_index + x][y] = temp_sram[x][y];
+		}
+	}
+}
 
 /****** Writes values to RAM as specified by the Gameshark code - Called by LCD during VBlank ******/
 void DMG_MMU::set_gs_cheats()

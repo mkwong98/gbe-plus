@@ -101,6 +101,7 @@ class AGB_MMU
 	struct gpio_controller
 	{
 		u8 data;
+		u8 prev_data;
 		u8 direction;
 		u8 control;
 		u16 state;
@@ -114,6 +115,7 @@ class AGB_MMU
 		u8 rtc_control;
 
 		u8 solar_counter;
+		u8 adc_clear;
 	} gpio;
 
 	std::vector<u32> cheat_bytes;

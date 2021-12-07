@@ -105,7 +105,7 @@ void NTR_MMU::reset()
 	nds7_temp_if = 0x0;
 	nds7_ime = 0;
 	nds7_exmem = 0;
-	power_cnt2 = 0;
+	power_cnt2 = 0x1;
 
 	nds9_bios.clear();
 	nds9_bios.resize(0xC00, 0);
@@ -117,7 +117,7 @@ void NTR_MMU::reset()
 	nds9_temp_if = 0x0;
 	nds9_ime = 0;
 	nds9_exmem = 0;
-	power_cnt1 = 0;
+	power_cnt1 = 0x820F;
 
 	gx_fifo_entry = 0;
 	gx_fifo_param_length = 0;
@@ -6386,6 +6386,9 @@ void NTR_MMU::setup_default_firmware()
 	{
 		firmware[0x3FF00 + x] = firmware[0x3FE00 + x];
 	}
+
+	//Set Update Counter for User Settings 1 higher than User Settings 0
+	firmware[0x3FF70] = (firmware[0x3FE70] + 1);
 
 	//Copy firmware user settings to RAM
 	for(u32 x = 0; x < 0x6C; x++)
