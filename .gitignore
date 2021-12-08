@@ -49,3 +49,11 @@ src/qt/moc_screens.cpp
 src/qt/moc_tbf_menu.cpp
 src/qt/moc_utp_menu.cpp
 src/qt/moc_zzh_menu.cpp
+*.exe
+*.idb
+*.ilk
+*.recipe
+x64/Release/gbe-plus.vcxproj.FileListAbsolute.txt
+x64/Debug/gbe-plus.vcxproj.FileListAbsolute.txt
+Win32/Release/gbe-plus.vcxproj.FileListAbsolute.txt
+Win32/Debug/gbe-plus.vcxproj.FileListAbsolute.txt

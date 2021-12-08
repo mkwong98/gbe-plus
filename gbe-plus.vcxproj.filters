@@ -366,6 +366,9 @@
     <ClCompile Include="src\qt\zzh_menu.cpp">
       <Filter>Source Files\qt</Filter>
     </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dmg\apu.h">
@@ -929,9 +932,6 @@
     <None Include="src\docs\technical\dandocs.html" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="src\main.cpp">
-      <Filter>Source Files</Filter>
-    </CustomBuild>
     <CustomBuild Include="src\qt\cgfx.h">
       <Filter>Header Files\qt</Filter>
     </CustomBuild>
