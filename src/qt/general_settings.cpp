@@ -1701,7 +1701,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 
 	multi_plust_menu = new mpos_menu;
 	turbo_file_menu = new tbf_menu;
-	magical_watch_menu = new mw_menu;
 
 	ubisoft_pedometer_menu = new utp_menu;
 	magic_reader_menu = new mr_menu;
@@ -2132,7 +2131,6 @@ void gen_settings::show_sio_config()
 		case 12: tabs->setCurrentIndex(3); controls_combo->setCurrentIndex(3); chip_gate_type->setCurrentIndex(2); break;
 		case 15: multi_plust_menu->show(); break;
 		case 16: turbo_file_menu->show(); break;
-		case 19: magical_watch_menu->show(); break;
 	}
 }
 

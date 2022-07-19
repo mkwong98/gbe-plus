@@ -210,9 +210,6 @@
     <ClCompile Include="src\qt\mpos_menu.cpp">
       <Filter>Source Files\qt</Filter>
     </ClCompile>
-    <ClCompile Include="src\qt\mw_menu.cpp">
-      <Filter>Source Files\qt</Filter>
-    </ClCompile>
     <ClCompile Include="src\qt\ogl_manager.cpp">
       <Filter>Source Files\qt</Filter>
     </ClCompile>
@@ -534,9 +531,6 @@
       <Filter>Header Files\qt</Filter>
     </CustomBuild>
     <CustomBuild Include="src\qt\mpos_menu.h">
-      <Filter>Header Files\qt</Filter>
-    </CustomBuild>
-    <CustomBuild Include="src\qt\mw_menu.h">
       <Filter>Header Files\qt</Filter>
     </CustomBuild>
     <CustomBuild Include="src\qt\pp2_menu.h">
