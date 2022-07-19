@@ -507,13 +507,7 @@ void main_menu::select_data_file()
 	QString filename = QFileDialog::getOpenFileName(this, tr("Open"), "", tr("Binary File(*.bin)"));
 	if(filename.isNull()) { SDL_PauseAudio(0); return; }
 
-	//Automatically save Soul Doll data when switching
-	if((main_menu::gbe_plus != NULL) && (config::gb_type == 3) && (config::sio_device == 9)) { gbe_plus->get_core_data(1); }
-
 	config::external_data_file = filename.toStdString();
-
-	//Automatically load Soul Doll data when switching
-	if((main_menu::gbe_plus != NULL) && (config::gb_type == 3) && (config::sio_device == 9)) { gbe_plus->get_core_data(2); }
 
 	SDL_PauseAudio(0);
 }
@@ -588,10 +582,6 @@ void main_menu::boot_game()
 	{
 		case 0x1: test_bios_path = config::dmg_bios_path; break;
 		case 0x2: test_bios_path = config::gbc_bios_path; break;
-		case 0x3: test_bios_path = config::agb_bios_path; break;
-		case 0x4: test_bios_path = config::nds7_bios_path; break;
-		case 0x7: test_bios_path = config::min_bios_path; break;
-		case 0x5: config::use_bios = false;
 	}
 
 	test_file.setFileName(QString::fromStdString(test_bios_path));
@@ -599,14 +589,6 @@ void main_menu::boot_game()
 	if((config::rom_file == "NOCART") && (!config::use_bios))
 	{
 		std::string mesg_text = "A BIOS/Boot ROM file must be used when booting without a cartridge\n";
-		warning_box->setText(QString::fromStdString(mesg_text));
-		warning_box->show();
-		return;
-	}
-
-	if((system_type == 7) && (!config::use_bios))
-	{
-		std::string mesg_text = "A BIOS file must be used when booting the Pokemon Mini core\n";
 		warning_box->setText(QString::fromStdString(mesg_text));
 		warning_box->show();
 		return;
@@ -620,38 +602,12 @@ void main_menu::boot_game()
 		
 		else
 		{
-			if(system_type == 4)
-			{
-				mesg_text = "ARM7 BIOS file not specified.\nPlease check your Paths settings or disable the 'Use BIOS/Boot ROM' option";
-			} 
-				
-			else 
-			{
 				mesg_text = "No BIOS file specified for this system.\nPlease check your Paths settings or disable the 'Use BIOS/Boot ROM' option";
-			}
 		} 
 
 		warning_box->setText(QString::fromStdString(mesg_text));
 		warning_box->show();
 		return;
-	}
-
-	//Perform a second test for NDS9 BIOS
-	if(system_type == 4)
-	{
-		test_file.setFileName(QString::fromStdString(config::nds9_bios_path));
-
-		if(!test_file.exists() && config::use_bios)
-		{
-			std::string mesg_text;
-
-			if(!test_bios_path.empty()) { mesg_text = "The BIOS file: '" + test_bios_path + "' could not be loaded"; }
-			else { mesg_text = "ARM9 BIOS file not specified.\nPlease check your Paths settings or disable the 'Use BIOS/Boot ROM' option"; } 
-
-			warning_box->setText(QString::fromStdString(mesg_text));
-			warning_box->show();
-			return;
-		}
 	}
 
 	config::sample_rate = settings->sample_rate;
@@ -695,15 +651,6 @@ void main_menu::boot_game()
 		case 0x3: config::cart_type = DMG_MMM01; break;
 		case 0x4: config::cart_type = DMG_MBC30; break;
 		case 0x5: config::cart_type = DMG_GBMEM; break;
-		case 0x6: config::cart_type = AGB_RTC; break;
-		case 0x7: config::cart_type = AGB_SOLAR_SENSOR; break;
-		case 0x8: config::cart_type = AGB_RUMBLE; break;
-		case 0x9: config::cart_type = AGB_GYRO_SENSOR; break;
-		case 0xA: config::cart_type = AGB_TILT_SENSOR; break;
-		case 0xB: config::cart_type = AGB_8M_DACS; break;
-		case 0xC: config::cart_type = AGB_AM3; break;
-		case 0xD: config::cart_type = AGB_JUKEBOX; break;
-		case 0xE: config::cart_type = NDS_IR_CART; break;
 	}
 
 	//Check rumble status
@@ -728,87 +675,35 @@ void main_menu::boot_game()
 	//Note, DMG and GBC games are automatically detected in the Gameboy MMU, so only check for GBA and NDS types here
 	if(config::rom_file != "NOCART")
 	{
-		std::size_t dot = config::rom_file.find_last_of(".");
-		std::string ext = config::rom_file.substr(dot);
-
 		config::gb_type = settings->sys_type->currentIndex();
-	
-		if(ext == ".gba") { config::gb_type = 3; }
-		else if(ext == ".nds") { config::gb_type = 4; }
-		else if(ext == ".min") { config::gb_type = 7; }
-		else if((ext != ".gba") && (config::gb_type == 3)) { config::gb_type = 2; config::gba_enhance = true; }
-		else { config::gba_enhance = false; }
-
-		if((config::gb_type == 5) || (config::gb_type == 6)) { config::gb_type = get_system_type_from_file(config::rom_file); }
-
-		//Force GBA system type for AM3 emulation
-		if(config::cart_type == AGB_AM3) { config::gb_type = 3; }
+		config::gba_enhance = false; 
 	}
 
 	//Determine CGFX scaling factor
 	cgfx::scaling_factor = (settings->cgfx_scale->currentIndex() + 1);
 	if(!cgfx::load_cgfx) { cgfx::scaling_factor = 1; }
 
-	//Start the appropiate system core - DMG, GBC, GBA, NDS, or MIN
+	//Start the appropiate system core - DMG, GBC
+	base_width = (160 * cgfx::scaling_factor);
+	base_height = (144 * cgfx::scaling_factor);
 
-	if(config::gb_type == 7) 
-	{
-		base_width = 96;
-		base_height = 64;
+	main_menu::gbe_plus = new DMG_core();
+	is_sgb_core = false;
 
-		main_menu::gbe_plus = new MIN_core();
-		resize((base_width * config::scaling_factor), (base_height * config::scaling_factor) + menu_height);
-		qt_gui::screen = new QImage(96, 64, QImage::Format_ARGB32);
+	resize((base_width * config::scaling_factor), (base_height * config::scaling_factor) + menu_height);
 
-		//Resize drawing screens
-		if(config::use_opengl) { hw_screen->resize((base_width * config::scaling_factor), (base_height * config::scaling_factor)); }
-		else { sw_screen->resize((base_width * config::scaling_factor), (base_height * config::scaling_factor)); }
+	//Resize drawing screens
+	if(config::use_opengl) { hw_screen->resize((base_width * config::scaling_factor), (base_height * config::scaling_factor)); }
+	else { sw_screen->resize((base_width * config::scaling_factor), (base_height * config::scaling_factor)); }
 
-		//Disable CGFX menu
-		findChild<QAction*>("custom_gfx_action")->setEnabled(false);
+	if(qt_gui::screen != NULL) { delete qt_gui::screen; }
+	qt_gui::screen = new QImage(base_width, base_height, QImage::Format_ARGB32);
 
-		//Disable debugging menu
-		findChild<QAction*>("debugging_action")->setEnabled(false);
-	}
+	//Enable CGFX menu
+	findChild<QAction*>("custom_gfx_action")->setEnabled(true);
 
-	else 
-	{
-		if((config::gb_type == 5) || (config::gb_type == 6))
-		{
-			base_width = 160;
-			base_height = 144;
-
-			//Disable CGFX
-			settings->load_cgfx->setChecked(false);
-
-			main_menu::gbe_plus = new SGB_core();
-			is_sgb_core = true;
-		}
-
-		else
-		{
-			base_width = (160 * cgfx::scaling_factor);
-			base_height = (144 * cgfx::scaling_factor);
-
-			main_menu::gbe_plus = new DMG_core();
-			is_sgb_core = false;
-		}
-
-		resize((base_width * config::scaling_factor), (base_height * config::scaling_factor) + menu_height);
-
-		//Resize drawing screens
-		if(config::use_opengl) { hw_screen->resize((base_width * config::scaling_factor), (base_height * config::scaling_factor)); }
-		else { sw_screen->resize((base_width * config::scaling_factor), (base_height * config::scaling_factor)); }
-
-		if(qt_gui::screen != NULL) { delete qt_gui::screen; }
-		qt_gui::screen = new QImage(base_width, base_height, QImage::Format_ARGB32);
-
-		//Enable CGFX menu
-		findChild<QAction*>("custom_gfx_action")->setEnabled(true);
-
-		//Enable debugging menu
-		findChild<QAction*>("debugging_action")->setEnabled(true);
-	}
+	//Enable debugging menu
+	findChild<QAction*>("debugging_action")->setEnabled(true);
 
 	//Tell settings whether this is an SGB core
 	settings->is_sgb_core = is_sgb_core;
@@ -823,8 +718,6 @@ void main_menu::boot_game()
 		{
 			case 0x1 : config::bios_file = config::dmg_bios_path; reset_dmg_colors(); break;
 			case 0x2 : config::bios_file = config::gbc_bios_path; reset_dmg_colors(); break;
-			case 0x3 : config::bios_file = config::agb_bios_path; break;
-			case 0x7 : config::bios_file = config::min_bios_path; break;
 		}
 
 		if(!main_menu::gbe_plus->read_bios(config::bios_file)) { return; } 
@@ -1029,202 +922,6 @@ void main_menu::keyReleaseEvent(QKeyEvent* event)
 /****** Event SW or HW screen ******/
 bool main_menu::eventFilter(QObject* target, QEvent* event)
 {
-	//Only process NDS touchscreen events
-	if((config::gb_type != 4) || (main_menu::gbe_plus == NULL)) { return QWidget::eventFilter(target, event); }
-
-	//Single click - Press
-	else if(event->type() == QEvent::MouseButtonPress)
-	{
-		if((target == sw_screen) || (target == hw_screen))
-		{
-			QMouseEvent* mouse_event = static_cast<QMouseEvent*>(event);
-			float x_scaling_factor, y_scaling_factor = 0.0;
-			u32 x, y = 0;
-
-			if(config::maintain_aspect_ratio)
-			{
-				u32 w = (target == sw_screen) ? sw_screen->width() : hw_screen->width();
-				u32 h = (target == sw_screen) ? sw_screen->height() : hw_screen->height();
-				u32 off_x, off_y = 0;
-
-				get_nds_ar_size(w, h, off_x, off_y);
-
-				x_scaling_factor = w / 256.0;
-				y_scaling_factor = h / 384.0;
-
-				x = ((mouse_event->x() - off_x) / x_scaling_factor);
-				y = ((mouse_event->y() - off_y) / y_scaling_factor);
-
-				if((mouse_event->x() < off_x) || (mouse_event->x() > (w + off_x))) { return QWidget::eventFilter(target, event); }
-				if((mouse_event->y() < off_y) || (mouse_event->y() > (h + off_y))) { return QWidget::eventFilter(target, event); }
-			}
-
-			else
-			{
-				x_scaling_factor = (target == sw_screen) ? (sw_screen->width() / 256.0) : (hw_screen->width() / 256.0);
-				y_scaling_factor = (target == sw_screen) ? (sw_screen->height() / 384.0) : (hw_screen->height() / 384.0);
-
-				x = (mouse_event->x() / x_scaling_factor);
-			 	y = (mouse_event->y() / y_scaling_factor);
-			}
-
-			//Adjust Y for bottom touchscreen
-			bool is_bottom = false;
-
-			if((y < 192) && (config::lcd_config & 0x1)) { is_bottom = true; }
-			else if((y > 192) && ((config::lcd_config & 0x1) == 0))
-			{
-				is_bottom = true;
-				y -= 192;
-			}
-
-			if(is_bottom)
-			{
-				//Pack Pad, X, Y into a 24-bit number to send to the NDS core
-				x &= 0xFF;
-				y &= 0xFF;
-
-				u8 pad = 0;
-
-				if(mouse_event->buttons() == Qt::LeftButton) { pad = 1; }
-				else if(mouse_event->buttons() == Qt::RightButton) { pad = 2; }
-				else { return QWidget::eventFilter(target, event); }
-
-				u32 pack = (pad << 16) | (y << 8) | (x);
-
-				main_menu::gbe_plus->feed_key_input(pack, true);
-			}
-		}
-	}
-
-	//Single click - Release
-	else if(event->type() == QEvent::MouseButtonRelease)
-	{
-		if((target == sw_screen) || (target == hw_screen))
-		{
-			QMouseEvent* mouse_event = static_cast<QMouseEvent*>(event);
-			float x_scaling_factor, y_scaling_factor = 0.0;
-			u32 x, y = 0;
-
-			if(config::maintain_aspect_ratio)
-			{
-				u32 w = (target == sw_screen) ? sw_screen->width() : hw_screen->width();
-				u32 h = (target == sw_screen) ? sw_screen->height() : hw_screen->height();
-				u32 off_x, off_y = 0;
-
-				get_nds_ar_size(w, h, off_x, off_y);
-
-				x_scaling_factor = w / 256.0;
-				y_scaling_factor = h / 384.0;
-
-				x = ((mouse_event->x() - off_x) / x_scaling_factor);
-				y = ((mouse_event->y() - off_y) / y_scaling_factor);
-
-				if((mouse_event->x() < off_x) || (mouse_event->x() > (w + off_x))) { return QWidget::eventFilter(target, event); }
-				if((mouse_event->y() < off_y) || (mouse_event->y() > (h + off_y))) { return QWidget::eventFilter(target, event); }
-			}
-
-			else
-			{
-				x_scaling_factor = (target == sw_screen) ? (sw_screen->width() / 256.0) : (hw_screen->width() / 256.0);
-				y_scaling_factor = (target == sw_screen) ? (sw_screen->height() / 384.0) : (hw_screen->height() / 384.0);
-
-				x = (mouse_event->x() / x_scaling_factor);
-			 	y = (mouse_event->y() / y_scaling_factor);
-			}
-
-			//Adjust Y for bottom touchscreen
-			bool is_bottom = false;
-
-			if((y < 192) && (config::lcd_config & 0x1)) { is_bottom = true; }
-			else if((y > 192) && ((config::lcd_config & 0x1) == 0))
-			{
-				is_bottom = true;
-				y -= 192;
-			}
-
-			if(is_bottom)
-			{
-				//Pack Pad, X, Y into a 24-bit number to send to the NDS core
-				x &= 0xFF;
-				y &= 0xFF;
-
-				u8 pad = 0;
-
-				if(mouse_event->button() == Qt::LeftButton) { pad = 1; }
-				else if(mouse_event->button() == Qt::RightButton) { pad = 2; }
-				else { return QWidget::eventFilter(target, event); }
-
-				u32 pack = (pad << 16) | (y << 8) | (x);
-
-				main_menu::gbe_plus->feed_key_input(pack, false);
-			}
-		}
-	}
-
-	//Mouse motion
-	else if(event->type() == QEvent::MouseMove)
-	{
-		if((target == sw_screen) || (target == hw_screen))
-		{
-			//Only process mouse motion if touch_by_mouse has been set in NDS core
-			if(main_menu::gbe_plus->get_core_data(2) == 0) { return QWidget::eventFilter(target, event); }
-
-			QMouseEvent* mouse_event = static_cast<QMouseEvent*>(event);
-			float x_scaling_factor, y_scaling_factor = 0.0;
-			u32 x, y = 0;
-
-			if(config::maintain_aspect_ratio)
-			{
-				u32 w = (target == sw_screen) ? sw_screen->width() : hw_screen->width();
-				u32 h = (target == sw_screen) ? sw_screen->height() : hw_screen->height();
-				u32 off_x, off_y = 0;
-
-				get_nds_ar_size(w, h, off_x, off_y);
-
-				x_scaling_factor = w / 256.0;
-				y_scaling_factor = h / 384.0;
-
-				x = ((mouse_event->x() - off_x) / x_scaling_factor);
-				y = ((mouse_event->y() - off_y) / y_scaling_factor);
-
-				if((mouse_event->x() < off_x) || (mouse_event->x() > (w + off_x))) { return QWidget::eventFilter(target, event); }
-				if((mouse_event->y() < off_y) || (mouse_event->y() > (h + off_y))) { return QWidget::eventFilter(target, event); }
-			}
-
-			else
-			{
-				x_scaling_factor = (target == sw_screen) ? (sw_screen->width() / 256.0) : (hw_screen->width() / 256.0);
-				y_scaling_factor = (target == sw_screen) ? (sw_screen->height() / 384.0) : (hw_screen->height() / 384.0);
-
-				x = (mouse_event->x() / x_scaling_factor);
-			 	y = (mouse_event->y() / y_scaling_factor);
-			}
-
-			//Adjust Y for bottom touchscreen
-			bool is_bottom = false;
-
-			if((y < 192) && (config::lcd_config & 0x1)) { is_bottom = true; }
-			else if((y > 192) && ((config::lcd_config & 0x1) == 0))
-			{
-				is_bottom = true;
-				y -= 192;
-			}
-
-			if(is_bottom)
-			{
-				//Pack Pad, X, Y into a 24-bit number to send to the NDS core
-				x &= 0xFF;
-				y &= 0xFF;
-
-				u8 pad = 4;
-				u32 pack = (pad << 16) | (y << 8) | (x);
-
-				main_menu::gbe_plus->feed_key_input(pack, true);
-			}
-		}
-	}
-
 	return QWidget::eventFilter(target, event);
 }
 
@@ -1277,8 +974,8 @@ void main_menu::reset()
 {
 	if(main_menu::gbe_plus != NULL) 
 	{
-		//When emulating the GB Memory Cartridge, let the DMG-GBC or SGB cores handle resetting
-		if((config::cart_type == DMG_GBMEM) && (config::gb_type != 3) && (config::gb_type != 4) && (config::gb_type != 7))
+		//When emulating the GB Memory Cartridge, let the DMG-GBC cores handle resetting
+		if((config::cart_type == DMG_GBMEM))
 		{
 			gbe_plus->feed_key_input(SDLK_F8, true);
 			return;
@@ -1295,10 +992,6 @@ void main_menu::reset()
 		{
 			case 0x1: test_bios_path = config::dmg_bios_path; break;
 			case 0x2: test_bios_path = config::gbc_bios_path; break;
-			case 0x3: test_bios_path = config::agb_bios_path; break;
-			case 0x4: test_bios_path = config::nds7_bios_path; break;
-			case 0x7: test_bios_path = config::min_bios_path; break;
-			case 0x5: config::use_bios = false;
 		}
 
 		test_file.setFileName(QString::fromStdString(test_bios_path));
@@ -1311,38 +1004,12 @@ void main_menu::reset()
 		
 			else
 			{
-				if(system_type == 4)
-				{
-					mesg_text = "ARM7 BIOS file not specified.\nPlease check your Paths settings or disable the 'Use BIOS/Boot ROM' option";
-				} 
-				
-				else 
-				{
-					mesg_text = "No BIOS file specified for this system.\nPlease check your Paths settings or disable the 'Use BIOS/Boot ROM' option";
-				}
+				mesg_text = "No BIOS file specified for this system.\nPlease check your Paths settings or disable the 'Use BIOS/Boot ROM' option";
 			} 
 
 			warning_box->setText(QString::fromStdString(mesg_text));
 			warning_box->show();
 			return;
-		}
-
-		//Perform a second test for NDS9 BIOS
-		if(system_type == 4)
-		{
-			test_file.setFileName(QString::fromStdString(config::nds9_bios_path));
-
-			if(!test_file.exists() && config::use_bios)
-			{
-				std::string mesg_text;
-
-				if(!test_bios_path.empty()) { mesg_text = "The BIOS file: '" + test_bios_path + "' could not be loaded"; }
-				else { mesg_text = "ARM9 BIOS file not specified.\nPlease check your Paths settings or disable the 'Use BIOS/Boot ROM' option"; } 
-
-				warning_box->setText(QString::fromStdString(mesg_text));
-				warning_box->show();
-				return;
-			}
 		}
 
 		boot_game();
@@ -1357,8 +1024,7 @@ void main_menu::fullscreen()
 		//Set fullscreen
 		if(findChild<QAction*>("fullscreen_action")->isChecked())
 		{
-			//Disable cursor except for NDS games
-			if(config::gb_type != 4) { QApplication::setOverrideCursor(Qt::BlankCursor); }
+			QApplication::setOverrideCursor(Qt::BlankCursor);
 
 			fullscreen_mode = true;
 			setWindowState(Qt::WindowFullScreen);
@@ -1462,16 +1128,6 @@ void main_menu::show_paths_settings()
 /****** Shows the Custom Graphics dialog ******/
 void main_menu::show_cgfx() 
 {
-	//Draw GBA layers
-	if(config::gb_type == 3)
-	{
-		//Do nothing for now
-		return;
-	}
-
-	//Do nothing for SGB for now
-	else if(is_sgb_core) { return; }
-
 	findChild<QAction*>("pause_action")->setEnabled(false);
 
 	//Wait until LY equals the selected line to stop on, or LCD is turned off

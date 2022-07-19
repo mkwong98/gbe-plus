@@ -97,7 +97,6 @@ namespace config
 	bool ignore_illegal_opcodes = true;
 
 	special_cart_types cart_type = NORMAL_CART;
-	gba_save_types agb_save_type = AGB_AUTO_DETECT;
 
 	u32 sio_device = 0;
 	u32 ir_device = 0;
@@ -562,50 +561,6 @@ void set_dmg_colors(u8 color_type)
 	}
 }	
 
-/****** Validates emulated system type ******/
-void validate_system_type()
-{
-	if(config::rom_file.empty()) { return; }
-	if((config::rom_file == "NOCART") || config::no_cart) { return; }
-	if((config::rom_file == "-h") || (config::rom_file == "--help")) { config::cli_args.push_back(config::rom_file); return; }
-
-	//When loading AM3 files, force system type to GBA
-	if(config::cart_type == AGB_AM3)
-	{
-		config::gb_type = 3;
-		return;
-	}
-
-	//Determine Gameboy type based on file name
-	//Note, DMG and GBC games are automatically detected in the Gameboy MMU, so only check for GBA types here
-	std::size_t dot = config::rom_file.find_last_of(".");
-	
-	if(dot == std::string::npos)
-	{
-		std::cout<<"GBE::Warning - Could not determine the emulated system type for file " << config::rom_file << "\n";
-		return;
-	}
-
-	std::string ext = config::rom_file.substr(dot);
-
-	//Convert extension to lower-case ASCII
-	for(u32 x = 0; x < ext.length(); x++)
-	{
-		if((ext[x] >= 0x41) && (ext[x] <= 0x5A)) { ext[x] += 0x20; }
-	}
-
-	if(ext == ".gba") { config::gb_type = 3; }
-	else if(ext == ".nds") { config::gb_type = 4; }
-	else if(ext == ".min") { config::gb_type = 7; }
-
-	//Force GBC mode if system type is set to GBA, but a GB/GBC game is loaded
-	else if((ext != ".gba") && (config::gb_type == 3)) 
-	{
-		config::gb_type = 2;
-		config::gba_enhance = true;
-	}
-}
-
 /****** Returns the emulated system type from a given filename ******/
 u8 get_system_type_from_file(std::string filename)
 {
@@ -616,42 +571,16 @@ u8 get_system_type_from_file(std::string filename)
 		return config::gb_type;
 	}
 
-	//When loading AM3 files, force system type to GBA
-	if(config::cart_type == AGB_AM3)
-	{
-		config::gb_type = 3;
-		return config::gb_type;
-	}
-
-	//Determine Gameboy type based on file name
-	std::size_t dot = filename.find_last_of(".");
-
-	if(dot == std::string::npos) { return 0; }
-
-	std::string ext = filename.substr(dot);
-	
-	//Convert extension to lower-case ASCII
-	for(u32 x = 0; x < ext.length(); x++)
-	{
-		if((ext[x] >= 0x41) && (ext[x] <= 0x5A)) { ext[x] += 0x20; }
-	}
-
 	u8 gb_type = config::gb_type;
 
-	if(ext == ".gba") { gb_type = 3; }
-	else if(ext == ".nds") { gb_type = 4; }
-	else if(ext == ".min") { gb_type = 7; }
-	else if((ext != ".gba") && (gb_type == 3)) { gb_type = 2; }
-
 	//For Auto or GBC mode, determine what the CGB Flag is
-	if((gb_type == 0) || (gb_type == 2) || (gb_type == 5) || (gb_type == 6))
+	if((gb_type == 0) || (gb_type == 2))
 	{
 		std::ifstream test_stream(filename.c_str(), std::ios::binary);
 		
 		if(test_stream.is_open())
 		{
 			u8 color_byte;
-			u8 sgb_byte;
 
 			test_stream.seekg(0x143);
 			test_stream.read((char*)&color_byte, 1);
@@ -659,15 +588,6 @@ u8 get_system_type_from_file(std::string filename)
 			//If GBC compatible, use GBC mode. Otherwise, use DMG mode
 			if((color_byte == 0xC0) || (color_byte == 0x80)) { gb_type = 2; }
 			else { gb_type = 1; }
-
-			test_stream.seekg(0x146);
-			test_stream.read((char*)&sgb_byte, 1);
-
-			//If SGB compatible, use it if SGB set as the system
-			if((sgb_byte == 0x3) && (config::gb_type == 5)) { gb_type = 5; }
-			else if((sgb_byte == 0x3) && (config::gb_type == 6)) { gb_type = 6; }
-
-			test_stream.close();
 		}
 	}
 
@@ -702,46 +622,6 @@ bool parse_cli_args()
 				{
 					config::use_bios = true; 
 					config::bios_file = config::cli_args[x];
-
-					//For the NDS, read 1st argument as NDS7 BIOS, 2nd as NDS9 BIOS
-					if(config::gb_type == 4)
-					{
-						if((++x) == config::cli_args.size())
-						{
-							std::cout<<"GBE::Error - No NDS9 BIOS file in arguments\n";
-							config::use_bios = false;
-						}
-
-						else
-						{
-							config::nds7_bios_path = config::bios_file;
-							config::nds9_bios_path = config::cli_args[x];
-						} 
-					}
-				}
-			}
-
-			//Load NDS Slot-2 device
-			else if(config::cli_args[x] == "--slot2-gba")
-			{
-				if((++x) == config::cli_args.size()) { std::cout<<"GBE::Error - No GBA ROM file in arguments\n"; }
-
-				else 
-				{
-					config::nds_slot2_device = 4;
-					config::nds_slot2_file = config::cli_args[x];
-				}
-			}
-
-			//Load Firmware (NDS)
-			else if((config::cli_args[x] == "-fw") || (config::cli_args[x] == "--firmware"))
-			{
-				if((++x) == config::cli_args.size()) { std::cout<<"GBE::Error - No firmware file in arguments\n"; }
-
-				else
-				{
-					config::use_firmware = true;
-					config::nds_firmware_path = config::cli_args[x];
 				}
 			}
 
@@ -775,54 +655,6 @@ bool parse_cli_args()
 
 			//Use GB Memory Cartridge mapper
 			else if(config::cli_args[x] == "--gbmem") { config::cart_type = DMG_GBMEM; }
-
-			//Use GBA RTC for a given ROM
-			else if(config::cli_args[x] == "--agb-rtc") { config::cart_type = AGB_RTC; }
-			
-			//Use GBA solar sensor for a given ROM
-			else if(config::cli_args[x] == "--agb-solar-sensor") { config::cart_type = AGB_SOLAR_SENSOR; }
-
-			//Use GBA rumble for Drill Dozer
-			else if(config::cli_args[x] == "--agb-rumble") { config::cart_type = AGB_RUMBLE; }
-
-			//Use GBA gyro sensor for WarioWare: Twisted
-			else if(config::cli_args[x] == "--agb-gyro-sensor") { config::cart_type = AGB_GYRO_SENSOR; }
-
-			//Use GBA tilt sensor for Yoshi Topsy Turvy aka Universal Gravitation
-			else if(config::cli_args[x] == "--agb-tilt-sensor") { config::cart_type = AGB_TILT_SENSOR; }
-
-			//Use GBA 8M DACS for Hikaru no Go 3
-			else if(config::cli_args[x] == "--agb-dacs") { config::cart_type = AGB_8M_DACS; }
-
-			//Use GBA AM3 mapper
-			else if(config::cli_args[x] == "--agb-am3") { config::cart_type = AGB_AM3; }
-
-			//Use GBA Music Recorder mapper
-			else if(config::cli_args[x] == "--agb-jukebox") { config::cart_type = AGB_JUKEBOX; }
-
-			//Use Auto-Detect for GBA saves
-			else if(config::cli_args[x] == "--save-auto") { config::agb_save_type = AGB_AUTO_DETECT; }
-
-			//Disable all GBA saves
-			else if(config::cli_args[x] == "--save-none") { config::agb_save_type = AGB_NO_SAVE; }
-
-			//Force SRAM GBA saves
-			else if(config::cli_args[x] == "--save-sram") { config::agb_save_type = AGB_SRAM; }
-
-			//Force EEPROM GBA saves
-			else if(config::cli_args[x] == "--save-eeprom") { config::agb_save_type = AGB_EEPROM; }
-
-			//Force FLASH 64KB GBA saves
-			else if(config::cli_args[x] == "--save-flash64") { config::agb_save_type = AGB_FLASH64; }
-
-			//Force FLASH 128KB GBA saves
-			else if(config::cli_args[x] == "--save-auto") { config::agb_save_type = AGB_FLASH128; }
-
-			//Disable Pokemon Mini 3-color Mode
-			else if(config::cli_args[x] == "--min-disable-colors") { config::min_config &= ~0x1; }
-
-			//Disable Pokemon Mini RTC
-			else if(config::cli_args[x] == "--min-disable-rtc") { config::min_config &= ~0x2; }
 
 			//Enable shared EEPROM
 			else if(config::cli_args[x] == "--min-shared-eeprom") { config::min_config &= ~0x4; }
@@ -859,21 +691,6 @@ bool parse_cli_args()
 			//Set system type - GBC
 			else if(config::cli_args[x] == "--sys-gbc") { config::gb_type = 2; }
 
-			//Set system type - GBA
-			else if(config::cli_args[x] == "--sys-gba") { config::gb_type = 3; }
-
-			//Set system type - NDS
-			else if(config::cli_args[x] == "--sys-nds") { config::gb_type = 4; }
-
-			//Set system type - SGB1
-			else if(config::cli_args[x] == "--sys-sgb") { config::gb_type = 5; }
-
-			//Set system type - SGB2
-			else if(config::cli_args[x] == "--sys-sgb2") { config::gb_type = 6; }
-
-			//Set system type - MIN
-			else if(config::cli_args[x] == "--sys-min") { config::gb_type = 7; }
-
 			//Enable Turbo File memory card
 			else if(config::cli_args[x] == "--turbo-file-memcard") { config::turbo_file_options |= 0x1; }
 
@@ -894,21 +711,12 @@ bool parse_cli_args()
 
 				std::cout<<"GBE+ Command Line Options:\n";
 				std::cout<<"-b [FILE], --bios [FILE] \t\t Load and use BIOS file\n";
-				std::cout<<"-fw [FILE], --firmware [FILE] \t\t Load and use firmware file (NDS)\n";
 				std::cout<<"-d, --debug \t\t\t\t Start the command-line debugger\n";
 				std::cout<<"--mbc1m \t\t\t\t Use MBC1M multicart mode if applicable\n";
 				std::cout<<"--mmm01 \t\t\t\t Use MMM01 multicart mode if applicable\n";
 				std::cout<<"--mbc1s \t\t\t\t Use MBC1S sonar cart\n";
 				std::cout<<"--mbc30 \t\t\t\t Use MBC30 for Pocket Monsters Crystal\n";
 				std::cout<<"--gbmem \t\t\t\t Use GB Memory Cartridge mapper\n";
-				std::cout<<"--agb-rtc \t\t\t\t Use GBA RTC cart\n";
-				std::cout<<"--agb-solar-sensor \t\t\t Use GBA Solar Sensor cart\n";
-				std::cout<<"--agb-rumble \t\t\t\t Use GBA Rumble cart\n";
-				std::cout<<"--agb-gyro-sensor \t\t\t Use GBA Gyro Sensor cart\n";
-				std::cout<<"--agb-tilt-sensor \t\t\t Use GBA Tilt Sensor cart\n";
-				std::cout<<"--agb-dacs \t\t\t Use GBA 8M DACS Flash cart\n";
-				std::cout<<"--agb-am3 \t\t\t Use GBA AM3 SmartCard adapter cart\n";
-				std::cout<<"--agb-jukebox \t\t\t Use GBA Music Recorder/Jukebox cart\n";
 				std::cout<<"--opengl \t\t\t\t Use OpenGL for screen drawing and scaling\n";
 				std::cout<<"--cheats \t\t\t\t Use Gameshark or Game Genie cheats\n";
 				std::cout<<"--patch \t\t\t\t Use a patch file for the ROM\n";
@@ -916,17 +724,7 @@ bool parse_cli_args()
 				std::cout<<"--sys-auto \t\t\t\t Set the emulated system type to AUTO\n";
 				std::cout<<"--sys-dmg \t\t\t\t Set the emulated system type to DMG (old Gameboy)\n";
 				std::cout<<"--sys-gbc \t\t\t\t Set the emulated system type to GBC\n";
-				std::cout<<"--sys-gba \t\t\t\t Set the emulated system type to GBA\n";
-				std::cout<<"--sys-nds \t\t\t\t Set the emulated system type to NDS\n";
-				std::cout<<"--sys-sgb \t\t\t\t Set the emulated system type to SGB\n";
-				std::cout<<"--sys-sgb2 \t\t\t\t Set the emulated system type to SGB2\n";
-				std::cout<<"--sys-min \t\t\t\t Set the emulated system type to MIN\n";
 				std::cout<<"--save-auto \t\t\t\t Set the GBA save type to Auto Detect\n";
-				std::cout<<"--save-none \t\t\t\t Disables all GBA saves\n";
-				std::cout<<"--save-sram \t\t\t\t Force the GBA save type to SRAM\n";
-				std::cout<<"--save-eeprom \t\t\t\t Force the GBA save type to EEPROM\n";
-				std::cout<<"--save-flash64 \t\t\t\t Force the GBA save type to FLASH 64KB\n";
-				std::cout<<"--save-flash128 \t\t\t Force the GBA save type to FLASH 128KB\n";
 				std::cout<<"--turbo-file-memcard \t\t\t Enable memory card for Turbo File\n";
 				std::cout<<"--turbo-file-protect \t\t\t Enable write-proection for Turbo File\n";
 				std::cout<<"--ignore-illegal-opcodes \t\t\t Ignore Illegal CPU instructions when running\n";
@@ -952,8 +750,6 @@ void parse_filenames()
 	//ROM file is always first argument
 	config::rom_file = config::cli_args[0];
 	config::save_file = config::rom_file + ".sav";
-
-	validate_system_type();
 }
 
 /****** Parse options from the .ini file ******/
@@ -1196,10 +992,9 @@ bool parse_ini_file()
 			{
 				util::from_str(ini_opts[++x], output);
 
-				if((output >= 0) && (output <= 7)) 
+				if((output >= 0) && (output <= 2)) 
 				{
 					config::gb_type = output;
-					validate_system_type();
 				}
 			}
 

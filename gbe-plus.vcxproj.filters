@@ -13,9 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
-    <Filter Include="Source Files\min">
-      <UniqueIdentifier>{fd877eaf-7a64-4fe7-9984-78624a3725e7}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\dmg">
       <UniqueIdentifier>{9a7326dc-82a5-42f9-ab17-261a679b1ca5}</UniqueIdentifier>
     </Filter>
@@ -25,14 +22,8 @@
     <Filter Include="Source Files\common">
       <UniqueIdentifier>{601383ad-2760-447e-88be-ac5249bd9cc4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\sgb">
-      <UniqueIdentifier>{4e5b596a-6c69-41d0-b730-a128f01ff39a}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\dmg">
       <UniqueIdentifier>{5d625125-db99-455a-b06c-e2a09020587e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\min">
-      <UniqueIdentifier>{a9da75fd-bbe1-4b78-b745-3936264159b9}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\qt">
       <UniqueIdentifier>{ebf4f1e6-496a-4417-a190-816dd91757ba}</UniqueIdentifier>
@@ -40,14 +31,8 @@
     <Filter Include="Header Files\common">
       <UniqueIdentifier>{8a3df64a-a2c6-4fb8-9a6a-3b4d6b569dbd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\sgb">
-      <UniqueIdentifier>{15fb6d9b-0322-4539-8dc1-6582d3ea3560}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\min\apu.cpp">
-      <Filter>Source Files\min</Filter>
-    </ClCompile>
     <ClCompile Include="src\dmg\apu.cpp">
       <Filter>Source Files\dmg</Filter>
     </ClCompile>
@@ -63,35 +48,17 @@
     <ClCompile Include="src\dmg\core.cpp">
       <Filter>Source Files\dmg</Filter>
     </ClCompile>
-    <ClCompile Include="src\sgb\core.cpp">
-      <Filter>Source Files\sgb</Filter>
-    </ClCompile>
-    <ClCompile Include="src\min\core.cpp">
-      <Filter>Source Files\min</Filter>
-    </ClCompile>
     <ClCompile Include="src\dmg\custom_graphics.cpp">
       <Filter>Source Files\dmg</Filter>
     </ClCompile>
     <ClCompile Include="src\dmg\debug.cpp">
       <Filter>Source Files\dmg</Filter>
     </ClCompile>
-    <ClCompile Include="src\sgb\debug.cpp">
-      <Filter>Source Files\sgb</Filter>
-    </ClCompile>
-    <ClCompile Include="src\min\debug.cpp">
-      <Filter>Source Files\min</Filter>
-    </ClCompile>
     <ClCompile Include="src\dmg\dmg07.cpp">
       <Filter>Source Files\dmg</Filter>
     </ClCompile>
     <ClCompile Include="src\dmg\gamepad.cpp">
       <Filter>Source Files\dmg</Filter>
-    </ClCompile>
-    <ClCompile Include="src\sgb\gamepad.cpp">
-      <Filter>Source Files\sgb</Filter>
-    </ClCompile>
-    <ClCompile Include="src\min\gamepad.cpp">
-      <Filter>Source Files\min</Filter>
     </ClCompile>
     <ClCompile Include="src\dmg\gbma.cpp">
       <Filter>Source Files\dmg</Filter>
@@ -108,17 +75,8 @@
     <ClCompile Include="src\dmg\huc3.cpp">
       <Filter>Source Files\dmg</Filter>
     </ClCompile>
-    <ClCompile Include="src\min\infrared.cpp">
-      <Filter>Source Files\min</Filter>
-    </ClCompile>
     <ClCompile Include="src\dmg\infrared.cpp">
       <Filter>Source Files\dmg</Filter>
-    </ClCompile>
-    <ClCompile Include="src\sgb\lcd.cpp">
-      <Filter>Source Files\sgb</Filter>
-    </ClCompile>
-    <ClCompile Include="src\min\lcd.cpp">
-      <Filter>Source Files\min</Filter>
     </ClCompile>
     <ClCompile Include="src\dmg\lcd.cpp">
       <Filter>Source Files\dmg</Filter>
@@ -144,26 +102,14 @@
     <ClCompile Include="src\dmg\mmm01.cpp">
       <Filter>Source Files\dmg</Filter>
     </ClCompile>
-    <ClCompile Include="src\min\mmu.cpp">
-      <Filter>Source Files\min</Filter>
-    </ClCompile>
     <ClCompile Include="src\dmg\mmu.cpp">
       <Filter>Source Files\dmg</Filter>
-    </ClCompile>
-    <ClCompile Include="src\sgb\opengl.cpp">
-      <Filter>Source Files\sgb</Filter>
-    </ClCompile>
-    <ClCompile Include="src\min\opengl.cpp">
-      <Filter>Source Files\min</Filter>
     </ClCompile>
     <ClCompile Include="src\dmg\opengl.cpp">
       <Filter>Source Files\dmg</Filter>
     </ClCompile>
     <ClCompile Include="src\common\osd.cpp">
       <Filter>Source Files\common</Filter>
-    </ClCompile>
-    <ClCompile Include="src\min\s1c88.cpp">
-      <Filter>Source Files\min</Filter>
     </ClCompile>
     <ClCompile Include="src\dmg\sio.cpp">
       <Filter>Source Files\dmg</Filter>
@@ -176,9 +122,6 @@
     </ClCompile>
     <ClCompile Include="src\dmg\z80.cpp">
       <Filter>Source Files\dmg</Filter>
-    </ClCompile>
-    <ClCompile Include="src\sgb\z80.cpp">
-      <Filter>Source Files\sgb</Filter>
     </ClCompile>
     <ClCompile Include="src\qt\cgfx.cpp">
       <Filter>Source Files\qt</Filter>
@@ -245,20 +188,11 @@
     <ClInclude Include="src\dmg\apu.h">
       <Filter>Header Files\dmg</Filter>
     </ClInclude>
-    <ClInclude Include="src\min\apu.h">
-      <Filter>Header Files\min</Filter>
-    </ClInclude>
-    <ClInclude Include="src\min\apu_data.h">
-      <Filter>Header Files\min</Filter>
-    </ClInclude>
     <ClInclude Include="src\dmg\apu_data.h">
       <Filter>Header Files\dmg</Filter>
     </ClInclude>
     <ClInclude Include="src\common\cgfx_common.h">
       <Filter>Header Files\common</Filter>
-    </ClInclude>
-    <ClInclude Include="src\min\common.h">
-      <Filter>Header Files\min</Filter>
     </ClInclude>
     <ClInclude Include="src\dmg\common.h">
       <Filter>Header Files\dmg</Filter>
@@ -272,12 +206,6 @@
     <ClInclude Include="src\dmg\core.h">
       <Filter>Header Files\dmg</Filter>
     </ClInclude>
-    <ClInclude Include="src\min\core.h">
-      <Filter>Header Files\min</Filter>
-    </ClInclude>
-    <ClInclude Include="src\sgb\core.h">
-      <Filter>Header Files\sgb</Filter>
-    </ClInclude>
     <ClInclude Include="src\common\core_emu.h">
       <Filter>Header Files\common</Filter>
     </ClInclude>
@@ -287,14 +215,8 @@
     <ClInclude Include="src\common\dmg_core_pad.h">
       <Filter>Header Files\common</Filter>
     </ClInclude>
-    <ClInclude Include="src\sgb\gamepad.h">
-      <Filter>Header Files\sgb</Filter>
-    </ClInclude>
     <ClInclude Include="src\dmg\gamepad.h">
       <Filter>Header Files\dmg</Filter>
-    </ClInclude>
-    <ClInclude Include="src\min\gamepad.h">
-      <Filter>Header Files\min</Filter>
     </ClInclude>
     <ClInclude Include="src\common\gx_util.h">
       <Filter>Header Files\common</Filter>
@@ -305,20 +227,8 @@
     <ClInclude Include="src\dmg\lcd.h">
       <Filter>Header Files\dmg</Filter>
     </ClInclude>
-    <ClInclude Include="src\sgb\lcd.h">
-      <Filter>Header Files\sgb</Filter>
-    </ClInclude>
-    <ClInclude Include="src\min\lcd.h">
-      <Filter>Header Files\min</Filter>
-    </ClInclude>
     <ClInclude Include="src\dmg\lcd_data.h">
       <Filter>Header Files\dmg</Filter>
-    </ClInclude>
-    <ClInclude Include="src\min\lcd_data.h">
-      <Filter>Header Files\min</Filter>
-    </ClInclude>
-    <ClInclude Include="src\min\mmu.h">
-      <Filter>Header Files\min</Filter>
     </ClInclude>
     <ClInclude Include="src\dmg\mmu.h">
       <Filter>Header Files\dmg</Filter>
@@ -332,23 +242,14 @@
     <ClInclude Include="src\qt\render.h">
       <Filter>Header Files\qt</Filter>
     </ClInclude>
-    <ClInclude Include="src\min\s1c88.h">
-      <Filter>Header Files\min</Filter>
-    </ClInclude>
     <ClInclude Include="src\dmg\sio.h">
       <Filter>Header Files\dmg</Filter>
     </ClInclude>
     <ClInclude Include="src\dmg\sio_data.h">
       <Filter>Header Files\dmg</Filter>
     </ClInclude>
-    <ClInclude Include="src\min\timer.h">
-      <Filter>Header Files\min</Filter>
-    </ClInclude>
     <ClInclude Include="src\common\util.h">
       <Filter>Header Files\common</Filter>
-    </ClInclude>
-    <ClInclude Include="src\sgb\z80.h">
-      <Filter>Header Files\sgb</Filter>
     </ClInclude>
     <ClInclude Include="src\dmg\z80.h">
       <Filter>Header Files\dmg</Filter>

@@ -26,8 +26,6 @@
 #include "screens.h"
 
 #include "dmg/core.h"
-#include "sgb/core.h"
-#include "min/core.h"
 
 class main_menu : public QWidget
 {

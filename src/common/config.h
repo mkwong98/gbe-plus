@@ -21,7 +21,6 @@
 
 void reset_dmg_colors();
 void set_dmg_colors(u8 color_type);
-void validate_system_type();
 u8 get_system_type_from_file(std::string filename);
 bool parse_cli_args();
 void parse_filenames();
@@ -44,27 +43,6 @@ enum special_cart_types
 	DMG_MMM01,
 	DMG_MBC30,
 	DMG_GBMEM,
-	AGB_RTC,
-	AGB_SOLAR_SENSOR,
-	AGB_RUMBLE,
-	AGB_GYRO_SENSOR,
-	AGB_TILT_SENSOR,
-	AGB_8M_DACS,
-	AGB_AM3,
-	AGB_JUKEBOX,
-	NDS_IR_CART,
-};
-
-enum gba_save_types
-{
-	AGB_AUTO_DETECT,
-	AGB_NO_SAVE,
-	AGB_SRAM,
-	AGB_EEPROM,
-	AGB_FLASH64,
-	AGB_FLASH128,
-	AGB_DACS_FLASH,
-	AGB_JUKEBOX_CONFIG,
 };
 
 namespace config
@@ -120,7 +98,6 @@ namespace config
 	extern bool ignore_illegal_opcodes;
 
 	extern special_cart_types cart_type;
-	extern gba_save_types agb_save_type;
 
 	extern u32 sio_device;
 	extern u32 ir_device;	

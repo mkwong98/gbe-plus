@@ -114,15 +114,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	special_cart->addItem("DMG - MMM01");
 	special_cart->addItem("DMG - MBC30");
 	special_cart->addItem("DMG - GB Memory");
-	special_cart->addItem("AGB - RTC");
-	special_cart->addItem("AGB - Solar Sensor");
-	special_cart->addItem("AGB - Rumble");
-	special_cart->addItem("AGB - Gyro Sensor");
-	special_cart->addItem("AGB - Tilt Sensor");
-	special_cart->addItem("AGB - 8M DACS");
-	special_cart->addItem("AGB - AM3");
-	special_cart->addItem("AGB - Jukebox");
-	special_cart->addItem("NDS - IR Cart");
 
 	QHBoxLayout* special_cart_layout = new QHBoxLayout;
 	special_cart_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
