@@ -529,13 +529,9 @@ void main_menu::quit()
 	config::use_stereo = (settings->stereo_enable->isChecked()) ? true : false;
 	config::volume = settings->volume->value();
 	config::use_haptics = (settings->rumble_on->isChecked()) ? true : false;
-	config::vc_enable = (settings->vc_on->isChecked()) ? true : false;
-	config::vc_opacity = settings->vc_opacity->value();
-	config::vc_timeout = settings->vc_timeout->value();
 
 	config::dmg_bios_path = settings->dmg_bios->text().toStdString();
 	config::gbc_bios_path = settings->gbc_bios->text().toStdString();
-	config::agb_bios_path = settings->gba_bios->text().toStdString();
 	cgfx::manifest_file = settings->manifest->text().toStdString();
 	config::ss_path = settings->screenshot->text().toStdString();
 	cgfx::dump_bg_path = settings->dump_bg->text().toStdString();
@@ -657,16 +653,6 @@ void main_menu::boot_game()
 	if(settings->rumble_on->isChecked()) { config::use_haptics = true; }
 	else { config::use_haptics = false; }
 
-	//Check Virtual Cursor enable
-	if(settings->vc_on->isChecked()) { config::vc_enable = true; }
-	else { config::vc_enable = false; }
-
-	//Virtual Cursor Opacity
-	config::vc_opacity = settings->vc_opacity->value();
-
-	//Virtual Cursor Timeout
-	config::vc_timeout = settings->vc_timeout->value();
-
 	findChild<QAction*>("pause_action")->setChecked(false);
 
 	menu_height = menu_bar->height();
@@ -676,7 +662,6 @@ void main_menu::boot_game()
 	if(config::rom_file != "NOCART")
 	{
 		config::gb_type = settings->sys_type->currentIndex();
-		config::gba_enhance = false; 
 	}
 
 	//Determine CGFX scaling factor
@@ -704,9 +689,6 @@ void main_menu::boot_game()
 
 	//Enable debugging menu
 	findChild<QAction*>("debugging_action")->setEnabled(true);
-
-	//Tell settings whether this is an SGB core
-	settings->is_sgb_core = is_sgb_core;
 
 	//Read specified ROM file
 	main_menu::gbe_plus->read_file(config::rom_file);
@@ -805,13 +787,9 @@ void main_menu::closeEvent(QCloseEvent* event)
 	config::volume = settings->volume->value();
 	config::use_opengl = (settings->ogl->isChecked()) ? true : false;
 	config::use_haptics = (settings->rumble_on->isChecked()) ? true : false;
-	config::vc_enable = (settings->vc_on->isChecked()) ? true : false;
-	config::vc_opacity = settings->vc_opacity->value();
-	config::vc_timeout = settings->vc_timeout->value();
 	
 	config::dmg_bios_path = settings->dmg_bios->text().toStdString();
 	config::gbc_bios_path = settings->gbc_bios->text().toStdString();
-	config::agb_bios_path = settings->gba_bios->text().toStdString();
 	cgfx::manifest_file = settings->manifest->text().toStdString();
 	config::ss_path = settings->screenshot->text().toStdString();
 	cgfx::dump_bg_path = settings->dump_bg->text().toStdString();
@@ -1241,10 +1219,6 @@ void main_menu::load_recent(int file_id)
 	{
 		case 0x1: test_bios_path = config::dmg_bios_path; break;
 		case 0x2: test_bios_path = config::gbc_bios_path; break;
-		case 0x3: test_bios_path = config::agb_bios_path; break;
-		case 0x4: test_bios_path = config::nds7_bios_path; break;
-		case 0x7: test_bios_path = config::min_bios_path; break;
-		case 0x5: config::use_bios = false;
 	}
 
 	test_file.setFileName(QString::fromStdString(test_bios_path));
@@ -1257,38 +1231,12 @@ void main_menu::load_recent(int file_id)
 		
 		else
 		{
-			if(system_type == 4)
-			{
-				mesg_text = "ARM7 BIOS file not specified.\nPlease check your Paths settings or disable the 'Use BIOS/Boot ROM' option";
-			} 
-				
-			else 
-			{
-				mesg_text = "No BIOS file specified for this system.\nPlease check your Paths settings or disable the 'Use BIOS/Boot ROM' option";
-			}
+			mesg_text = "No BIOS file specified for this system.\nPlease check your Paths settings or disable the 'Use BIOS/Boot ROM' option";
 		} 
 
 		warning_box->setText(QString::fromStdString(mesg_text));
 		warning_box->show();
 		return;
-	}
-
-	//Perform a second test for NDS9 BIOS
-	if(system_type == 4)
-	{
-		test_file.setFileName(QString::fromStdString(config::nds9_bios_path));
-
-		if(!test_file.exists() && config::use_bios)
-		{
-			std::string mesg_text;
-
-			if(!test_bios_path.empty()) { mesg_text = "The BIOS file: '" + test_bios_path + "' could not be loaded"; }
-			else { mesg_text = "ARM9 BIOS file not specified.\nPlease check your Paths settings or disable the 'Use BIOS/Boot ROM' option"; } 
-
-			warning_box->setText(QString::fromStdString(mesg_text));
-			warning_box->show();
-			return;
-		}
 	}
 
 	//Close the core

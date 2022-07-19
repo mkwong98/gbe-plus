@@ -52,17 +52,14 @@ class gen_settings : public QDialog
 	//General tab widgets
 	QComboBox* sys_type;
 	QCheckBox* bios;
-	QCheckBox* firmware;
 	QComboBox* special_cart;
 	QComboBox* overclock;
 	QCheckBox* cheats;
 	QPushButton* edit_cheats;
 	QPushButton* config_sio;
 	QPushButton* config_ir;
-	QPushButton* config_slot2;
 	QComboBox* sio_dev;
 	QComboBox* ir_dev;
-	QComboBox* slot2_dev;
 	QCheckBox* auto_patch;
 
 	//Display tab widgets
@@ -96,17 +93,12 @@ class gen_settings : public QDialog
 	QVBoxLayout* advanced_controls_layout;
 	QVBoxLayout* hotkey_controls_layout;
 	QVBoxLayout* bcg_controls_layout;
-	QVBoxLayout* vc_controls_layout;
 
 	QSlider* dead_zone;
-
-	bool is_sgb_core;
 
 	//Paths tab widgets
 	QLineEdit* dmg_bios;
 	QLineEdit* gbc_bios;
-	QLineEdit* gba_bios;
-	QLineEdit* nds_firmware;
 	QLineEdit* manifest;
 	QLineEdit* dump_bg;
 	QLineEdit* dump_obj;
@@ -116,8 +108,6 @@ class gen_settings : public QDialog
 
 	QLabel* dmg_bios_label;
 	QLabel* gbc_bios_label;
-	QLabel* gba_bios_label;
-	QLabel* nds_firmware_label;
 	QLabel* manifest_label;
 	QLabel* dump_bg_label;
 	QLabel* dump_obj_label;
@@ -149,8 +139,6 @@ class gen_settings : public QDialog
 	QLineEdit* input_turbo;
 	QLineEdit* input_mute;
 	QLineEdit* input_camera;
-	QLineEdit* input_swap_screen;
-	QLineEdit* input_shift_screen;
 
 	QPushButton* config_a;
 	QPushButton* config_b;
@@ -173,8 +161,6 @@ class gen_settings : public QDialog
 	QPushButton* config_turbo;
 	QPushButton* config_mute;
 	QPushButton* config_camera;
-	QPushButton* config_swap_screen;
-	QPushButton* config_shift_screen;
 
 	//Advanced controls tab widget
 	QCheckBox* rumble_on;
@@ -185,14 +171,6 @@ class gen_settings : public QDialog
 	QComboBox* battle_chip_2;
 	QComboBox* battle_chip_3;
 	QComboBox* battle_chip_4;
-
-	//Virtual Cursor controls tab widgets
-	QCheckBox* vc_on;
-	QSpinBox* vc_opacity;
-	QSpinBox* vc_timeout;
-	QLineEdit* vc_path;
-
-	QLabel* vc_path_label;
 
 	//Netplay tab widgets
 	QCheckBox* enable_netplay;
@@ -230,17 +208,14 @@ class gen_settings : public QDialog
 
 	private slots:
 	void set_bios();
-	void set_firmware();
 	void sio_dev_change();
 	void ir_dev_change();
-	void slot2_dev_change();
 	void overclock_change();
 	void set_patches();
 	void show_cheats();
 	void show_rtc();
 	void show_sio_config();
 	void show_ir_config();
-	void show_slot2_config();
 	void set_ogl();
 	void screen_scale_change();
 	void aspect_ratio_change();
@@ -263,8 +238,6 @@ class gen_settings : public QDialog
 	void set_real_server();
 	void get_chip_list();
 	void set_battle_chip();
-	void update_vc_opacity();
-	void update_vc_timeout();
 	void update_sync_threshold();
 	void update_server_port();
 	void update_client_port();
@@ -311,19 +284,12 @@ class gen_settings : public QDialog
 	QWidget* hotkey_turbo_set;
 	QWidget* hotkey_mute_set;
 	QWidget* hotkey_camera_set;
-	QWidget* hotkey_swap_screen_set;
-	QWidget* hotkey_shift_screen_set;
 
 	QWidget* bcg_gate_set;
 	QWidget* bcg_chip_1_set;
 	QWidget* bcg_chip_2_set;
 	QWidget* bcg_chip_3_set;
 	QWidget* bcg_chip_4_set;
-
-	QWidget* vc_enable_set;
-	QWidget* vc_opacity_set;
-	QWidget* vc_timeout_set;
-	QWidget* vc_path_set;
 
 	void process_joystick_event();
 	void input_delay(QPushButton* input_button); 

@@ -210,9 +210,6 @@ namespace config
 	u8 nds_slot2_device = 0;
 	std::string nds_slot2_file = "";
 
-	//Pokemon Mini flags
-	u8 min_config = 0x7;
-
 	//Real-time clock offsets
 	u16 rtc_offset[6] = { 0, 0, 0, 0, 0, 0 };
 
@@ -655,10 +652,7 @@ bool parse_cli_args()
 
 			//Use GB Memory Cartridge mapper
 			else if(config::cli_args[x] == "--gbmem") { config::cart_type = DMG_GBMEM; }
-
-			//Enable shared EEPROM
-			else if(config::cli_args[x] == "--min-shared-eeprom") { config::min_config &= ~0x4; }
-			
+	
 			//Use OpenGL for screen drawing
 			else if(config::cli_args[x] == "--opengl") { config::use_opengl = true; }
 

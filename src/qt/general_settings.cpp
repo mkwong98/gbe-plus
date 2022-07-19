@@ -67,11 +67,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	sys_type->addItem("Auto");
 	sys_type->addItem("Game Boy [DMG]");
 	sys_type->addItem("Game Boy Color [GBC]");
-	sys_type->addItem("Game Boy Advance [GBA]");
-	sys_type->addItem("Nintendo DS [NDS]");
-	sys_type->addItem("Super Game Boy [SGB]");
-	sys_type->addItem("Super Game Boy 2 [SGB2]");
-	sys_type->addItem("Pokemon Mini [MIN]");
 
 	QHBoxLayout* sys_type_layout = new QHBoxLayout;
 	sys_type_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
@@ -90,18 +85,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	bios_layout->addWidget(bios);
 	bios_layout->addWidget(bios_label);
 	bios_set->setLayout(bios_layout);
-
-	//General settings - Use Firmware
-	QWidget* firmware_set = new QWidget(general);
-	QLabel* firmware_label = new QLabel("Use NDS Firmware", firmware_set);
-	firmware = new QCheckBox(firmware_set);
-	firmware->setToolTip("Instructs GBE+ to boot using NDS firmware if applicable");
-
-	QHBoxLayout* firmware_layout = new QHBoxLayout;
-	firmware_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	firmware_layout->addWidget(firmware);
-	firmware_layout->addWidget(firmware_label);
-	firmware_set->setLayout(firmware_layout);
 
 	//General settings - Emulate specialty game carts
 	QWidget* special_cart_set = new QWidget(general);
@@ -202,28 +185,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	ir_layout->addWidget(config_ir, 0, Qt::AlignRight);
 	ir_set->setLayout(ir_layout);
 
-	//General settings - Emulated Slot-2 device
-	QWidget* slot2_set = new QWidget(general);
-	QLabel* slot2_label = new QLabel("Slot-2 Device", slot2_set);
-	slot2_dev = new QComboBox(slot2_set);
-	slot2_dev->setToolTip("Changes the emulated Slot-2 device inserted into an NDS");
-	slot2_dev->addItem("Auto");
-	slot2_dev->addItem("None");
-	slot2_dev->addItem("PassMe");
-	slot2_dev->addItem("Rumble Pak");
-	slot2_dev->addItem("GBA Cart");
-	slot2_dev->addItem("Ubisoft Pedometer");
-	slot2_dev->addItem("HCV-1000");
-	slot2_dev->addItem("Magic Reader");
-
-	config_slot2 = new QPushButton("Configure");
-
-	QHBoxLayout* slot2_layout = new QHBoxLayout;
-	slot2_layout->addWidget(slot2_label, 0, Qt::AlignLeft);
-	slot2_layout->addWidget(slot2_dev, 1, Qt::AlignLeft);
-	slot2_layout->addWidget(config_slot2, 0, Qt::AlignRight);
-	slot2_set->setLayout(slot2_layout);
-
 	//General settings - Emulated CPU Speed
 	QWidget* overclock_set = new QWidget(general);
 	QLabel* overclock_label = new QLabel("Emulated CPU Speed", overclock_set);
@@ -257,11 +218,9 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	gen_layout->addWidget(sys_type_set);
 	gen_layout->addWidget(sio_set);
 	gen_layout->addWidget(ir_set);
-	gen_layout->addWidget(slot2_set);
 	gen_layout->addWidget(special_cart_set);
 	gen_layout->addWidget(overclock_set);
 	gen_layout->addWidget(bios_set);
-	gen_layout->addWidget(firmware_set);
 	gen_layout->addWidget(cheats_set);
 	gen_layout->addWidget(patch_set);
 	gen_layout->addWidget(rtc_set);
@@ -883,36 +842,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	hotkey_camera_layout->setContentsMargins(6, 0, 0, 0);
 	hotkey_camera_set->setLayout(hotkey_camera_layout);
 
-	//Hotkey settings - NDS Screen Swap
-	hotkey_swap_screen_set = new QWidget(controls);
-	QLabel* hotkey_swap_screen_label = new QLabel("DS Swap LCD : ");
-	input_swap_screen = new QLineEdit(controls);
-	config_swap_screen = new QPushButton("Configure");
-	input_swap_screen->setMaximumWidth(100);
-	config_swap_screen->setMaximumWidth(100);
-
-	QHBoxLayout* hotkey_swap_screen_layout = new QHBoxLayout;
-	hotkey_swap_screen_layout->addWidget(hotkey_swap_screen_label, 1, Qt::AlignLeft);
-	hotkey_swap_screen_layout->addWidget(input_swap_screen, 1, Qt::AlignLeft);
-	hotkey_swap_screen_layout->addWidget(config_swap_screen, 1, Qt::AlignLeft);
-	hotkey_swap_screen_layout->setContentsMargins(6, 0, 0, 0);
-	hotkey_swap_screen_set->setLayout(hotkey_swap_screen_layout);
-
-	//Hotkey settings - NDS Screen Shift
-	hotkey_shift_screen_set = new QWidget(controls);
-	QLabel* hotkey_shift_screen_label = new QLabel("DS V/H Mode : ");
-	input_shift_screen = new QLineEdit(controls);
-	config_shift_screen = new QPushButton("Configure");
-	input_shift_screen->setMaximumWidth(100);
-	config_shift_screen->setMaximumWidth(100);
-
-	QHBoxLayout* hotkey_shift_screen_layout = new QHBoxLayout;
-	hotkey_shift_screen_layout->addWidget(hotkey_shift_screen_label, 1, Qt::AlignLeft);
-	hotkey_shift_screen_layout->addWidget(input_shift_screen, 1, Qt::AlignLeft);
-	hotkey_shift_screen_layout->addWidget(config_shift_screen, 1, Qt::AlignLeft);
-	hotkey_shift_screen_layout->setContentsMargins(6, 0, 0, 0);
-	hotkey_shift_screen_set->setLayout(hotkey_shift_screen_layout);
-
 	//Battle Chip Gate settings - Type
 	bcg_gate_set = new QWidget(controls);
 	QLabel* bcg_gate_label = new QLabel("Battle Chip Gate Type : ");
@@ -976,56 +905,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	bcg_chip_4_layout->setContentsMargins(6, 0, 0, 0);
 	bcg_chip_4_set->setLayout(bcg_chip_4_layout);
 
-	//Virtual Cursor Settings - Enable VC
-	vc_enable_set = new QWidget(controls);
-	QLabel* vc_enable_label = new QLabel("Enable Virtual Cursor", vc_enable_set);
-	vc_on = new QCheckBox(vc_enable_set);
-
-	QHBoxLayout* vc_enable_layout = new QHBoxLayout;
-	vc_enable_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	vc_enable_layout->addWidget(vc_on);
-	vc_enable_layout->addWidget(vc_enable_label);
-	vc_enable_set->setLayout(vc_enable_layout);
-
-	//Virtual Cursor Settings - Opacity
-	vc_opacity_set = new QWidget(controls);
-	QLabel* vc_opacity_label = new QLabel("Virtual Cursor Opacity", vc_opacity_set);
-	vc_opacity = new QSpinBox(vc_opacity_set);
-	vc_opacity->setMinimum(0);
-	vc_opacity->setMaximum(31);
-
-	QHBoxLayout* vc_opacity_layout = new QHBoxLayout;
-	vc_opacity_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	vc_opacity_layout->addWidget(vc_opacity);
-	vc_opacity_layout->addWidget(vc_opacity_label);
-	vc_opacity_set->setLayout(vc_opacity_layout);
-
-	//Virtual Cursor Settings - Timeout
-	vc_timeout_set = new QWidget(controls);
-	QLabel* vc_timeout_label = new QLabel("Virtual Cursor Timeout", vc_timeout_set);
-	vc_timeout = new QSpinBox(vc_timeout_set);
-	vc_timeout->setMinimum(0);
-	vc_timeout->setMaximum(1800);
-
-	QHBoxLayout* vc_timeout_layout = new QHBoxLayout;
-	vc_timeout_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	vc_timeout_layout->addWidget(vc_timeout);
-	vc_timeout_layout->addWidget(vc_timeout_label);
-	vc_timeout_set->setLayout(vc_timeout_layout);
-
-	//Virtual Cursor Settings - Virtual Cursor Bitmap File
-	QWidget* vc_path_set = new QWidget(controls);
-	vc_path_label = new QLabel("Cursor File :  ");
-	QPushButton* vc_path_button = new QPushButton("Browse");
-	vc_path = new QLineEdit(controls);
-
-	QHBoxLayout* vc_path_layout = new QHBoxLayout;
-	vc_path_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	vc_path_layout->addWidget(vc_path_label);
-	vc_path_layout->addWidget(vc_path);
-	vc_path_layout->addWidget(vc_path_button);
-	vc_path_set->setLayout(vc_path_layout);
-
 	controls_layout = new QVBoxLayout;
 	controls_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
 	controls_layout->addWidget(input_device_set);
@@ -1059,8 +938,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	hotkey_controls_layout->addWidget(hotkey_turbo_set);
 	hotkey_controls_layout->addWidget(hotkey_mute_set);
 	hotkey_controls_layout->addWidget(hotkey_camera_set);
-	hotkey_controls_layout->addWidget(hotkey_swap_screen_set);
-	hotkey_controls_layout->addWidget(hotkey_shift_screen_set);
 	
 	bcg_controls_layout = new QVBoxLayout;
 	bcg_controls_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
@@ -1070,13 +947,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	bcg_controls_layout->addWidget(bcg_chip_3_set);
 	bcg_controls_layout->addWidget(bcg_chip_4_set);
 
-	vc_controls_layout = new QVBoxLayout;
-	vc_controls_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	vc_controls_layout->addWidget(vc_enable_set);
-	vc_controls_layout->addWidget(vc_opacity_set);
-	vc_controls_layout->addWidget(vc_timeout_set);
-	vc_controls_layout->addWidget(vc_path_set);
-	
 	rumble_set->setVisible(false);
 	con_up_set->setVisible(false);
 	con_down_set->setVisible(false);
@@ -1088,20 +958,12 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	hotkey_turbo_set->setVisible(false);
 	hotkey_mute_set->setVisible(false);
 	hotkey_camera_set->setVisible(false);
-	hotkey_swap_screen_set->setVisible(false);
-	hotkey_shift_screen_set->setVisible(false);
 
 	bcg_gate_set->setVisible(false);
 	bcg_chip_1_set->setVisible(false);
 	bcg_chip_2_set->setVisible(false);
 	bcg_chip_3_set->setVisible(false);
 	bcg_chip_4_set->setVisible(false);
-
-	vc_enable_set->setVisible(false);
-	vc_opacity_set->setVisible(false);
-	vc_timeout_set->setVisible(false);
-	vc_path_set->setVisible(false);
-
 
 	//Netplay - Enable Netplay
 	QWidget* enable_netplay_set = new QWidget(netplay);
@@ -1260,32 +1122,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	gbc_bios_layout->addWidget(gbc_bios_button);
 	gbc_bios_set->setLayout(gbc_bios_layout);
 
-	//Path settings - GBA BIOS
-	QWidget* gba_bios_set = new QWidget(paths);
-	gba_bios_label = new QLabel("GBA BIOS :  ");
-	QPushButton* gba_bios_button = new QPushButton("Browse");
-	gba_bios = new QLineEdit(paths);
-
-	QHBoxLayout* gba_bios_layout = new QHBoxLayout;
-	gba_bios_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	gba_bios_layout->addWidget(gba_bios_label);
-	gba_bios_layout->addWidget(gba_bios);
-	gba_bios_layout->addWidget(gba_bios_button);
-	gba_bios_set->setLayout(gba_bios_layout);
-
-	//Path settings - System Firmware
-	QWidget* nds_firmware_set = new QWidget(paths);
-	nds_firmware_label = new QLabel("NDS Firmware :  ");
-	QPushButton* nds_firmware_button = new QPushButton("Browse");
-	nds_firmware = new QLineEdit(paths);
-
-	QHBoxLayout* nds_firmware_layout = new QHBoxLayout;
-	nds_firmware_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	nds_firmware_layout->addWidget(nds_firmware_label);
-	nds_firmware_layout->addWidget(nds_firmware);
-	nds_firmware_layout->addWidget(nds_firmware_button);
-	nds_firmware_set->setLayout(nds_firmware_layout);
-
 	//Path settings - CGFX Manifest
 	QWidget* manifest_set = new QWidget(paths);
 	manifest_label = new QLabel("CGFX Manifest :  ");
@@ -1370,8 +1206,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	paths_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
 	paths_layout->addWidget(dmg_bios_set);
 	paths_layout->addWidget(gbc_bios_set);
-	paths_layout->addWidget(gba_bios_set);
-	paths_layout->addWidget(nds_firmware_set);
 	paths_layout->addWidget(manifest_set);
 	paths_layout->addWidget(dump_bg_set);
 	paths_layout->addWidget(dump_obj_set);
@@ -1393,17 +1227,14 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	connect(tabs_button, SIGNAL(rejected()), this, SLOT(reject()));
 	connect(tabs_button->button(QDialogButtonBox::Close), SIGNAL(clicked()), this, SLOT(close_settings()));
 	connect(bios, SIGNAL(stateChanged(int)), this, SLOT(set_bios()));
-	connect(firmware, SIGNAL(stateChanged(int)), this, SLOT(set_firmware()));
 	connect(sio_dev, SIGNAL(currentIndexChanged(int)), this, SLOT(sio_dev_change()));
 	connect(ir_dev, SIGNAL(currentIndexChanged(int)), this, SLOT(ir_dev_change()));
-	connect(slot2_dev, SIGNAL(currentIndexChanged(int)), this, SLOT(slot2_dev_change()));
 	connect(overclock, SIGNAL(currentIndexChanged(int)), this, SLOT(overclock_change()));
 	connect(auto_patch, SIGNAL(stateChanged(int)), this, SLOT(set_patches()));
 	connect(edit_cheats, SIGNAL(clicked()), this, SLOT(show_cheats()));
 	connect(edit_rtc, SIGNAL(clicked()), this, SLOT(show_rtc()));
 	connect(config_sio, SIGNAL(clicked()), this, SLOT(show_sio_config()));
 	connect(config_ir, SIGNAL(clicked()), this, SLOT(show_ir_config()));
-	connect(config_slot2, SIGNAL(clicked()), this, SLOT(show_slot2_config()));
 	connect(ogl, SIGNAL(stateChanged(int)), this, SLOT(set_ogl()));
 	connect(screen_scale, SIGNAL(currentIndexChanged(int)), this, SLOT(screen_scale_change()));
 	connect(aspect_ratio, SIGNAL(stateChanged(int)), this, SLOT(aspect_ratio_change()));
@@ -1428,8 +1259,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	connect(battle_chip_2, SIGNAL(currentIndexChanged(int)), this, SLOT(set_battle_chip()));
 	connect(battle_chip_3, SIGNAL(currentIndexChanged(int)), this, SLOT(set_battle_chip()));
 	connect(battle_chip_4, SIGNAL(currentIndexChanged(int)), this, SLOT(set_battle_chip()));
-	connect(vc_opacity, SIGNAL(valueChanged(int)), this, SLOT(update_vc_opacity()));
-	connect(vc_timeout, SIGNAL(valueChanged(int)), this, SLOT(update_vc_timeout()));
 	connect(sync_threshold, SIGNAL(valueChanged(int)), this, SLOT(update_sync_threshold()));
 	connect(server_port, SIGNAL(valueChanged(int)), this, SLOT(update_server_port()));
 	connect(client_port, SIGNAL(valueChanged(int)), this, SLOT(update_client_port()));
@@ -1441,27 +1270,21 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	QSignalMapper* paths_mapper = new QSignalMapper(this);
 	connect(dmg_bios_button, SIGNAL(clicked()), paths_mapper, SLOT(map()));
 	connect(gbc_bios_button, SIGNAL(clicked()), paths_mapper, SLOT(map()));
-	connect(gba_bios_button, SIGNAL(clicked()), paths_mapper, SLOT(map()));
-	connect(nds_firmware_button, SIGNAL(clicked()), paths_mapper, SLOT(map()));
 	connect(manifest_button, SIGNAL(clicked()), paths_mapper, SLOT(map()));
 	connect(dump_bg_button, SIGNAL(clicked()), paths_mapper, SLOT(map()));
 	connect(dump_obj_button, SIGNAL(clicked()), paths_mapper, SLOT(map()));
 	connect(screenshot_button, SIGNAL(clicked()), paths_mapper, SLOT(map()));
 	connect(game_saves_button, SIGNAL(clicked()), paths_mapper, SLOT(map()));
 	connect(cheats_path_button, SIGNAL(clicked()), paths_mapper, SLOT(map()));
-	connect(vc_path_button, SIGNAL(clicked()), paths_mapper, SLOT(map()));
 
 	paths_mapper->setMapping(dmg_bios_button, 0);
 	paths_mapper->setMapping(gbc_bios_button, 1);
-	paths_mapper->setMapping(gba_bios_button, 2);
-	paths_mapper->setMapping(nds_firmware_button, 3);
 	paths_mapper->setMapping(manifest_button, 4);
 	paths_mapper->setMapping(screenshot_button, 5);
 	paths_mapper->setMapping(dump_bg_button, 6);
 	paths_mapper->setMapping(dump_obj_button, 7);
 	paths_mapper->setMapping(game_saves_button, 8);
 	paths_mapper->setMapping(cheats_path_button, 9);
-	paths_mapper->setMapping(vc_path_button, 10);
 	connect(paths_mapper, SIGNAL(mapped(int)), this, SLOT(set_paths(int)));
 
 	QSignalMapper* button_config = new QSignalMapper(this);
@@ -1486,8 +1309,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	connect(config_turbo, SIGNAL(clicked()), button_config, SLOT(map()));
 	connect(config_mute, SIGNAL(clicked()), button_config, SLOT(map()));
 	connect(config_camera, SIGNAL(clicked()), button_config, SLOT(map()));
-	connect(config_swap_screen, SIGNAL(clicked()), button_config, SLOT(map()));
-	connect(config_shift_screen, SIGNAL(clicked()), button_config, SLOT(map()));
 	
 	button_config->setMapping(config_a, 0);
 	button_config->setMapping(config_b, 1);
@@ -1510,8 +1331,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	button_config->setMapping(config_turbo, 18);
 	button_config->setMapping(config_mute, 19);
 	button_config->setMapping(config_camera, 20);
-	button_config->setMapping(config_swap_screen, 21);
-	button_config->setMapping(config_shift_screen, 22);
 	connect(button_config, SIGNAL(mapped(int)), this, SLOT(configure_button(int))) ;
 
 	//Final tab layout
@@ -1542,8 +1361,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	config_turbo->setMinimumWidth(150);
 	config_mute->setMinimumWidth(150);
 	config_camera->setMinimumWidth(150);
-	config_swap_screen->setMinimumWidth(150);
-	config_shift_screen->setMinimumWidth(150);
 
 	input_a->setReadOnly(true);
 	input_b->setReadOnly(true);
@@ -1564,8 +1381,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	input_turbo->setReadOnly(true);
 	input_mute->setReadOnly(true);
 	input_camera->setReadOnly(true);
-	input_swap_screen->setReadOnly(true);
-	input_shift_screen->setReadOnly(true);
 
 	//Install event filters
 	config_a->installEventFilter(this);
@@ -1589,8 +1404,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	config_turbo->installEventFilter(this);
 	config_mute->installEventFilter(this);
 	config_camera->installEventFilter(this);
-	config_swap_screen->installEventFilter(this);
-	config_shift_screen->installEventFilter(this);
 
 	input_a->installEventFilter(this);
 	input_b->installEventFilter(this);
@@ -1613,8 +1426,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	input_turbo->installEventFilter(this);
 	input_mute->installEventFilter(this);
 	input_camera->installEventFilter(this);
-	input_swap_screen->installEventFilter(this);
-	input_shift_screen->installEventFilter(this);
 
 	//Set focus policies
 	config_a->setFocusPolicy(Qt::NoFocus);
@@ -1638,8 +1449,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	config_turbo->setFocusPolicy(Qt::NoFocus);
 	config_mute->setFocusPolicy(Qt::NoFocus);
 	config_camera->setFocusPolicy(Qt::NoFocus);
-	config_swap_screen->setFocusPolicy(Qt::NoFocus);
-	config_shift_screen->setFocusPolicy(Qt::NoFocus);
 
 	input_a->setFocusPolicy(Qt::NoFocus);
 	input_b->setFocusPolicy(Qt::NoFocus);
@@ -1662,8 +1471,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	input_turbo->setFocusPolicy(Qt::NoFocus);
 	input_mute->setFocusPolicy(Qt::NoFocus);
 	input_camera->setFocusPolicy(Qt::NoFocus);
-	input_swap_screen->setFocusPolicy(Qt::NoFocus);
-	input_shift_screen->setFocusPolicy(Qt::NoFocus);
 
 	//Joystick handling
 	jstick = SDL_JoystickOpen(0);
@@ -1681,7 +1488,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	grab_input = false;
 	input_type = 0;
 	last_control_id = 0;
-	is_sgb_core = false;
 
 	dmg_cheat_menu = new cheat_menu;
 	real_time_clock_menu = new rtc_menu;
@@ -1737,22 +1543,12 @@ void gen_settings::set_ini_options()
 	if((config::ir_device == 1) || (config::ir_device == 2) || (config::ir_device == 3) || (config::ir_device == 5)) { config_ir->setEnabled(true); }
 	else { config_ir->setEnabled(false); }
 
-	//Emulated Slot-2 device
-	slot2_dev->setCurrentIndex(config::nds_slot2_device);
-
-	if((config::nds_slot2_device == 3) || (config::nds_slot2_device == 5) || (config::nds_slot2_device == 6) || (config::nds_slot2_device == 7)) { config_slot2->setEnabled(true); }
-	else { config_slot2->setEnabled(false); }
-
 	//Emulated CPU speed
 	overclock->setCurrentIndex(config::oc_flags);
 
 	//BIOS or Boot ROM option
 	if(config::use_bios) { bios->setChecked(true); }
 	else { bios->setChecked(false); }
-
-	//Use firmware
-	if(config::use_firmware) { firmware->setChecked(true); }
-	else { firmware->setChecked(false); }
 
 	//Enable patches
 	if(config::use_patches) { auto_patch->setChecked(true); }
@@ -1925,35 +1721,20 @@ void gen_settings::set_ini_options()
 	input_turbo->setText(QString::number(config::hotkey_turbo));
 	input_mute->setText(QString::number(config::hotkey_mute));
 	input_camera->setText(QString::number(config::hotkey_camera));
-	input_swap_screen->setText(QString::number(config::hotkey_swap_screen));
-	input_shift_screen->setText(QString::number(config::hotkey_shift_screen));
 
 	//BIOS, Boot ROM and Manifest paths
 	QString path_1(QString::fromStdString(config::dmg_bios_path));
 	QString path_2(QString::fromStdString(config::gbc_bios_path));
-	QString path_3(QString::fromStdString(config::agb_bios_path));
-	QString path_4(QString::fromStdString(config::nds_firmware_path));
 	QString path_5(QString::fromStdString(cgfx::manifest_file));
 	QString path_6(QString::fromStdString(config::ss_path));
 	QString path_7(QString::fromStdString(cgfx::dump_bg_path));
 	QString path_8(QString::fromStdString(cgfx::dump_obj_path));
 	QString path_9(QString::fromStdString(config::save_path));
 	QString path_10(QString::fromStdString(config::cheats_path));
-	QString path_11(QString::fromStdString(config::vc_file));
 
 	//Rumble
 	if(config::use_haptics) { rumble_on->setChecked(true); }
 	else { rumble_on->setChecked(false); }
-
-	//Virtual Cursor Enable
-	if(config::vc_enable) { vc_on->setChecked(true); }
-	else { vc_on->setChecked(false); }
-
-	//Virtual Cursor Opacity
-	vc_opacity->setValue(config::vc_opacity);
-
-	//Virtual Cursor Timeout
-	vc_timeout->setValue(config::vc_timeout);
 
 	//Netplay
 	if(config::use_netplay) { enable_netplay->setChecked(true); }
@@ -2001,15 +1782,12 @@ void gen_settings::set_ini_options()
 
 	dmg_bios->setText(path_1);
 	gbc_bios->setText(path_2);
-	gba_bios->setText(path_3);
-	nds_firmware->setText(path_4);
 	manifest->setText(path_5);
 	screenshot->setText(path_6);
 	dump_bg->setText(path_7);
 	dump_obj->setText(path_8);
 	game_saves->setText(path_9);
 	cheats_path->setText(path_10);
-	vc_path->setText(path_11);
 }
 
 /****** Toggles whether to use the Boot ROM or BIOS ******/
@@ -2017,13 +1795,6 @@ void gen_settings::set_bios()
 {
 	if(bios->isChecked()) { config::use_bios = true; }
 	else { config::use_bios = false; }
-}
-
-/****** Toggles whether to use firmware ******/
-void gen_settings::set_firmware()
-{
-	if(firmware->isChecked()) { config::use_firmware = true; }
-	else { config::use_firmware = false; }
 }
 
 /****** Changes the emulated Serial IO device ******/
@@ -2069,15 +1840,6 @@ void gen_settings::ir_dev_change()
 
 	if((config::ir_device == 1) || (config::ir_device == 2) || (config::ir_device == 3) || config::ir_device == 5) { config_ir->setEnabled(true); }
 	else { config_ir->setEnabled(false); }
-}
-
-/****** Changes the emulated Slot-2 device ******/
-void gen_settings::slot2_dev_change()
-{
-	config::nds_slot2_device = slot2_dev->currentIndex();
-
-	if((config::nds_slot2_device == 3) || (config::nds_slot2_device == 5) || (config::nds_slot2_device == 6) || (config::nds_slot2_device == 7)) { config_slot2->setEnabled(true); }
-	else { config_slot2->setEnabled(false); }
 }
 
 /****** Changes the emulated CPU speed ******/
@@ -2135,18 +1897,6 @@ void gen_settings::show_ir_config()
 		case 0x3: pocket_sakura_menu->show(); break;
 		case 0x5: chalien_menu->show(); break;
 	}	
-}
-
-/****** Displays relevant Slot-2 configuration window ******/
-void gen_settings::show_slot2_config()
-{
-	switch(config::nds_slot2_device)
-	{
-		case 0x3: tabs->setCurrentIndex(3); controls_combo->setCurrentIndex(1); break;
-		case 0x5: ubisoft_pedometer_menu->show(); break;
-		case 0x6: qt_gui::draw_surface->set_card_file(); break;
-		case 0x7: magic_reader_menu->show(); break;
-	}
 }
 
 /****** Toggles enabling or disabling the fragment and vertex shader widgets when setting OpenGL ******/
@@ -2274,23 +2024,7 @@ void gen_settings::set_cgfx()
 	//Instruct core to invalidate any CGFX when turning option on or off during gameplay
 	if(main_menu::gbe_plus != NULL)
 	{
-		//Prevent SGB core from CGFX actions while running
-		if(is_sgb_core)
-		{
-			load_cgfx->setChecked(false);
-			load_cgfx->setCheckState(Qt::Unchecked);
-			cgfx::load_cgfx = false;
-			cgfx_scale->setEnabled(false);
-		}
-
-		switch(config::gb_type)
-		{
-			case 0:
-			case 1:
-			case 2:	
-				main_menu::gbe_plus->get_core_data(2);
-				break;
-		}
+		main_menu::gbe_plus->get_core_data(2);
 	}
 }
 
@@ -2422,16 +2156,6 @@ void gen_settings::set_paths(int index)
 			gbc_bios->setText(path);
 			break;
 
-		case 2:
-			config::agb_bios_path = path.toStdString();
-			gba_bios->setText(path);
-			break;
-
-		case 3:
-			config::nds_firmware_path = path.toStdString();
-			nds_firmware->setText(path);
-			break;
-
 		case 4:
 			cgfx::manifest_file = path.toStdString();
 			manifest->setText(path);
@@ -2467,10 +2191,6 @@ void gen_settings::set_paths(int index)
 
 			break;
 
-		case 10:
-			config::vc_file = path.toStdString();
-			vc_path->setText(path);
-			break;
 	}
 }
 
@@ -2659,18 +2379,6 @@ void gen_settings::set_battle_chip()
 	config::chip_list[3] = chip_list[index];
 }
 
-/****** Sets the Virtual Cursor Opacity ******/
-void gen_settings::update_vc_opacity()
-{
-	config::vc_opacity = vc_opacity->value();
-}
-
-/****** Sets the Virtual Cursor Timeout ******/
-void gen_settings::update_vc_timeout()
-{
-	config::vc_timeout = vc_timeout->value();
-}
-
 /****** Sets the netplay sync threshold ******/
 void gen_settings::update_sync_threshold()
 {
@@ -2856,18 +2564,6 @@ void gen_settings::configure_button(int button)
 			input_delay(config_camera);
 			input_turbo->setFocus();
 			input_index = 20;
-			break;
-
-		case 21:
-			input_delay(config_swap_screen);
-			input_turbo->setFocus();
-			input_index = 21;
-			break;
-
-		case 22:
-			input_delay(config_shift_screen);
-			input_turbo->setFocus();
-			input_index = 22;
 			break;
 	}
 
@@ -3177,8 +2873,6 @@ void gen_settings::close_input()
 	config_turbo->setText("Configure");
 	config_mute->setText("Configure");
 	config_camera->setText("Configure");
-	config_swap_screen->setText("Configure");
-	config_shift_screen->setText("Configure");
 
 	input_index = -1;
 	grab_input = false;
@@ -3218,12 +2912,6 @@ void gen_settings::switch_control_layout()
 			bcg_controls_layout->itemAt(x)->widget()->setVisible(false);
 		}
 
-		//Set all Virtual Cursor control widgets to invisible
-		for(int x = 0; x < vc_controls_layout->count(); x++)
-		{
-			vc_controls_layout->itemAt(x)->widget()->setVisible(false);
-		}
-
 		delete controls->layout();
 		advanced_controls_layout->insertWidget(0, input_device_set);
 		controls->setLayout(advanced_controls_layout);
@@ -3259,12 +2947,6 @@ void gen_settings::switch_control_layout()
 			bcg_controls_layout->itemAt(x)->widget()->setVisible(false);
 		}
 
-		//Set all Virtual Cursor control widgets to invisible
-		for(int x = 0; x < vc_controls_layout->count(); x++)
-		{
-			vc_controls_layout->itemAt(x)->widget()->setVisible(false);
-		}
-
 		delete controls->layout();
 		controls_layout->insertWidget(0, input_device_set);
 		controls->setLayout(controls_layout);
@@ -3298,12 +2980,6 @@ void gen_settings::switch_control_layout()
 		for(int x = 0; x < bcg_controls_layout->count(); x++)
 		{
 			bcg_controls_layout->itemAt(x)->widget()->setVisible(false);
-		}
-
-		//Set all Virtual Cursor control widgets to invisible
-		for(int x = 0; x < vc_controls_layout->count(); x++)
-		{
-			vc_controls_layout->itemAt(x)->widget()->setVisible(false);
 		}
 
 		delete controls->layout();
@@ -3342,12 +3018,6 @@ void gen_settings::switch_control_layout()
 			hotkey_controls_layout->itemAt(x)->widget()->setVisible(false);
 		}
 
-		//Set all Virtual Cursor control widgets to invisible
-		for(int x = 0; x < vc_controls_layout->count(); x++)
-		{
-			vc_controls_layout->itemAt(x)->widget()->setVisible(false);
-		}
-
 		delete controls->layout();
 		bcg_controls_layout->insertWidget(0, input_device_set);
 		controls->setLayout(bcg_controls_layout);
@@ -3383,16 +3053,6 @@ void gen_settings::switch_control_layout()
 		{
 			hotkey_controls_layout->itemAt(x)->widget()->setVisible(false);
 		}
-
-		//Set all Virtual Cursor control widgets to invisible
-		for(int x = 0; x < vc_controls_layout->count(); x++)
-		{
-			vc_controls_layout->itemAt(x)->widget()->setVisible(true);
-		}
-
-		delete controls->layout();
-		vc_controls_layout->insertWidget(0, input_device_set);
-		controls->setLayout(vc_controls_layout);
 
 		input_device_set->setVisible(true);
 		input_device_set->setEnabled(false);
@@ -3438,8 +3098,6 @@ void gen_settings::switch_control_layout()
 			hotkey_controls_layout->addWidget(hotkey_turbo_set);
 			hotkey_controls_layout->addWidget(hotkey_mute_set);
 			hotkey_controls_layout->addWidget(hotkey_camera_set);
-			hotkey_controls_layout->addWidget(hotkey_swap_screen_set);
-			hotkey_controls_layout->addWidget(hotkey_shift_screen_set);
 			break;
 
 		case 3:
@@ -3451,15 +3109,6 @@ void gen_settings::switch_control_layout()
 			bcg_controls_layout->addWidget(bcg_chip_3_set);
 			bcg_controls_layout->addWidget(bcg_chip_4_set);
 			break;
-
-		case 4:
-			vc_controls_layout = new QVBoxLayout;
-			vc_controls_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-			vc_controls_layout->addWidget(vc_enable_set);
-			vc_controls_layout->addWidget(vc_opacity_set);
-			vc_controls_layout->addWidget(vc_timeout_set);
-			vc_controls_layout->addWidget(vc_path_set);
-			break;
 	}
 
 	last_control_id = controls_combo->currentIndex();
@@ -3469,15 +3118,12 @@ void gen_settings::switch_control_layout()
 void gen_settings::paintEvent(QPaintEvent* event)
 {
 	gbc_bios_label->setMinimumWidth(dmg_bios_label->width());
-	gba_bios_label->setMinimumWidth(dmg_bios_label->width());
-	nds_firmware_label->setMinimumWidth(dmg_bios_label->width());
 	manifest_label->setMinimumWidth(dmg_bios_label->width());
 	dump_bg_label->setMinimumWidth(dmg_bios_label->width());
 	dump_obj_label->setMinimumWidth(dmg_bios_label->width());
 	screenshot_label->setMinimumWidth(dmg_bios_label->width());
 	game_saves_label->setMinimumWidth(dmg_bios_label->width());
 	cheats_path_label->setMinimumWidth(dmg_bios_label->width());
-	vc_path_label->setMinimumWidth(dmg_bios_label->width());
 }
 
 /****** Closes the settings window ******/
@@ -3744,28 +3390,6 @@ void gen_settings::keyPressEvent(QKeyEvent* event)
 
 				config_camera->setText("Configure");
 				input_camera->clearFocus();
-				break;
-
-			case 21:
-				if(last_key != -1)
-				{
-					config::hotkey_swap_screen = last_key;
-					input_swap_screen->setText(QString::number(last_key));
-				}
-
-				config_swap_screen->setText("Configure");
-				input_swap_screen->clearFocus();
-				break;
-
-			case 22:
-				if(last_key != -1)
-				{
-					config::hotkey_shift_screen = last_key;
-					input_shift_screen->setText(QString::number(last_key));
-				}
-
-				config_shift_screen->setText("Configure");
-				input_shift_screen->clearFocus();
 				break;
 
 		}

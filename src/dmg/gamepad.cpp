@@ -391,7 +391,7 @@ void DMG_GamePad::process_keyboard(int pad, bool pressed)
 	}
 
 	//Emulate R Trigger press - DMG/GBC on GBA or sewing machine ONLY
-	else if((pad == config::gbe_key_r_trigger) && (pressed) && (config::gba_enhance || (config::sio_device == 14)))
+	else if((pad == config::gbe_key_r_trigger) && (pressed) && (config::sio_device == 14))
 	{
 		config::request_resize = true;
 		config::resize_mode--;
@@ -401,7 +401,7 @@ void DMG_GamePad::process_keyboard(int pad, bool pressed)
 	}
 
 	//Emulate L Trigger press - DMG/GBC on GBA or sewing machine ONLY
-	else if((pad == config::gbe_key_l_trigger) && (pressed) && (config::gba_enhance || (config::sio_device == 14)))
+	else if((pad == config::gbe_key_l_trigger) && (pressed) && (config::sio_device == 14))
 	{
 		config::request_resize = true;
 		config::resize_mode++;
@@ -557,7 +557,7 @@ void DMG_GamePad::process_joystick(int pad, bool pressed)
 	}
 
 	//Emulate R Trigger press - DMG/GBC on GBA or sewing machine ONLY
-	else if((pad == config::gbe_joy_r_trigger) && (pressed) && (config::gba_enhance || (config::sio_device == 14)))
+	else if((pad == config::gbe_joy_r_trigger) && (pressed) && (config::sio_device == 14))
 	{
 		config::request_resize = true;
 		config::resize_mode--;
@@ -567,7 +567,7 @@ void DMG_GamePad::process_joystick(int pad, bool pressed)
 	}
 
 	//Emulate L Trigger press - DMG/GBC on GBA or sewing machine ONLY
-	else if((pad == config::gbe_joy_l_trigger) && (pressed) && (config::gba_enhance || (config::sio_device == 14)))
+	else if((pad == config::gbe_joy_l_trigger) && (pressed) && (config::sio_device == 14))
 	{
 		config::request_resize = true;
 		config::resize_mode++;

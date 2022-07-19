@@ -33,8 +33,6 @@ bool load_osd_font();
 void draw_osd_msg(std::string osd_text, std::vector <u32> &osd_surface, u8 x_offset, u8 y_offset);
 void draw_osd_msg(std::string osd_text, std::vector <u32> &osd_surface, u8 x_offset, u8 y_offset, u32 width);
 
-bool load_virtual_cursor();
-
 enum special_cart_types
 {
 	NORMAL_CART,
@@ -52,11 +50,6 @@ namespace config
 	extern std::string save_file;
 	extern std::string dmg_bios_path;
 	extern std::string gbc_bios_path;
-	extern std::string agb_bios_path;
-	extern std::string nds7_bios_path;
-	extern std::string nds9_bios_path;
-	extern std::string nds_firmware_path;
-	extern std::string min_bios_path;
 	extern std::string save_path;
 	extern std::string ss_path;
 	extern std::string cfg_path;
@@ -93,7 +86,6 @@ namespace config
 	extern u32 flags;
 	extern bool pause_emu;
 	extern bool use_bios;
-	extern bool use_firmware;
 	extern bool no_cart;
 	extern bool ignore_illegal_opcodes;
 
@@ -108,23 +100,15 @@ namespace config
 	extern u8 old_scaling_factor;
 	extern std::stringstream title;
 	extern u8 gb_type;
-	extern bool gba_enhance;
 	extern bool sdl_render;
 	extern u8 dmg_gbc_pal;
 	extern u16 mpos_id;
 	extern u32 utp_steps;
 	extern u32 magic_reader_id;
 
-	extern u8 nds_slot1_device;
-	extern u8 nds_slot2_device;
-	extern std::string nds_slot2_file;
-
-	extern u8 min_config;
-
 	extern bool use_cheats;
 	extern std::vector <u32> gs_cheats;
 	extern std::vector <std::string> gg_cheats;
-	extern std::vector <std::string> gsa_cheats;
 	extern std::vector <std::string> cheats_info;
 	extern bool use_patches;
 
@@ -177,8 +161,6 @@ namespace config
 
 	extern u8 turbo_file_options;
 
-	extern u8 mw_data[6];
-
 	extern bool auto_gen_am3_id;
 
 	extern u32 jukebox_total_time;
@@ -189,13 +171,6 @@ namespace config
 	extern u32 osd_count;
 
 	extern bool use_external_interfaces;
-
-	extern bool vc_enable;
-	extern std::string vc_file;
-	extern std::vector <u32> vc_data;
-	extern u32 vc_wait;
-	extern u32 vc_timeout;
-	extern u8 vc_opacity;
 
 	//Function pointer for external software rendering
 	//This function is provided by frontends that will not rely on SDL
