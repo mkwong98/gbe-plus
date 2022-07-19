@@ -243,9 +243,6 @@
     <ClCompile Include="src\qt\zzh_menu.cpp">
       <Filter>Source Files\qt</Filter>
     </ClCompile>
-    <ClCompile Include="src\main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dmg\apu.h">
