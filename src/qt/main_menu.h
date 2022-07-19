@@ -25,9 +25,7 @@
 #include "debug_dmg.h"
 #include "screens.h"
 
-#include "gba/core.h"
 #include "dmg/core.h"
-#include "nds/core.h"
 #include "sgb/core.h"
 #include "min/core.h"
 

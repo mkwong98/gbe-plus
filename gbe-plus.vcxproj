@@ -237,84 +237,6 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
-    <ClCompile Include="src\gba\am3.cpp" />
-    <ClCompile Include="src\gba\apu.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="src\gba\arm7.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="src\gba\arm_instr.cpp" />
-    <ClCompile Include="src\gba\cheats.cpp" />
-    <ClCompile Include="src\gba\core.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="src\gba\debug.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="src\gba\dma.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="src\gba\gamepad.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="src\gba\gbma.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="src\gba\gpio.cpp" />
-    <ClCompile Include="src\gba\jukebox.cpp" />
-    <ClCompile Include="src\gba\lcd.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="src\gba\mmu.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="src\gba\opengl.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="src\gba\sio.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="src\gba\swi.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="src\gba\thumb_instr.cpp" />
     <ClCompile Include="src\main.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -370,77 +292,6 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
     <ClCompile Include="src\min\s1c88.cpp" />
-    <ClCompile Include="src\nds\apu.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="src\nds\arm7.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="src\nds\arm7_arm_instr.cpp" />
-    <ClCompile Include="src\nds\arm7_thumb_instr.cpp" />
-    <ClCompile Include="src\nds\arm9.cpp" />
-    <ClCompile Include="src\nds\arm9_arm_instr.cpp" />
-    <ClCompile Include="src\nds\arm9_thumb_instr.cpp" />
-    <ClCompile Include="src\nds\core.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="src\nds\cp15.cpp" />
-    <ClCompile Include="src\nds\debug.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="src\nds\dma.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="src\nds\gamecard.cpp" />
-    <ClCompile Include="src\nds\gamepad.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="src\nds\gx_render.cpp" />
-    <ClCompile Include="src\nds\lcd.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="src\nds\mmu.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="src\nds\ntr_027.cpp" />
-    <ClCompile Include="src\nds\opengl.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="src\nds\rtc.cpp" />
-    <ClCompile Include="src\nds\slot2.cpp" />
-    <ClCompile Include="src\nds\swi.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
-    </ClCompile>
     <ClCompile Include="src\qt\cgfx.cpp" />
     <ClCompile Include="src\qt\cheat_menu.cpp" />
     <ClCompile Include="src\qt\con_ir_menu.cpp" />
@@ -520,18 +371,6 @@
     <ClInclude Include="src\dmg\sio.h" />
     <ClInclude Include="src\dmg\sio_data.h" />
     <ClInclude Include="src\dmg\z80.h" />
-    <ClInclude Include="src\gba\apu.h" />
-    <ClInclude Include="src\gba\apu_data.h" />
-    <ClInclude Include="src\gba\arm7.h" />
-    <ClInclude Include="src\gba\common.h" />
-    <ClInclude Include="src\gba\core.h" />
-    <ClInclude Include="src\gba\gamepad.h" />
-    <ClInclude Include="src\gba\lcd.h" />
-    <ClInclude Include="src\gba\lcd_data.h" />
-    <ClInclude Include="src\gba\mmu.h" />
-    <ClInclude Include="src\gba\sio.h" />
-    <ClInclude Include="src\gba\sio_data.h" />
-    <ClInclude Include="src\gba\timer.h" />
     <ClInclude Include="src\min\apu.h" />
     <ClInclude Include="src\min\apu_data.h" />
     <ClInclude Include="src\min\common.h" />
@@ -542,18 +381,6 @@
     <ClInclude Include="src\min\mmu.h" />
     <ClInclude Include="src\min\s1c88.h" />
     <ClInclude Include="src\min\timer.h" />
-    <ClInclude Include="src\nds\apu.h" />
-    <ClInclude Include="src\nds\apu_data.h" />
-    <ClInclude Include="src\nds\arm7.h" />
-    <ClInclude Include="src\nds\arm9.h" />
-    <ClInclude Include="src\nds\common.h" />
-    <ClInclude Include="src\nds\core.h" />
-    <ClInclude Include="src\nds\cp15.h" />
-    <ClInclude Include="src\nds\gamepad.h" />
-    <ClInclude Include="src\nds\lcd.h" />
-    <ClInclude Include="src\nds\lcd_data.h" />
-    <ClInclude Include="src\nds\mmu.h" />
-    <ClInclude Include="src\nds\timer.h" />
     <CustomBuild Include="src\qt\cgfx.h">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">C:\Qt\Qt5.12.12\5.12.12\msvc2017\bin\moc.exe "%(FullPath)" -o "%(RootDir)%(Directory)moc_%(Filename).cpp</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">C:\Qt\Qt5.12.12\5.12.12\msvc2017\bin\moc.exe "%(FullPath)" -o "%(RootDir)%(Directory)moc_%(Filename).cpp</Command>
@@ -869,80 +696,6 @@
     <ClInclude Include="src\sgb\z80.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="src\data\bin\soul_dollz\behemoth.bin" />
-    <None Include="src\data\bin\soul_dollz\bicorn.bin" />
-    <None Include="src\data\bin\soul_dollz\bigfoot.bin" />
-    <None Include="src\data\bin\soul_dollz\blaze_dragon.bin" />
-    <None Include="src\data\bin\soul_dollz\blaze_dragon_berserker_mode.bin" />
-    <None Include="src\data\bin\soul_dollz\cait_sith.bin" />
-    <None Include="src\data\bin\soul_dollz\carbuncle.bin" />
-    <None Include="src\data\bin\soul_dollz\centaur.bin" />
-    <None Include="src\data\bin\soul_dollz\cerberus.bin" />
-    <None Include="src\data\bin\soul_dollz\chibi_shiron.bin" />
-    <None Include="src\data\bin\soul_dollz\chimaera.bin" />
-    <None Include="src\data\bin\soul_dollz\cloud_giant.bin" />
-    <None Include="src\data\bin\soul_dollz\colonel_blaze_dragon_volcano_soul.bin" />
-    <None Include="src\data\bin\soul_dollz\colonel_wind_dragon_tornado_soul.bin" />
-    <None Include="src\data\bin\soul_dollz\command_blaze_dragon.bin" />
-    <None Include="src\data\bin\soul_dollz\command_blaze_dragon_volk_armed.bin" />
-    <None Include="src\data\bin\soul_dollz\command_wind_dragon.bin" />
-    <None Include="src\data\bin\soul_dollz\command_wind_dragon_break_armed.bin" />
-    <None Include="src\data\bin\soul_dollz\cyclops.bin" />
-    <None Include="src\data\bin\soul_dollz\devour_crocodile.bin" />
-    <None Include="src\data\bin\soul_dollz\devour_crocodile_dandy.bin" />
-    <None Include="src\data\bin\soul_dollz\dwarf.bin" />
-    <None Include="src\data\bin\soul_dollz\earthquake_king_dragon.bin" />
-    <None Include="src\data\bin\soul_dollz\echidna.bin" />
-    <None Include="src\data\bin\soul_dollz\fenrir.bin" />
-    <None Include="src\data\bin\soul_dollz\fire_giant.bin" />
-    <None Include="src\data\bin\soul_dollz\gargoyle.bin" />
-    <None Include="src\data\bin\soul_dollz\giant_crab.bin" />
-    <None Include="src\data\bin\soul_dollz\goblin.bin" />
-    <None Include="src\data\bin\soul_dollz\golem.bin" />
-    <None Include="src\data\bin\soul_dollz\gorgon.bin" />
-    <None Include="src\data\bin\soul_dollz\griffin.bin" />
-    <None Include="src\data\bin\soul_dollz\harpy.bin" />
-    <None Include="src\data\bin\soul_dollz\hell_hound.bin" />
-    <None Include="src\data\bin\soul_dollz\hex_dragon.bin" />
-    <None Include="src\data\bin\soul_dollz\hydra.bin" />
-    <None Include="src\data\bin\soul_dollz\ifrit.bin" />
-    <None Include="src\data\bin\soul_dollz\iron_golem.bin" />
-    <None Include="src\data\bin\soul_dollz\jabberwock.bin" />
-    <None Include="src\data\bin\soul_dollz\kraken.bin" />
-    <None Include="src\data\bin\soul_dollz\leviathan.bin" />
-    <None Include="src\data\bin\soul_dollz\lich.bin" />
-    <None Include="src\data\bin\soul_dollz\manticore.bin" />
-    <None Include="src\data\bin\soul_dollz\mermaid.bin" />
-    <None Include="src\data\bin\soul_dollz\minotauros.bin" />
-    <None Include="src\data\bin\soul_dollz\nekrom_king_dragon.bin" />
-    <None Include="src\data\bin\soul_dollz\oberon.bin" />
-    <None Include="src\data\bin\soul_dollz\ogre.bin" />
-    <None Include="src\data\bin\soul_dollz\peryton.bin" />
-    <None Include="src\data\bin\soul_dollz\pheonix.bin" />
-    <None Include="src\data\bin\soul_dollz\ranshiin.bin" />
-    <None Include="src\data\bin\soul_dollz\scylla.bin" />
-    <None Include="src\data\bin\soul_dollz\skeleton.bin" />
-    <None Include="src\data\bin\soul_dollz\sphinx.bin" />
-    <None Include="src\data\bin\soul_dollz\spiritual_king_dragon.bin" />
-    <None Include="src\data\bin\soul_dollz\spiritual_wind_dragon.bin" />
-    <None Include="src\data\bin\soul_dollz\spriggan.bin" />
-    <None Include="src\data\bin\soul_dollz\storm_king_dragon.bin" />
-    <None Include="src\data\bin\soul_dollz\tiamat.bin" />
-    <None Include="src\data\bin\soul_dollz\titan.bin" />
-    <None Include="src\data\bin\soul_dollz\tornado_king_dragon.bin" />
-    <None Include="src\data\bin\soul_dollz\triton.bin" />
-    <None Include="src\data\bin\soul_dollz\troll.bin" />
-    <None Include="src\data\bin\soul_dollz\undine.bin" />
-    <None Include="src\data\bin\soul_dollz\valkyrie.bin" />
-    <None Include="src\data\bin\soul_dollz\vampire.bin" />
-    <None Include="src\data\bin\soul_dollz\volcano_king_dragon.bin" />
-    <None Include="src\data\bin\soul_dollz\werewolf.bin" />
-    <None Include="src\data\bin\soul_dollz\will_o_wisp.bin" />
-    <None Include="src\data\bin\soul_dollz\wind_dragon.bin" />
-    <None Include="src\data\bin\soul_dollz\wind_dragon_berserker_mode.bin" />
-    <None Include="src\data\bin\soul_dollz\wind_dragon_manga_version.bin" />
-    <None Include="src\data\bin\soul_dollz\wyvern.bin" />
-    <None Include="src\data\bin\soul_dollz\yeti.bin" />
     <None Include="src\data\cards\bcb\battle_space\battle_space_baasaakaa.bin" />
     <None Include="src\data\cards\bcb\battle_space\battle_space_barukirii.bin" />
     <None Include="src\data\cards\bcb\battle_space\battle_space_gurizurii.bin" />
@@ -986,7 +739,6 @@
     <None Include="src\data\cards\hcv1000\oshare_majo\TF_02.bin" />
     <None Include="src\data\cards\hcv1000\oshare_majo\TH_01.bin" />
     <None Include="src\data\cards\hcv1000\oshare_majo\TH_02.bin" />
-    <None Include="src\data\fonts\block_font.bin" />
     <None Include="src\data\gbma\index.html" />
     <None Include="src\data\gbma\map.bin" />
     <None Include="src\data\gbma\mbox.bin" />

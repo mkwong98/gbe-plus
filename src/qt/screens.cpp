@@ -12,6 +12,7 @@
 
 #include "screens.h"
 #include "render.h"
+#include "common/gx_util.h"
 
 /****** Software screen constructor ******/
 soft_screen::soft_screen(QWidget *parent) : QWidget(parent) { }

@@ -13,12 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
-    <Filter Include="Source Files\gba">
-      <UniqueIdentifier>{c87c20c1-8aa4-47cb-ae12-fb8e2ecf9bb3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\nds">
-      <UniqueIdentifier>{7f3a5c32-d7c4-4439-8601-543fba92e363}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\min">
       <UniqueIdentifier>{fd877eaf-7a64-4fe7-9984-78624a3725e7}</UniqueIdentifier>
     </Filter>
@@ -40,12 +34,6 @@
     <Filter Include="Header Files\min">
       <UniqueIdentifier>{a9da75fd-bbe1-4b78-b745-3936264159b9}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\gba">
-      <UniqueIdentifier>{48017169-fd7c-4100-b07d-75f22297694b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\nds">
-      <UniqueIdentifier>{148dea46-ba16-4acb-b497-aa408195a7bb}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\qt">
       <UniqueIdentifier>{ebf4f1e6-496a-4417-a190-816dd91757ba}</UniqueIdentifier>
     </Filter>
@@ -57,41 +45,11 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\gba\apu.cpp">
-      <Filter>Source Files\gba</Filter>
-    </ClCompile>
-    <ClCompile Include="src\nds\apu.cpp">
-      <Filter>Source Files\nds</Filter>
-    </ClCompile>
     <ClCompile Include="src\min\apu.cpp">
       <Filter>Source Files\min</Filter>
     </ClCompile>
     <ClCompile Include="src\dmg\apu.cpp">
       <Filter>Source Files\dmg</Filter>
-    </ClCompile>
-    <ClCompile Include="src\gba\arm_instr.cpp">
-      <Filter>Source Files\gba</Filter>
-    </ClCompile>
-    <ClCompile Include="src\gba\arm7.cpp">
-      <Filter>Source Files\gba</Filter>
-    </ClCompile>
-    <ClCompile Include="src\nds\arm7.cpp">
-      <Filter>Source Files\nds</Filter>
-    </ClCompile>
-    <ClCompile Include="src\nds\arm7_arm_instr.cpp">
-      <Filter>Source Files\nds</Filter>
-    </ClCompile>
-    <ClCompile Include="src\nds\arm7_thumb_instr.cpp">
-      <Filter>Source Files\nds</Filter>
-    </ClCompile>
-    <ClCompile Include="src\nds\arm9.cpp">
-      <Filter>Source Files\nds</Filter>
-    </ClCompile>
-    <ClCompile Include="src\nds\arm9_arm_instr.cpp">
-      <Filter>Source Files\nds</Filter>
-    </ClCompile>
-    <ClCompile Include="src\nds\arm9_thumb_instr.cpp">
-      <Filter>Source Files\nds</Filter>
     </ClCompile>
     <ClCompile Include="src\dmg\camera.cpp">
       <Filter>Source Files\dmg</Filter>
@@ -99,35 +57,20 @@
     <ClCompile Include="src\common\cgfx_common.cpp">
       <Filter>Source Files\common</Filter>
     </ClCompile>
-    <ClCompile Include="src\gba\cheats.cpp">
-      <Filter>Source Files\gba</Filter>
-    </ClCompile>
     <ClCompile Include="src\common\config.cpp">
       <Filter>Source Files\common</Filter>
     </ClCompile>
     <ClCompile Include="src\dmg\core.cpp">
       <Filter>Source Files\dmg</Filter>
     </ClCompile>
-    <ClCompile Include="src\gba\core.cpp">
-      <Filter>Source Files\gba</Filter>
-    </ClCompile>
     <ClCompile Include="src\sgb\core.cpp">
       <Filter>Source Files\sgb</Filter>
-    </ClCompile>
-    <ClCompile Include="src\nds\core.cpp">
-      <Filter>Source Files\nds</Filter>
     </ClCompile>
     <ClCompile Include="src\min\core.cpp">
       <Filter>Source Files\min</Filter>
     </ClCompile>
-    <ClCompile Include="src\nds\cp15.cpp">
-      <Filter>Source Files\nds</Filter>
-    </ClCompile>
     <ClCompile Include="src\dmg\custom_graphics.cpp">
       <Filter>Source Files\dmg</Filter>
-    </ClCompile>
-    <ClCompile Include="src\nds\debug.cpp">
-      <Filter>Source Files\nds</Filter>
     </ClCompile>
     <ClCompile Include="src\dmg\debug.cpp">
       <Filter>Source Files\dmg</Filter>
@@ -135,23 +78,11 @@
     <ClCompile Include="src\sgb\debug.cpp">
       <Filter>Source Files\sgb</Filter>
     </ClCompile>
-    <ClCompile Include="src\gba\debug.cpp">
-      <Filter>Source Files\gba</Filter>
-    </ClCompile>
     <ClCompile Include="src\min\debug.cpp">
       <Filter>Source Files\min</Filter>
     </ClCompile>
-    <ClCompile Include="src\gba\dma.cpp">
-      <Filter>Source Files\gba</Filter>
-    </ClCompile>
-    <ClCompile Include="src\nds\dma.cpp">
-      <Filter>Source Files\nds</Filter>
-    </ClCompile>
     <ClCompile Include="src\dmg\dmg07.cpp">
       <Filter>Source Files\dmg</Filter>
-    </ClCompile>
-    <ClCompile Include="src\nds\gamecard.cpp">
-      <Filter>Source Files\nds</Filter>
     </ClCompile>
     <ClCompile Include="src\dmg\gamepad.cpp">
       <Filter>Source Files\dmg</Filter>
@@ -162,23 +93,8 @@
     <ClCompile Include="src\min\gamepad.cpp">
       <Filter>Source Files\min</Filter>
     </ClCompile>
-    <ClCompile Include="src\nds\gamepad.cpp">
-      <Filter>Source Files\nds</Filter>
-    </ClCompile>
-    <ClCompile Include="src\gba\gamepad.cpp">
-      <Filter>Source Files\gba</Filter>
-    </ClCompile>
-    <ClCompile Include="src\gba\gbma.cpp">
-      <Filter>Source Files\gba</Filter>
-    </ClCompile>
     <ClCompile Include="src\dmg\gbma.cpp">
       <Filter>Source Files\dmg</Filter>
-    </ClCompile>
-    <ClCompile Include="src\gba\gpio.cpp">
-      <Filter>Source Files\gba</Filter>
-    </ClCompile>
-    <ClCompile Include="src\nds\gx_render.cpp">
-      <Filter>Source Files\nds</Filter>
     </ClCompile>
     <ClCompile Include="src\common\gx_util.cpp">
       <Filter>Source Files\common</Filter>
@@ -198,14 +114,8 @@
     <ClCompile Include="src\dmg\infrared.cpp">
       <Filter>Source Files\dmg</Filter>
     </ClCompile>
-    <ClCompile Include="src\gba\lcd.cpp">
-      <Filter>Source Files\gba</Filter>
-    </ClCompile>
     <ClCompile Include="src\sgb\lcd.cpp">
       <Filter>Source Files\sgb</Filter>
-    </ClCompile>
-    <ClCompile Include="src\nds\lcd.cpp">
-      <Filter>Source Files\nds</Filter>
     </ClCompile>
     <ClCompile Include="src\min\lcd.cpp">
       <Filter>Source Files\min</Filter>
@@ -234,23 +144,11 @@
     <ClCompile Include="src\dmg\mmm01.cpp">
       <Filter>Source Files\dmg</Filter>
     </ClCompile>
-    <ClCompile Include="src\gba\mmu.cpp">
-      <Filter>Source Files\gba</Filter>
-    </ClCompile>
     <ClCompile Include="src\min\mmu.cpp">
       <Filter>Source Files\min</Filter>
     </ClCompile>
     <ClCompile Include="src\dmg\mmu.cpp">
       <Filter>Source Files\dmg</Filter>
-    </ClCompile>
-    <ClCompile Include="src\nds\mmu.cpp">
-      <Filter>Source Files\nds</Filter>
-    </ClCompile>
-    <ClCompile Include="src\nds\ntr_027.cpp">
-      <Filter>Source Files\nds</Filter>
-    </ClCompile>
-    <ClCompile Include="src\gba\opengl.cpp">
-      <Filter>Source Files\gba</Filter>
     </ClCompile>
     <ClCompile Include="src\sgb\opengl.cpp">
       <Filter>Source Files\sgb</Filter>
@@ -258,41 +156,20 @@
     <ClCompile Include="src\min\opengl.cpp">
       <Filter>Source Files\min</Filter>
     </ClCompile>
-    <ClCompile Include="src\nds\opengl.cpp">
-      <Filter>Source Files\nds</Filter>
-    </ClCompile>
     <ClCompile Include="src\dmg\opengl.cpp">
       <Filter>Source Files\dmg</Filter>
     </ClCompile>
     <ClCompile Include="src\common\osd.cpp">
       <Filter>Source Files\common</Filter>
     </ClCompile>
-    <ClCompile Include="src\nds\rtc.cpp">
-      <Filter>Source Files\nds</Filter>
-    </ClCompile>
     <ClCompile Include="src\min\s1c88.cpp">
       <Filter>Source Files\min</Filter>
-    </ClCompile>
-    <ClCompile Include="src\gba\sio.cpp">
-      <Filter>Source Files\gba</Filter>
     </ClCompile>
     <ClCompile Include="src\dmg\sio.cpp">
       <Filter>Source Files\dmg</Filter>
     </ClCompile>
-    <ClCompile Include="src\nds\slot2.cpp">
-      <Filter>Source Files\nds</Filter>
-    </ClCompile>
-    <ClCompile Include="src\nds\swi.cpp">
-      <Filter>Source Files\nds</Filter>
-    </ClCompile>
-    <ClCompile Include="src\gba\swi.cpp">
-      <Filter>Source Files\gba</Filter>
-    </ClCompile>
     <ClCompile Include="src\dmg\tama5.cpp">
       <Filter>Source Files\dmg</Filter>
-    </ClCompile>
-    <ClCompile Include="src\gba\thumb_instr.cpp">
-      <Filter>Source Files\gba</Filter>
     </ClCompile>
     <ClCompile Include="src\common\util.cpp">
       <Filter>Source Files\common</Filter>
@@ -369,12 +246,6 @@
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\gba\jukebox.cpp">
-      <Filter>Source Files\gba</Filter>
-    </ClCompile>
-    <ClCompile Include="src\gba\am3.cpp">
-      <Filter>Source Files\gba</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dmg\apu.h">
@@ -383,32 +254,11 @@
     <ClInclude Include="src\min\apu.h">
       <Filter>Header Files\min</Filter>
     </ClInclude>
-    <ClInclude Include="src\gba\apu.h">
-      <Filter>Header Files\gba</Filter>
-    </ClInclude>
-    <ClInclude Include="src\nds\apu.h">
-      <Filter>Header Files\nds</Filter>
-    </ClInclude>
-    <ClInclude Include="src\nds\apu_data.h">
-      <Filter>Header Files\nds</Filter>
-    </ClInclude>
-    <ClInclude Include="src\gba\apu_data.h">
-      <Filter>Header Files\gba</Filter>
-    </ClInclude>
     <ClInclude Include="src\min\apu_data.h">
       <Filter>Header Files\min</Filter>
     </ClInclude>
     <ClInclude Include="src\dmg\apu_data.h">
       <Filter>Header Files\dmg</Filter>
-    </ClInclude>
-    <ClInclude Include="src\nds\arm7.h">
-      <Filter>Header Files\nds</Filter>
-    </ClInclude>
-    <ClInclude Include="src\gba\arm7.h">
-      <Filter>Header Files\gba</Filter>
-    </ClInclude>
-    <ClInclude Include="src\nds\arm9.h">
-      <Filter>Header Files\nds</Filter>
     </ClInclude>
     <ClInclude Include="src\common\cgfx_common.h">
       <Filter>Header Files\common</Filter>
@@ -419,12 +269,6 @@
     <ClInclude Include="src\dmg\common.h">
       <Filter>Header Files\dmg</Filter>
     </ClInclude>
-    <ClInclude Include="src\gba\common.h">
-      <Filter>Header Files\gba</Filter>
-    </ClInclude>
-    <ClInclude Include="src\nds\common.h">
-      <Filter>Header Files\nds</Filter>
-    </ClInclude>
     <ClInclude Include="src\common\common.h">
       <Filter>Header Files\common</Filter>
     </ClInclude>
@@ -434,12 +278,6 @@
     <ClInclude Include="src\dmg\core.h">
       <Filter>Header Files\dmg</Filter>
     </ClInclude>
-    <ClInclude Include="src\nds\core.h">
-      <Filter>Header Files\nds</Filter>
-    </ClInclude>
-    <ClInclude Include="src\gba\core.h">
-      <Filter>Header Files\gba</Filter>
-    </ClInclude>
     <ClInclude Include="src\min\core.h">
       <Filter>Header Files\min</Filter>
     </ClInclude>
@@ -448,9 +286,6 @@
     </ClInclude>
     <ClInclude Include="src\common\core_emu.h">
       <Filter>Header Files\common</Filter>
-    </ClInclude>
-    <ClInclude Include="src\nds\cp15.h">
-      <Filter>Header Files\nds</Filter>
     </ClInclude>
     <ClInclude Include="src\dmg\custom_graphics_data.h">
       <Filter>Header Files\dmg</Filter>
@@ -467,12 +302,6 @@
     <ClInclude Include="src\min\gamepad.h">
       <Filter>Header Files\min</Filter>
     </ClInclude>
-    <ClInclude Include="src\gba\gamepad.h">
-      <Filter>Header Files\gba</Filter>
-    </ClInclude>
-    <ClInclude Include="src\nds\gamepad.h">
-      <Filter>Header Files\nds</Filter>
-    </ClInclude>
     <ClInclude Include="src\common\gx_util.h">
       <Filter>Header Files\common</Filter>
     </ClInclude>
@@ -482,23 +311,11 @@
     <ClInclude Include="src\dmg\lcd.h">
       <Filter>Header Files\dmg</Filter>
     </ClInclude>
-    <ClInclude Include="src\nds\lcd.h">
-      <Filter>Header Files\nds</Filter>
-    </ClInclude>
     <ClInclude Include="src\sgb\lcd.h">
       <Filter>Header Files\sgb</Filter>
     </ClInclude>
-    <ClInclude Include="src\gba\lcd.h">
-      <Filter>Header Files\gba</Filter>
-    </ClInclude>
     <ClInclude Include="src\min\lcd.h">
       <Filter>Header Files\min</Filter>
-    </ClInclude>
-    <ClInclude Include="src\nds\lcd_data.h">
-      <Filter>Header Files\nds</Filter>
-    </ClInclude>
-    <ClInclude Include="src\gba\lcd_data.h">
-      <Filter>Header Files\gba</Filter>
     </ClInclude>
     <ClInclude Include="src\dmg\lcd_data.h">
       <Filter>Header Files\dmg</Filter>
@@ -509,14 +326,8 @@
     <ClInclude Include="src\min\mmu.h">
       <Filter>Header Files\min</Filter>
     </ClInclude>
-    <ClInclude Include="src\gba\mmu.h">
-      <Filter>Header Files\gba</Filter>
-    </ClInclude>
     <ClInclude Include="src\dmg\mmu.h">
       <Filter>Header Files\dmg</Filter>
-    </ClInclude>
-    <ClInclude Include="src\nds\mmu.h">
-      <Filter>Header Files\nds</Filter>
     </ClInclude>
     <ClInclude Include="src\qt\ogl_manager.h">
       <Filter>Header Files\qt</Filter>
@@ -530,26 +341,14 @@
     <ClInclude Include="src\min\s1c88.h">
       <Filter>Header Files\min</Filter>
     </ClInclude>
-    <ClInclude Include="src\gba\sio.h">
-      <Filter>Header Files\gba</Filter>
-    </ClInclude>
     <ClInclude Include="src\dmg\sio.h">
       <Filter>Header Files\dmg</Filter>
-    </ClInclude>
-    <ClInclude Include="src\gba\sio_data.h">
-      <Filter>Header Files\gba</Filter>
     </ClInclude>
     <ClInclude Include="src\dmg\sio_data.h">
       <Filter>Header Files\dmg</Filter>
     </ClInclude>
     <ClInclude Include="src\min\timer.h">
       <Filter>Header Files\min</Filter>
-    </ClInclude>
-    <ClInclude Include="src\gba\timer.h">
-      <Filter>Header Files\gba</Filter>
-    </ClInclude>
-    <ClInclude Include="src\nds\timer.h">
-      <Filter>Header Files\nds</Filter>
     </ClInclude>
     <ClInclude Include="src\common\util.h">
       <Filter>Header Files\common</Filter>
@@ -569,228 +368,6 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="src\data\zzh_db.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\behemoth.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\bicorn.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\bigfoot.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\blaze_dragon.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\blaze_dragon_berserker_mode.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\cait_sith.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\carbuncle.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\centaur.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\cerberus.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\chibi_shiron.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\chimaera.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\cloud_giant.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\colonel_blaze_dragon_volcano_soul.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\colonel_wind_dragon_tornado_soul.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\command_blaze_dragon.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\command_blaze_dragon_volk_armed.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\command_wind_dragon.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\command_wind_dragon_break_armed.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\cyclops.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\devour_crocodile.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\devour_crocodile_dandy.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\dwarf.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\earthquake_king_dragon.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\echidna.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\fenrir.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\fire_giant.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\gargoyle.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\giant_crab.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\goblin.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\golem.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\gorgon.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\griffin.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\harpy.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\hell_hound.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\hex_dragon.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\hydra.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\ifrit.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\iron_golem.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\jabberwock.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\kraken.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\leviathan.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\lich.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\manticore.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\mermaid.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\minotauros.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\nekrom_king_dragon.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\oberon.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\ogre.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\peryton.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\pheonix.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\ranshiin.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\scylla.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\skeleton.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\sphinx.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\spiritual_king_dragon.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\spiritual_wind_dragon.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\spriggan.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\storm_king_dragon.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\tiamat.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\titan.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\tornado_king_dragon.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\triton.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\troll.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\undine.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\valkyrie.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\vampire.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\volcano_king_dragon.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\werewolf.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\will_o_wisp.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\wind_dragon.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\wind_dragon_berserker_mode.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\wind_dragon_manga_version.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\wyvern.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\bin\soul_dollz\yeti.bin">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="src\data\cards\bcb\battle_space\battle_space_baasaakaa.bin">
@@ -920,9 +497,6 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="src\data\cards\hcv1000\oshare_majo\TH_02.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\fonts\block_font.bin">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="src\data\gbma\map.bin">

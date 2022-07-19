@@ -8,10 +8,8 @@
 //
 // This is main. It all begins here ;)
 
-#include "gba/core.h"
 #include "dmg/core.h"
 #include "sgb/core.h"
-#include "nds/core.h"
 #include "min/core.h"
 #include "common/config.h"
 
@@ -52,14 +50,8 @@ int main(int argc, char* args[])
 	//Get emulated system type from file
 	config::gb_type = get_system_type_from_file(config::rom_file);
 
-	//GBA core
-	if (config::gb_type == 3)
-	{
-		gbe_plus = new AGB_core();
-	}
-
 	//DMG-GBC core
-	else if ((config::gb_type >= 0) && (config::gb_type <= 2))
+	if ((config::gb_type >= 0) && (config::gb_type <= 2))
 	{
 		gbe_plus = new DMG_core();
 	}
@@ -76,11 +68,6 @@ int main(int argc, char* args[])
 		gbe_plus = new MIN_core();
 	}
 
-	//NDS core
-	else
-	{
-		gbe_plus = new NTR_core();
-	}
 
 	//Read BIOS file optionally
 	if (config::use_bios)

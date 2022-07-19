@@ -750,47 +750,8 @@ void main_menu::boot_game()
 	if(!cgfx::load_cgfx) { cgfx::scaling_factor = 1; }
 
 	//Start the appropiate system core - DMG, GBC, GBA, NDS, or MIN
-	if(config::gb_type == 3) 
-	{
-		base_width = 240;
-		base_height = 160;
 
-		main_menu::gbe_plus = new AGB_core();
-		resize((base_width * config::scaling_factor), (base_height * config::scaling_factor) + menu_height);
-		qt_gui::screen = new QImage(240, 160, QImage::Format_ARGB32);
-
-		//Resize drawing screens
-		if(config::use_opengl) { hw_screen->resize((base_width * config::scaling_factor), (base_height * config::scaling_factor)); }
-		else { sw_screen->resize((base_width * config::scaling_factor), (base_height * config::scaling_factor)); }
-
-		//Disable CGFX menu
-		findChild<QAction*>("custom_gfx_action")->setEnabled(false);
-
-		//Disable debugging menu
-		findChild<QAction*>("debugging_action")->setEnabled(false);
-	}
-
-	else if(config::gb_type == 4)
-	{
-		base_width = 256;
-		base_height = 384;
-
-		main_menu::gbe_plus = new NTR_core();
-		resize((base_width * config::scaling_factor), (base_height * config::scaling_factor) + menu_height);
-		qt_gui::screen = new QImage(256, 384, QImage::Format_ARGB32);
-
-		//Resize drawing screens
-		if(config::use_opengl) { hw_screen->resize((base_width * config::scaling_factor), (base_height * config::scaling_factor)); }
-		else { sw_screen->resize((base_width * config::scaling_factor), (base_height * config::scaling_factor)); }
-
-		//Disable CGFX menu
-		findChild<QAction*>("custom_gfx_action")->setEnabled(false);
-
-		//Disable debugging menu
-		findChild<QAction*>("debugging_action")->setEnabled(false);
-	}
-
-	else if(config::gb_type == 7) 
+	if(config::gb_type == 7) 
 	{
 		base_width = 96;
 		base_height = 64;
