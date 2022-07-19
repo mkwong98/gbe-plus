@@ -111,6 +111,7 @@ class AGB_SIO
 		std::vector <u8> net_data;
 		std::vector <std::string> srv_list_in;
 		std::vector <std::string> srv_list_out;
+		std::vector <u8> auth_list;
 		u32 packet_size;	
 		agb_mobile_state current_state;
 		std::string http_data;
@@ -127,6 +128,8 @@ class AGB_SIO
 		bool http_session_started;
 		bool smtp_session_started;
 		bool line_busy;
+		bool switch_mode;
+		bool s32_mode;
 	} mobile_adapter;
 
 	//Multi Plust On System
@@ -259,11 +262,15 @@ class AGB_SIO
 	void battle_chip_gate_process();
 	void net_gate_process();
 
-	void mobile_adapter_process();
+	void mobile_adapter_process_08();
+	void mobile_adapter_process_32();
+	void mobile_adapter_execute_command();
 	void mobile_adapter_process_pop();
 	void mobile_adapter_process_http();
 	void mobile_adapter_process_smtp();
 	bool mobile_adapter_load_server_list();
+	bool mobile_adapter_open_tcp(u16 port);
+	void mobile_adapter_close_tcp();
 
 	void mpos_process();
 	void mpos_generate_data();

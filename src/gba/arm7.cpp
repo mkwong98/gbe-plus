@@ -1566,13 +1566,28 @@ void ARM7::clock_emulated_sio_device()
 	switch(config::sio_device)
 	{
 		case 0x3:
-			if(controllers.serial_io.sio_stat.sio_mode == NORMAL_8BIT)
+			if((controllers.serial_io.sio_stat.sio_mode == NORMAL_8BIT) || (controllers.serial_io.sio_stat.sio_mode == NORMAL_32BIT))
 			{
 				//Reset Bit 7 in SIO_CNT
 				mem->memory_map[SIO_CNT] &= ~0x80;
 
-				//Process Mobile Adapter
-				controllers.serial_io.mobile_adapter_process();
+				//If the GBA switches over to 8-bit mode, force Mobile Adapter to do the same
+				if((controllers.serial_io.sio_stat.sio_mode == NORMAL_8BIT) && (controllers.serial_io.mobile_adapter.s32_mode))
+				{
+					controllers.serial_io.mobile_adapter.s32_mode = false;
+				}
+
+				//Process Mobile Adapter - 8-bit
+				if(!controllers.serial_io.mobile_adapter.s32_mode)
+				{
+					controllers.serial_io.mobile_adapter_process_08();
+				}
+
+				//Process Mobile Adapter - 32-bit
+				else
+				{
+					controllers.serial_io.mobile_adapter_process_32();
+				}
 			}
 
 			controllers.serial_io.sio_stat.emu_device_ready = false;

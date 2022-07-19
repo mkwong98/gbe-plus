@@ -49,6 +49,9 @@ enum special_cart_types
 	AGB_RUMBLE,
 	AGB_GYRO_SENSOR,
 	AGB_TILT_SENSOR,
+	AGB_8M_DACS,
+	AGB_AM3,
+	AGB_JUKEBOX,
 	NDS_IR_CART,
 };
 
@@ -60,6 +63,8 @@ enum gba_save_types
 	AGB_EEPROM,
 	AGB_FLASH64,
 	AGB_FLASH128,
+	AGB_DACS_FLASH,
+	AGB_JUKEBOX_CONFIG,
 };
 
 namespace config
@@ -167,6 +172,7 @@ namespace config
 	extern double sample_rate;
 	extern bool mute;
 	extern bool use_stereo;
+	extern bool use_microphone;
 	
 	extern u32 sys_width;
 	extern u32 sys_height;
@@ -180,6 +186,7 @@ namespace config
 	extern s8 resize_mode;
 	extern bool maintain_aspect_ratio;
 	extern u8 lcd_config;
+	extern u16 max_fps;
 
 	extern u32 DMG_BG_PAL[4];
 	extern u32 DMG_OBJ_PAL[4][2];
@@ -194,6 +201,10 @@ namespace config
 	extern u8 turbo_file_options;
 
 	extern u8 mw_data[6];
+
+	extern bool auto_gen_am3_id;
+
+	extern u32 jukebox_total_time;
 
 	extern bool use_osd;
 	extern std::vector <u32> osd_font;

@@ -26,6 +26,10 @@ class AGB_APU
 	agb_apu_data apu_stat;
 
 	SDL_AudioSpec desired_spec;
+	SDL_AudioSpec microphone_spec;
+
+	//Recording buffer for microphone input
+	std::vector<s16> mic_buffer;
 
 	AGB_APU();
 	~AGB_APU();
@@ -45,6 +49,7 @@ class AGB_APU
 	void generate_channel_4_samples(s16* stream, int length);
 	void generate_dma_a_samples(s16* stream, int length);
 	void generate_dma_b_samples(s16* stream, int length);
+	void generate_ext_audio_hi_samples(s16* stream, int length);
 
 	//Serialize data for save state loading/saving
 	bool apu_read(u32 offset, std::string filename);
@@ -54,5 +59,8 @@ class AGB_APU
 
 /****** SDL Audio Callback ******/ 
 void agb_audio_callback(void* _apu, u8 *_stream, int _length);
+
+/****** SDL Audio Callback - Microphone ******/ 
+void agb_microphone_callback(void* _apu, u8 *_stream, int _length);
 
 #endif // GBA_APU 

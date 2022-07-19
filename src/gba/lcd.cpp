@@ -51,6 +51,14 @@ void AGB_LCD::reset()
 	fps_count = 0;
 	fps_time = 0;
 
+	for(u32 x = 0; x < 60; x++)
+	{
+		u16 max = (config::max_fps) ? config::max_fps : 60;
+		double frame_1 = ((1000.0 / max) * x);
+		double frame_2 = ((1000.0 / max) * (x + 1));
+		frame_delay[x] = (std::round(frame_2) - std::round(frame_1));
+	}
+
 	current_scanline = 0;
 	scanline_pixel_counter = 0;
 
@@ -526,6 +534,9 @@ bool AGB_LCD::render_sprite_pixel()
 		//Check to see if current_scanline_pixel is within sprite
 		if((!obj[sprite_id].x_wrap) && ((scanline_pixel_counter < obj[sprite_id].left) || (scanline_pixel_counter > obj[sprite_id].right))) { continue; }
 		else if((obj[sprite_id].x_wrap) && ((scanline_pixel_counter > obj[sprite_id].right) && (scanline_pixel_counter < obj[sprite_id].left))) { continue; }
+
+		//For bitmap BG Modes 3-5, skip rendering tile numbers lower than 512
+		else if((lcd_stat.bg_mode >= 0x3) && (obj[sprite_id].tile_number < 512)) { continue; }
 
 		//Normal sprite rendering
 		if(!obj[sprite_id].affine_enable)
@@ -1029,12 +1040,12 @@ void AGB_LCD::render_scanline()
 			check_x = true;
 		}
 
-		if((lcd_stat.window_y1[0] <= lcd_stat.window_y2[0]) && (current_scanline >= lcd_stat.window_y1[0]) && (current_scanline <= lcd_stat.window_y2[0]))
+		if((lcd_stat.window_y1[0] <= lcd_stat.window_y2[0]) && (current_scanline >= lcd_stat.window_y1[0]) && (current_scanline < lcd_stat.window_y2[0]))
 		{
 			check_y = true;
 		}
 
-		else if((lcd_stat.window_y1[0] > lcd_stat.window_y2[0]) && ((current_scanline >= lcd_stat.window_y1[0]) || (current_scanline <= lcd_stat.window_y2[0])))
+		else if((lcd_stat.window_y1[0] > lcd_stat.window_y2[0]) && ((current_scanline >= lcd_stat.window_y1[0]) || (current_scanline < lcd_stat.window_y2[0])))
 		{
 			check_y = true;
 		}
@@ -1058,12 +1069,12 @@ void AGB_LCD::render_scanline()
 			check_x = true;
 		}
 
-		if((lcd_stat.window_y1[1] <= lcd_stat.window_y2[1]) && (current_scanline >= lcd_stat.window_y1[1]) && (current_scanline <= lcd_stat.window_y2[1]))
+		if((lcd_stat.window_y1[1] <= lcd_stat.window_y2[1]) && (current_scanline >= lcd_stat.window_y1[1]) && (current_scanline < lcd_stat.window_y2[1]))
 		{
 			check_y = true;
 		}
 
-		else if((lcd_stat.window_y1[1] > lcd_stat.window_y2[1]) && ((current_scanline >= lcd_stat.window_y1[1]) || (current_scanline <= lcd_stat.window_y2[1])))
+		else if((lcd_stat.window_y1[1] > lcd_stat.window_y2[1]) && ((current_scanline >= lcd_stat.window_y1[1]) || (current_scanline < lcd_stat.window_y2[1])))
 		{
 			check_y = true;
 		}
@@ -1573,6 +1584,9 @@ void AGB_LCD::step()
 			//Update subscreen per frame
 			if(mem->sub_screen_update) { mem->sub_screen_lock = false; }
 
+			//Jukebox
+			if((config::cart_type == AGB_JUKEBOX) && (mem->jukebox.progress)) { mem->process_jukebox(); }
+
 			//Use SDL
 			if(config::sdl_render)
 			{
@@ -1666,7 +1680,8 @@ void AGB_LCD::step()
 			if(!config::turbo)
 			{
 				frame_current_time = SDL_GetTicks();
-				if((frame_current_time - frame_start_time) < 16) { SDL_Delay(16 - (frame_current_time - frame_start_time));}
+				int delay = frame_delay[fps_count % 60];
+				if((frame_current_time - frame_start_time) < delay) { SDL_Delay(delay - (frame_current_time - frame_start_time));}
 				frame_start_time = SDL_GetTicks();
 			}
 

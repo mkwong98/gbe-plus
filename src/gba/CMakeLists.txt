@@ -15,6 +15,8 @@ set(SRCS
 	cheats.cpp
 	sio.cpp
 	gbma.cpp
+	jukebox.cpp
+	am3.cpp
 	)
 
 set(HEADERS

@@ -9,6 +9,8 @@
 // Draws background, window, and sprites to screen
 // Responsible for blitting pixel data and limiting frame rate
 
+#include <cmath>
+
 #include "lcd.h"
 #include "common/cgfx_common.h"
 #include "common/util.h"
@@ -51,6 +53,14 @@ void SGB_LCD::reset()
 	frame_current_time = 0;
 	fps_count = 0;
 	fps_time = 0;
+
+	for(u32 x = 0; x < 60; x++)
+	{
+		u16 max = (config::max_fps) ? config::max_fps : 60;
+		double frame_1 = ((1000.0 / max) * x);
+		double frame_2 = ((1000.0 / max) * (x + 1));
+		frame_delay[x] = (std::round(frame_2) - std::round(frame_1));
+	}
 
 	//Initialize various LCD status variables
 	lcd_stat.lcd_control = 0;
@@ -1025,7 +1035,8 @@ void SGB_LCD::step(int cpu_clock)
 				if(!config::turbo)
 				{
 					frame_current_time = SDL_GetTicks();
-					if((frame_current_time - frame_start_time) < 16) { SDL_Delay(16 - (frame_current_time - frame_start_time));}
+					int delay = frame_delay[fps_count % 60];
+					if((frame_current_time - frame_start_time) < delay) { SDL_Delay(delay - (frame_current_time - frame_start_time));}
 					frame_start_time = SDL_GetTicks();
 				}
 

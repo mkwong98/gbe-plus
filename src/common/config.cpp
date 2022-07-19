@@ -159,6 +159,9 @@ namespace config
 	//LCD configuration (NDS primarily)
 	u8 lcd_config = 0;
 
+	//Max FPS
+	u16 max_fps = 0;
+
 	//Sound parameters
 	u8 volume = 128;
 	u8 old_volume = 0;
@@ -166,6 +169,7 @@ namespace config
 	double sample_rate = 44100.0;
 	bool mute = false;
 	bool use_stereo = false;
+	bool use_microphone = false;
 
 	//Virtual Cursor parameters for NDS
 	bool vc_enable = false;
@@ -230,6 +234,12 @@ namespace config
 
 	//Magical Watch Data
 	u8 mw_data[6] = { 0, 0, 0, 0, 0, 0 };
+
+	//AM3 SmartMedia ID Auto Generate Flag
+	bool auto_gen_am3_id = false;
+
+	//Total time (in seconds) for Jukebox recording
+	u32 jukebox_total_time = 0;
 
 	//On-screen display settings
 	bool use_osd = false;
@@ -557,7 +567,14 @@ void validate_system_type()
 {
 	if(config::rom_file.empty()) { return; }
 	if((config::rom_file == "NOCART") || config::no_cart) { return; }
-	if((config::rom_file == "-h") || (config::rom_file == "--help")) { config::cli_args.push_back(config::rom_file); return; } 
+	if((config::rom_file == "-h") || (config::rom_file == "--help")) { config::cli_args.push_back(config::rom_file); return; }
+
+	//When loading AM3 files, force system type to GBA
+	if(config::cart_type == AGB_AM3)
+	{
+		config::gb_type = 3;
+		return;
+	}
 
 	//Determine Gameboy type based on file name
 	//Note, DMG and GBC games are automatically detected in the Gameboy MMU, so only check for GBA types here
@@ -596,6 +613,13 @@ u8 get_system_type_from_file(std::string filename)
 	if(filename == "NOCART")
 	{
 		config::no_cart = true;
+		return config::gb_type;
+	}
+
+	//When loading AM3 files, force system type to GBA
+	if(config::cart_type == AGB_AM3)
+	{
+		config::gb_type = 3;
 		return config::gb_type;
 	}
 
@@ -721,6 +745,19 @@ bool parse_cli_args()
 				}
 			}
 
+			//Set maximum FPS
+			else if((config::cli_args[x] == "-mf") || (config::cli_args[x] == "--max-fps"))
+			{
+				if((++x) == config::cli_args.size()) { std::cout<<"GBE::Error - No maximum framerate set\n"; }
+
+				else
+				{
+					u32 output = 0;
+					util::from_str(config::cli_args[x], output);
+					config::max_fps = output;
+				}
+			}
+
 			//Enable fullscreen mode
 			else if((config::cli_args[x] == "-f") || (config::cli_args[x] == "--fullscreen")) { config::flags |= SDL_WINDOW_FULLSCREEN_DESKTOP; } 
 
@@ -753,6 +790,15 @@ bool parse_cli_args()
 
 			//Use GBA tilt sensor for Yoshi Topsy Turvy aka Universal Gravitation
 			else if(config::cli_args[x] == "--agb-tilt-sensor") { config::cart_type = AGB_TILT_SENSOR; }
+
+			//Use GBA 8M DACS for Hikaru no Go 3
+			else if(config::cli_args[x] == "--agb-dacs") { config::cart_type = AGB_8M_DACS; }
+
+			//Use GBA AM3 mapper
+			else if(config::cli_args[x] == "--agb-am3") { config::cart_type = AGB_AM3; }
+
+			//Use GBA Music Recorder mapper
+			else if(config::cli_args[x] == "--agb-jukebox") { config::cart_type = AGB_JUKEBOX; }
 
 			//Use Auto-Detect for GBA saves
 			else if(config::cli_args[x] == "--save-auto") { config::agb_save_type = AGB_AUTO_DETECT; }
@@ -837,6 +883,9 @@ bool parse_cli_args()
 			//Ignore Illegal Opcodes
 			else if(config::cli_args[x] == "--ignore-illegal-opcodes") { config::ignore_illegal_opcodes = true; }
 
+			//Auto Generate AM3 SmartMedia ID
+			else if(config::cli_args[x] == "--auto-gen-smid") { config::auto_gen_am3_id = true; }
+
 			//Print Help
 			else if((config::cli_args[x] == "-h") || (config::cli_args[x] == "--help")) 
 			{
@@ -857,6 +906,9 @@ bool parse_cli_args()
 				std::cout<<"--agb-rumble \t\t\t\t Use GBA Rumble cart\n";
 				std::cout<<"--agb-gyro-sensor \t\t\t Use GBA Gyro Sensor cart\n";
 				std::cout<<"--agb-tilt-sensor \t\t\t Use GBA Tilt Sensor cart\n";
+				std::cout<<"--agb-dacs \t\t\t Use GBA 8M DACS Flash cart\n";
+				std::cout<<"--agb-am3 \t\t\t Use GBA AM3 SmartCard adapter cart\n";
+				std::cout<<"--agb-jukebox \t\t\t Use GBA Music Recorder/Jukebox cart\n";
 				std::cout<<"--opengl \t\t\t\t Use OpenGL for screen drawing and scaling\n";
 				std::cout<<"--cheats \t\t\t\t Use Gameshark or Game Genie cheats\n";
 				std::cout<<"--patch \t\t\t\t Use a patch file for the ROM\n";
@@ -868,6 +920,7 @@ bool parse_cli_args()
 				std::cout<<"--sys-nds \t\t\t\t Set the emulated system type to NDS\n";
 				std::cout<<"--sys-sgb \t\t\t\t Set the emulated system type to SGB\n";
 				std::cout<<"--sys-sgb2 \t\t\t\t Set the emulated system type to SGB2\n";
+				std::cout<<"--sys-min \t\t\t\t Set the emulated system type to MIN\n";
 				std::cout<<"--save-auto \t\t\t\t Set the GBA save type to Auto Detect\n";
 				std::cout<<"--save-none \t\t\t\t Disables all GBA saves\n";
 				std::cout<<"--save-sram \t\t\t\t Force the GBA save type to SRAM\n";
@@ -876,6 +929,8 @@ bool parse_cli_args()
 				std::cout<<"--save-flash128 \t\t\t Force the GBA save type to FLASH 128KB\n";
 				std::cout<<"--turbo-file-memcard \t\t\t Enable memory card for Turbo File\n";
 				std::cout<<"--turbo-file-protect \t\t\t Enable write-proection for Turbo File\n";
+				std::cout<<"--ignore-illegal-opcodes \t\t\t Ignore Illegal CPU instructions when running\n";
+				std::cout<<"--auto-gen-smid \t\t\t\t Automatically generate 16-byte SmartMedia ID for AM3\n";
 				std::cout<<"-h, --help \t\t\t\t Print these help messages\n";
 				return false;
 			}
@@ -1515,6 +1570,23 @@ bool parse_ini_file()
 			else { config::vertex_shader = config::data_path + "shaders/vertex.vs"; }
 		}
 
+		//Max FPS
+		else if(ini_item == "#max_fps")
+		{
+			if((x + 1) < size)
+			{
+				util::from_str(ini_opts[++x], output);
+
+				if(output <= 65535) { config::max_fps = output; }
+			}
+
+			else 
+			{
+				std::cout<<"GBE::Error - Could not parse gbe.ini (#max_fps) \n";
+				return false;
+			}
+		}
+
 		//Use gamepad dead zone
 		else if(ini_item == "#dead_zone")
 		{
@@ -1597,6 +1669,23 @@ bool parse_ini_file()
 			else 
 			{
 				std::cout<<"GBE::Error - Could not parse gbe.ini (#use_stereo) \n";
+				return false;
+			}
+		}
+
+		//Enable microphone
+		else if(ini_item == "#use_microphone")
+		{
+			if((x + 1) < size)
+			{
+				util::from_str(ini_opts[++x], output);
+
+				if((output >= 0) && (output <= 1)) { config::use_microphone = output; }
+			}
+
+			else 
+			{
+				std::cout<<"GBE::Error - Could not parse gbe.ini (#use_microphone) \n";
 				return false;
 			}
 		}
@@ -2497,6 +2586,23 @@ bool parse_ini_file()
 			}
 		}
 
+		//Total time for GBA Jukebox recording
+		else if(ini_item == "#jukebox_total_time")
+		{
+			if((x + 1) < size)
+			{
+				util::from_str(ini_opts[++x], output);
+
+				config::jukebox_total_time = output;
+			}
+
+			else 
+			{
+				std::cout<<"GBE::Error - Could not parse gbe.ini (#jukebox_total_time) \n";
+				return false;
+			}
+		}
+
 		//Recent files
 		else if(ini_item == "#recent_files")
 		{
@@ -2872,6 +2978,15 @@ bool save_ini_file()
 			output_lines[line_pos] = "[#use_stereo:" + val + "]";
 		}
 
+		//Enable microphone
+		else if(ini_item == "#use_microphone")
+		{
+			line_pos = output_count[x];
+			std::string val = (config::use_microphone) ? "1" : "0";
+
+			output_lines[line_pos] = "[#use_microphone:" + val + "]";
+		}
+
 		//Sample rate
 		else if(ini_item == "#sample_rate")
 		{
@@ -2972,6 +3087,14 @@ bool save_ini_file()
 			else if(config::vertex_shader == (config::data_path + "shaders/invert_x.vs")) { config::vertex_shader = "invert_x.vs"; }
 
 			output_lines[line_pos] = "[#vertex_shader:'" + config::vertex_shader + "']";
+		}
+
+		//Max FPS
+		else if(ini_item == "#max_fps")
+		{
+			line_pos = output_count[x];
+
+			output_lines[line_pos] = "[#max_fps:" + util::to_str(config::max_fps) + "]";
 		}
 
 		//Keyboard controls
@@ -3284,6 +3407,14 @@ bool save_ini_file()
 			std::string val = util::to_str(config::vc_timeout);
 
 			output_lines[line_pos] = "[#virtual_cursor_timeout:" + val + "]";
+		}
+
+		//Total time for GBA Jukebox
+		else if(ini_item == "#jukebox_total_time")
+		{
+			line_pos = output_count[x];
+
+			output_lines[line_pos] = "[#jukebox_total_time:" + util::to_str(config::jukebox_total_time) + "]";
 		}
 
 		else if(ini_item == "#recent_files")

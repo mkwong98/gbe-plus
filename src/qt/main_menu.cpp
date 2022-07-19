@@ -295,7 +295,7 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 	QDialogButtonBox* about_button = new QDialogButtonBox(QDialogButtonBox::Close);
 	connect(about_button->button(QDialogButtonBox::Close), SIGNAL(clicked()), about_box, SLOT(close()));
 
-	QLabel* emu_title = new QLabel("GBE+ 1.5");
+	QLabel* emu_title = new QLabel("GBE+ 1.6");
 	QFont font = emu_title->font();
 	font.setPointSize(18);
 	font.setBold(true);
@@ -353,7 +353,7 @@ void main_menu::open_file()
 
 	if(config::cli_args.empty())
 	{
-		QString filename = QFileDialog::getOpenFileName(this, tr("Open"), "", tr("GBx/NDS/MIN files (*.gb *.gbc *.gba *.nds *.min)"));
+		QString filename = QFileDialog::getOpenFileName(this, tr("Open"), "", tr("GBx/NDS/MIN/AM3 files (*.gb *.gbc *.gba *.nds *.min *.am3)"));
 		if(filename.isNull()) { SDL_PauseAudio(0); return; }
 
 		config::rom_file = filename.toStdString();
@@ -604,6 +604,14 @@ void main_menu::boot_game()
 		return;
 	}
 
+	if((system_type == 7) && (!config::use_bios))
+	{
+		std::string mesg_text = "A BIOS file must be used when booting the Pokemon Mini core\n";
+		warning_box->setText(QString::fromStdString(mesg_text));
+		warning_box->show();
+		return;
+	}
+
 	if(!test_file.exists() && config::use_bios)
 	{
 		std::string mesg_text;
@@ -692,7 +700,10 @@ void main_menu::boot_game()
 		case 0x8: config::cart_type = AGB_RUMBLE; break;
 		case 0x9: config::cart_type = AGB_GYRO_SENSOR; break;
 		case 0xA: config::cart_type = AGB_TILT_SENSOR; break;
-		case 0xB: config::cart_type = NDS_IR_CART; break;
+		case 0xB: config::cart_type = AGB_8M_DACS; break;
+		case 0xC: config::cart_type = AGB_AM3; break;
+		case 0xD: config::cart_type = AGB_JUKEBOX; break;
+		case 0xE: config::cart_type = NDS_IR_CART; break;
 	}
 
 	//Check rumble status
@@ -729,6 +740,9 @@ void main_menu::boot_game()
 		else { config::gba_enhance = false; }
 
 		if((config::gb_type == 5) || (config::gb_type == 6)) { config::gb_type = get_system_type_from_file(config::rom_file); }
+
+		//Force GBA system type for AM3 emulation
+		if(config::cart_type == AGB_AM3) { config::gb_type = 3; }
 	}
 
 	//Determine CGFX scaling factor

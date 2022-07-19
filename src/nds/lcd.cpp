@@ -66,6 +66,14 @@ void NTR_LCD::reset()
 	fps_count = 0;
 	fps_time = 0;
 
+	for(u32 x = 0; x < 60; x++)
+	{
+		u16 max = (config::max_fps) ? config::max_fps : 60;
+		double frame_1 = ((1000.0 / max) * x);
+		double frame_2 = ((1000.0 / max) * (x + 1));
+		frame_delay[x] = (std::round(frame_2) - std::round(frame_1));
+	}
+
 	lcd_stat.current_scanline = 0;
 	scanline_pixel_counter = 0;
 
@@ -1360,7 +1368,6 @@ void NTR_LCD::render_obj_scanline(u32 bg_control)
 	for(int x = 0; x < obj_render_length; x++)
 	{
 		obj_id = engine_id ? obj_render_list_b[x] : obj_render_list_a[x];
-		pal_id = obj[obj_id].palette_number;
 
 		//Determine whether or not extended palettes are necessary
 		if((!engine_id) && (lcd_stat.ext_pal_a & 0x2) && (obj[obj_id].bit_depth == 8)) { ext_pal = true; }
@@ -1372,6 +1379,7 @@ void NTR_LCD::render_obj_scanline(u32 bg_control)
 			if(obj[obj_id].bit_depth == 8) { pal_id = 0; }
 		}
 
+		pal_id = (ext_pal) ? (obj[obj_id].palette_number << 8) : (obj[obj_id].palette_number << 4);
 		
 		//Check to see if OBJ is even onscreen
 		if((obj[obj_id].left < 256) || (obj[obj_id].right < 256))
@@ -1481,7 +1489,7 @@ void NTR_LCD::render_obj_scanline(u32 bg_control)
 							obj_addr += (((obj_y % 8) * 8) + (obj_x % 8)) >> pixel_shift; 
 						}
 
-						raw_color = mem->read_u8(obj_addr);
+						raw_color = mem->memory_map[obj_addr];
 
 						//Process 4-bit depth if necessary
 						if((bit_depth == 32) && (!ext_pal)) { raw_color = (obj_x & 0x1) ? (raw_color >> 4) : (raw_color & 0xF); }
@@ -1489,7 +1497,7 @@ void NTR_LCD::render_obj_scanline(u32 bg_control)
 						//Draw for Engine A
 						if(!engine_id && raw_color && !render_buffer_a[scanline_pixel_counter] && render_obj)
 						{
-							scanline_buffer_a[scanline_pixel_counter] = (ext_pal) ? lcd_stat.obj_ext_pal_a[(pal_id * 256) + raw_color] : lcd_stat.obj_pal_a[(pal_id * 16) + raw_color];
+							scanline_buffer_a[scanline_pixel_counter] = (ext_pal) ? lcd_stat.obj_ext_pal_a[pal_id + raw_color] : lcd_stat.obj_pal_a[pal_id + raw_color];
 							render_buffer_a[scanline_pixel_counter] = (obj[obj_id].bg_priority + 1);
 							obj_line_buffer[obj[obj_id].bg_priority][scanline_pixel_counter] = scanline_buffer_a[scanline_pixel_counter];
 						}
@@ -1497,7 +1505,7 @@ void NTR_LCD::render_obj_scanline(u32 bg_control)
 						//Draw for Engine B
 						else if(engine_id && raw_color && !render_buffer_b[scanline_pixel_counter] && render_obj)
 						{
-							scanline_buffer_b[scanline_pixel_counter] = (ext_pal) ? lcd_stat.obj_ext_pal_b[(pal_id * 256) + raw_color] : lcd_stat.obj_pal_b[(pal_id * 16) + raw_color];
+							scanline_buffer_b[scanline_pixel_counter] = (ext_pal) ? lcd_stat.obj_ext_pal_b[pal_id + raw_color] : lcd_stat.obj_pal_b[pal_id + raw_color];
 							render_buffer_b[scanline_pixel_counter] = (obj[obj_id].bg_priority + 1);
 							obj_line_buffer[obj[obj_id].bg_priority][scanline_pixel_counter] = scanline_buffer_b[scanline_pixel_counter];
 						}
@@ -1530,7 +1538,7 @@ void NTR_LCD::render_obj_scanline(u32 bg_control)
 							obj_addr += ((obj_x % 8) << 1) + ((obj_y % 8) << obj_shift);
 						}
 
-						raw_pixel = mem->read_u16(obj_addr);
+						raw_pixel = mem->read_u16_fast(obj_addr);
 
 						//Draw for Engine A
 						if(!engine_id && (raw_pixel & 0x8000) && !render_buffer_a[scanline_pixel_counter] && render_obj)
@@ -1671,13 +1679,14 @@ void NTR_LCD::render_bg_mode_text(u32 bg_control)
 			map_entry += (current_screen_pixel >> 3);
 
 			//Pull map data from current map entry
-			u16 map_data = mem->read_u16(map_addr + (map_entry << 1));
+			u16 map_data = mem->read_u16_fast(map_addr + (map_entry << 1));
 
 			//Get tile, palette number, and flipping parameters
 			tile_id = (map_data & 0x3FF);
 			pal_id = (map_data >> 12) & 0xF;
 			ext_pal_id = (slot << 12) + (pal_id << 8);
 			flip = (map_data >> 10) & 0x3;
+			pal_id <<= 4;
 
 			//Calculate VRAM address to start pulling up tile data
 			line_offset = (flip & 0x2) ? ((bit_depth >> 3) * inv_lut[current_tile_line]) : ((bit_depth >> 3) * current_tile_line);
@@ -1691,7 +1700,7 @@ void NTR_LCD::render_bg_mode_text(u32 bg_control)
 				if(bit_depth == 64)
 				{
 					//Grab dot-data, account for horizontal flipping 
-					u8 raw_color = (flip & 0x1) ? mem->read_u8(tile_data_addr--) : mem->read_u8(tile_data_addr++);
+					u8 raw_color = (flip & 0x1) ? mem->memory_map[tile_data_addr--] : mem->memory_map[tile_data_addr++];
 
 					//Only draw if no previous pixel was rendered
 					if(!render_buffer_a[scanline_pixel_counter] || (bg_priority < render_buffer_a[scanline_pixel_counter]))
@@ -1720,10 +1729,10 @@ void NTR_LCD::render_bg_mode_text(u32 bg_control)
 				else
 				{
 					//Grab dot-data, account for horizontal flipping 
-					u8 raw_color = (flip & 0x1) ? mem->read_u8(tile_data_addr--) : mem->read_u8(tile_data_addr++);
+					u8 raw_color = (flip & 0x1) ? mem->memory_map[tile_data_addr--] : mem->memory_map[tile_data_addr++];
 
-					u8 pal_1 = (flip & 0x1) ? ((pal_id * 16) + (raw_color >> 4)) : ((pal_id * 16) + (raw_color & 0xF));
-					u8 pal_2 = (flip & 0x1) ? ((pal_id * 16) + (raw_color & 0xF)) : ((pal_id * 16) + (raw_color >> 4));
+					u8 pal_1 = (flip & 0x1) ? (pal_id + (raw_color >> 4)) : (pal_id + (raw_color & 0xF));
+					u8 pal_2 = (flip & 0x1) ? (pal_id + (raw_color & 0xF)) : (pal_id + (raw_color >> 4));
 
 					//Only draw if no previous pixel was rendered
 					if(!render_buffer_a[scanline_pixel_counter] || (bg_priority < render_buffer_a[scanline_pixel_counter]))
@@ -1743,8 +1752,7 @@ void NTR_LCD::render_bg_mode_text(u32 bg_control)
 					if((raw_color & 0xF) && (window_draw[scanline_pixel_counter]) && (enable)) { line_buffer[bg_id + 4][scanline_pixel_counter] |= 1; }
 
 					//Draw 256 pixels max
-					scanline_pixel_counter++;
-					if(scanline_pixel_counter & 0x100) { return; }
+					if(++scanline_pixel_counter & 0x100) { return; }
 
 					//Only draw if no previous pixel was rendered
 					if(!render_buffer_a[scanline_pixel_counter] || (bg_priority < render_buffer_a[scanline_pixel_counter]))
@@ -1765,8 +1773,7 @@ void NTR_LCD::render_bg_mode_text(u32 bg_control)
 					if((raw_color >> 4) && (window_draw[scanline_pixel_counter]) && (enable)) { line_buffer[bg_id + 4][scanline_pixel_counter] |= 1; }
 
 					//Draw 256 pixels max
-					scanline_pixel_counter++;
-					if(scanline_pixel_counter & 0x100) { return; }
+					if(++scanline_pixel_counter & 0x100) { return; }
 
 					current_screen_pixel += 2;
 					y++;
@@ -1884,13 +1891,14 @@ void NTR_LCD::render_bg_mode_text(u32 bg_control)
 			map_entry += (current_screen_pixel >> 3);
 
 			//Pull map data from current map entry
-			u16 map_data = mem->read_u16(map_addr + (map_entry << 1));
+			u16 map_data = mem->read_u16_fast(map_addr + (map_entry << 1));
 
 			//Get tile, palette number, and flipping parameters
 			tile_id = (map_data & 0x3FF);
 			pal_id = (map_data >> 12) & 0xF;
 			ext_pal_id = (slot << 12) + (pal_id << 8);
 			flip = (map_data >> 10) & 0x3;
+			pal_id <<= 3;
 
 			//Calculate VRAM address to start pulling up tile data
 			line_offset = (flip & 0x2) ? ((bit_depth >> 3) * inv_lut[current_tile_line]) : ((bit_depth >> 3) * current_tile_line);
@@ -1904,7 +1912,7 @@ void NTR_LCD::render_bg_mode_text(u32 bg_control)
 				if(bit_depth == 64)
 				{
 					//Grab dot-data, account for horizontal flipping 
-					u8 raw_color = (flip & 0x1) ? mem->read_u8(tile_data_addr--) : mem->read_u8(tile_data_addr++);
+					u8 raw_color = (flip & 0x1) ? mem->memory_map[tile_data_addr--] : mem->memory_map[tile_data_addr++];
 
 					//Only draw if no previous pixel was rendered
 					if(!render_buffer_b[scanline_pixel_counter] || (bg_priority < render_buffer_b[scanline_pixel_counter]))
@@ -1933,10 +1941,10 @@ void NTR_LCD::render_bg_mode_text(u32 bg_control)
 				else
 				{
 					//Grab dot-data, account for horizontal flipping 
-					u8 raw_color = (flip & 0x1) ? mem->read_u8(tile_data_addr--) : mem->read_u8(tile_data_addr++);
+					u8 raw_color = (flip & 0x1) ? mem->memory_map[tile_data_addr--] : mem->memory_map[tile_data_addr++];
 
-					u8 pal_1 = (flip & 0x1) ? ((pal_id * 16) + (raw_color >> 4)) : ((pal_id * 16) + (raw_color & 0xF));
-					u8 pal_2 = (flip & 0x1) ? ((pal_id * 16) + (raw_color & 0xF)) : ((pal_id * 16) + (raw_color >> 4));
+					u8 pal_1 = (flip & 0x1) ? (pal_id + (raw_color >> 4)) : (pal_id + (raw_color & 0xF));
+					u8 pal_2 = (flip & 0x1) ? (pal_id + (raw_color & 0xF)) : (pal_id + (raw_color >> 4));
 
 					//Only draw if no previous pixel was rendered
 					if(!render_buffer_b[scanline_pixel_counter] || (bg_priority < render_buffer_b[scanline_pixel_counter]))
@@ -1956,8 +1964,7 @@ void NTR_LCD::render_bg_mode_text(u32 bg_control)
 					if((raw_color & 0xF) && (window_draw[scanline_pixel_counter]) && (enable)) { line_buffer[bg_id + 4][scanline_pixel_counter] |= 1; }
 
 					//Draw 256 pixels max
-					scanline_pixel_counter++;
-					if(scanline_pixel_counter & 0x100) { return; }
+					if(++scanline_pixel_counter & 0x100) { return; }
 
 					//Only draw if no previous pixel was rendered
 					if(!render_buffer_b[scanline_pixel_counter] || (bg_priority < render_buffer_b[scanline_pixel_counter]))
@@ -1977,8 +1984,7 @@ void NTR_LCD::render_bg_mode_text(u32 bg_control)
 					if((raw_color >> 4) && (window_draw[scanline_pixel_counter]) && (enable)) { line_buffer[bg_id + 4][scanline_pixel_counter] |= 1; }
 
 					//Draw 256 pixels max
-					scanline_pixel_counter++;
-					if(scanline_pixel_counter & 0x100) { return; }
+					if(++scanline_pixel_counter & 0x100) { return; }
 
 					current_screen_pixel += 2;
 					y++;
@@ -2361,7 +2367,7 @@ void NTR_LCD::render_bg_mode_affine_ext(u32 bg_control)
 					u16 tile_number = ((src_y / 8) * bg_tile_size) + (src_x / 8);
 
 					//Look at the Tile Map #(tile_number), see what Tile # it points to
-					u16 map_entry = mem->read_u16(map_base + (tile_number << 1));
+					u16 map_entry = mem->read_u16_fast(map_base + (tile_number << 1));
 
 					//Grab flipping attributes
 					flip = (map_entry >> 10) & 0x3;
@@ -2508,7 +2514,7 @@ void NTR_LCD::render_bg_mode_affine_ext(u32 bg_control)
 					u16 tile_number = ((src_y / 8) * bg_tile_size) + (src_x / 8);
 
 					//Look at the Tile Map #(tile_number), see what Tile # it points to
-					u16 map_entry = mem->read_u16(map_base + (tile_number << 1));
+					u16 map_entry = mem->read_u16_fast(map_base + (tile_number << 1));
 
 					//Grab flipping attributes
 					flip = (map_entry >> 10) & 0x3;
@@ -2921,7 +2927,7 @@ void NTR_LCD::render_bg_mode_direct(u32 bg_control)
 					src_x = new_x;
 					src_y = new_y;
 
-					raw_color = mem->read_u16(bitmap_addr + (((src_y * bg_pixel_width) + src_x) * 2));
+					raw_color = mem->read_u16_fast(bitmap_addr + (((src_y * bg_pixel_width) + src_x) * 2));
 			
 					//Convert 16-bit ARGB to 32-bit ARGB - Bit 15 is alpha transparency
 					if(raw_color & 0x8000)
@@ -3046,7 +3052,7 @@ void NTR_LCD::render_bg_mode_direct(u32 bg_control)
 					src_x = new_x;
 					src_y = new_y;
 
-					raw_color = mem->read_u16(bitmap_addr + (((src_y * bg_pixel_width) + src_x) * 2));
+					raw_color = mem->read_u16_fast(bitmap_addr + (((src_y * bg_pixel_width) + src_x) * 2));
 			
 					//Convert 16-bit ARGB to 32-bit ARGB - Bit 15 is alpha transparency
 					if(raw_color & 0x8000)
@@ -3813,12 +3819,12 @@ void NTR_LCD::calculate_window_on_scanline()
 					check_x = true;
 				}
 
-				if((lcd_stat.window_y_a[win_id][0] <= lcd_stat.window_y_a[win_id][1]) && (line >= lcd_stat.window_y_a[win_id][0]) && (line <= lcd_stat.window_y_a[win_id][1]))
+				if((lcd_stat.window_y_a[win_id][0] <= lcd_stat.window_y_a[win_id][1]) && (line >= lcd_stat.window_y_a[win_id][0]) && (line < lcd_stat.window_y_a[win_id][1]))
 				{
 					check_y = true;
 				}
 
-				else if((lcd_stat.window_y_a[win_id][0] > lcd_stat.window_y_a[win_id][1]) && ((line >= lcd_stat.window_y_a[win_id][0]) || (line <= lcd_stat.window_y_a[win_id][1])))
+				else if((lcd_stat.window_y_a[win_id][0] > lcd_stat.window_y_a[win_id][1]) && ((line >= lcd_stat.window_y_a[win_id][0]) || (line < lcd_stat.window_y_a[win_id][1])))
 				{
 					check_y = true;
 				}
@@ -3868,12 +3874,12 @@ void NTR_LCD::calculate_window_on_scanline()
 					check_x = true;
 				}
 
-				if((lcd_stat.window_y_b[win_id][0] <= lcd_stat.window_y_b[win_id][1]) && (line >= lcd_stat.window_y_b[win_id][0]) && (line <= lcd_stat.window_y_b[win_id][1]))
+				if((lcd_stat.window_y_b[win_id][0] <= lcd_stat.window_y_b[win_id][1]) && (line >= lcd_stat.window_y_b[win_id][0]) && (line < lcd_stat.window_y_b[win_id][1]))
 				{
 					check_y = true;
 				}
 
-				else if((lcd_stat.window_y_b[win_id][0] > lcd_stat.window_y_b[win_id][1]) && ((line >= lcd_stat.window_y_b[win_id][0]) || (line <= lcd_stat.window_y_b[win_id][1])))
+				else if((lcd_stat.window_y_b[win_id][0] > lcd_stat.window_y_b[win_id][1]) && ((line >= lcd_stat.window_y_b[win_id][0]) || (line < lcd_stat.window_y_b[win_id][1])))
 				{
 					check_y = true;
 				}
@@ -4176,7 +4182,8 @@ void NTR_LCD::step()
 			if(!config::turbo)
 			{
 				frame_current_time = SDL_GetTicks();
-				if((frame_current_time - frame_start_time) < 16) { SDL_Delay(16 - (frame_current_time - frame_start_time));}
+				int delay = frame_delay[fps_count % 60];
+				if((frame_current_time - frame_start_time) < delay) { SDL_Delay(delay - (frame_current_time - frame_start_time));}
 				frame_start_time = SDL_GetTicks();
 			}
 

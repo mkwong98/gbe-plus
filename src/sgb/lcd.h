@@ -95,6 +95,7 @@ class SGB_LCD
 	int frame_current_time;
 	int fps_count;
 	int fps_time;
+	int frame_delay[60];
 
 	//SGB stuff
 	u8 sgb_mask_mode;

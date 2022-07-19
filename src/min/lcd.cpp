@@ -60,6 +60,14 @@ void MIN_LCD::reset()
 	fps_count = 0;
 	fps_time = 0;
 
+	for(u32 x = 0; x < 72; x++)
+	{
+		u16 max = (config::max_fps) ? config::max_fps : 72;
+		double frame_1 = ((1000.0 / max) * x);
+		double frame_2 = ((1000.0 / max) * (x + 1));
+		frame_delay[x] = (std::round(frame_2) - std::round(frame_1));
+	}
+
 	//Define LCD ON, OFF, and mixed colors for all contrast levels
 	float r1 = 255.0 / 31.0;
 	float r2 = 255.0 / 63.0;
@@ -254,7 +262,8 @@ void MIN_LCD::update()
 	if(!config::turbo)
 	{
 		frame_current_time = SDL_GetTicks();
-		if((frame_current_time - frame_start_time) < 14) { SDL_Delay(14 - (frame_current_time - frame_start_time));}
+		int delay = frame_delay[fps_count % 72];
+		if((frame_current_time - frame_start_time) < delay) { SDL_Delay(delay - (frame_current_time - frame_start_time));}
 		frame_start_time = SDL_GetTicks();
 	}
 

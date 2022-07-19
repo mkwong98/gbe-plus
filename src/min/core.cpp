@@ -395,7 +395,6 @@ void MIN_core::handle_hotkey(SDL_Event& event)
 	else if((event.type == SDL_KEYUP) && (event.key.keysym.sym == config::hotkey_turbo))
 	{
 		config::turbo = false;
-		if((config::sdl_render) && (config::use_opengl)) { SDL_GL_SetSwapInterval(1); }
 	}
 		
 	//Reset emulation on F8
@@ -445,6 +444,55 @@ void MIN_core::handle_hotkey(SDL_Event& event)
 			config::osd_count = 180;
 		}
 	}
+
+	//Toggle Fullscreen on F12
+	else if((event.type == SDL_KEYDOWN) && (event.key.keysym.sym == SDLK_F12))
+	{
+		//Unset fullscreen
+		if(config::flags & SDL_WINDOW_FULLSCREEN_DESKTOP)
+		{
+			config::flags &= ~SDL_WINDOW_FULLSCREEN_DESKTOP;
+			config::scaling_factor = config::old_scaling_factor;
+		}
+
+		//Set fullscreen
+		else
+		{
+			config::flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+			config::old_scaling_factor = config::scaling_factor;
+		}
+
+		//Destroy old window
+		SDL_DestroyWindow(core_cpu.controllers.video.window);
+
+		//Initialize new window - SDL
+		if(!config::use_opengl)
+		{
+			core_cpu.controllers.video.window = SDL_CreateWindow("GBE+", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, config::sys_width, config::sys_height, config::flags);
+			core_cpu.controllers.video.final_screen = SDL_GetWindowSurface(core_cpu.controllers.video.window);
+			SDL_GetWindowSize(core_cpu.controllers.video.window, &config::win_width, &config::win_height);
+
+			//Find the maximum fullscreen dimensions that maintain the original aspect ratio
+			if(config::flags & SDL_WINDOW_FULLSCREEN_DESKTOP)
+			{
+				double max_width, max_height, ratio = 0.0;
+
+				max_width = (double)config::win_width / config::sys_width;
+				max_height = (double)config::win_height / config::sys_height;
+
+				if(max_width <= max_height) { ratio = max_width; }
+				else { ratio = max_height; }
+
+				core_cpu.controllers.video.max_fullscreen_ratio = ratio;
+			}
+		}
+
+		//Initialize new window - OpenGL
+		else
+		{
+			core_cpu.controllers.video.opengl_init();
+		}
+	}
 }
 
 /****** Process hotkey input - Use exsternally when not using SDL ******/
@@ -455,6 +503,50 @@ void MIN_core::handle_hotkey(int input, bool pressed)
 
 	//Toggle turbo off
 	else if((input == config::hotkey_turbo) && (!pressed)) { config::turbo = false; }
+
+	//Switch current netplay connection on F3 
+	else if((input == SDLK_F3) && (core_mmu.ir_stat.sync_timeout == 0) && (pressed))
+	{
+		core_mmu.ir_stat.network_id++;
+		if(core_mmu.ir_stat.network_id >= 6) { core_mmu.ir_stat.network_id = 0; }
+		
+		core_mmu.ir_stat.sync_balance = 4;
+
+		//OSD
+		if(core_mmu.ir_stat.network_id != config::netplay_id)
+		{
+			config::osd_message = "P" + util::to_str(core_mmu.ir_stat.network_id + 1) + " LINKED";
+		}
+
+		else
+		{
+			config::osd_message = "NO LINK";
+		}
+
+		config::osd_count = 180;
+	}
+
+	//Change between static and dynamic IR linking modes on F10
+	else if((input == SDLK_F10) && (pressed)) 
+	{
+		if(!core_mmu.ir_stat.static_mode)
+		{
+			core_mmu.ir_stat.static_mode = true;
+
+			//OSD
+			config::osd_message = "STATIC MODE";
+			config::osd_count = 180;
+		}
+
+		else
+		{
+			core_mmu.ir_stat.static_mode = false;
+
+			//OSD
+			config::osd_message = "DYNAMIC MODE";
+			config::osd_count = 180;
+		}
+	}
 }
 
 /****** Processs any keypad IRQs that need to fire after user input ******/

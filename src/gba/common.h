@@ -176,4 +176,28 @@ const u32 FLASH_RAM_SECD = 0xE00D000;
 const u32 FLASH_RAM_SECE = 0xE00E000;
 const u32 FLASH_RAM_SECF = 0xE00F000;
 
+/* AM3 IO */
+const u32 AM_BLK_ADDR = 0x8010400;
+const u32 AM_BLK_SIZE = 0x8010408;
+const u32 AM_BLK_STAT = 0x8010420;
+
+const u32 AM_SMC_OFFS = 0x8010404;
+const u32 AM_SMC_SIZE = 0x801040A;
+const u32 AM_SMC_FILE = 0x801040C;
+const u32 AM_SMC_EOF = 0x801040E;
+
+const u32 AM_FILE_SIZE = 0x8010410;
+
+/* Jukebox IO */
+const u32 JB_REG_00 = 0xB000000;
+const u32 JB_REG_02 = 0xB020000;
+const u32 JB_REG_04 = 0xB040000;
+const u32 JB_REG_06 = 0xB060000;
+const u32 JB_REG_08 = 0xB080000;
+const u32 JB_REG_0A = 0xB0A0000;
+const u32 JB_REG_0C = 0xB0C0000;
+const u32 JB_REG_0E = 0xB0E0000;
+const u32 JB_REG_10 = 0xB100000;
+const u32 JB_REG_12 = 0xB120000;
+
 #endif // GBA_COMMON

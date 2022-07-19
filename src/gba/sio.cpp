@@ -337,6 +337,7 @@ void AGB_SIO::reset()
 	mobile_adapter.current_state = AGB_GBMA_AWAITING_PACKET;
 	mobile_adapter.srv_list_in.clear();
 	mobile_adapter.srv_list_out.clear();
+	mobile_adapter.auth_list.clear();
 
 	mobile_adapter.command = 0;
 	mobile_adapter.data_length = 0;
@@ -349,6 +350,8 @@ void AGB_SIO::reset()
 	mobile_adapter.pop_session_started = false;
 	mobile_adapter.http_session_started = false;
 	mobile_adapter.smtp_session_started = false;
+	mobile_adapter.switch_mode = false;
+	mobile_adapter.s32_mode = false;
 	mobile_adapter.http_data = "";
 
 	//Multi Plust On System

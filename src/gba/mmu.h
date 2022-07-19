@@ -34,7 +34,9 @@ class AGB_MMU
 		EEPROM,
 		FLASH_64,
 		FLASH_128,
-		SRAM
+		SRAM,
+		DACS,
+		JUKEBOX_CONFIG,
 	};
 
 	//Cartridge GPIO-type enumerations
@@ -97,6 +99,86 @@ class AGB_MMU
 		bool next_write;
 	} flash_ram;
 
+	//Structure to handle 8M DACS FLASH commands and writing
+	struct dacs_flash_controller
+	{
+		u8 current_command;
+		u8 status_register;
+	} dacs_flash;
+
+	//Structure to handle AM3 SmartMedia cards
+	struct am3_smart_media
+	{
+		bool read_sm_card;
+		bool read_key;
+
+		u8 op_delay;
+		u32 transfer_delay;
+		u32 base_addr;
+
+		u16 blk_stat;
+		u16 blk_size;
+		u32 blk_addr;
+
+		u32 smc_offset;
+		u32 last_offset;
+		u16 smc_size;
+		u16 smc_base;
+
+		u16 file_index;
+		u32 file_count;
+		u32 file_size;
+		std::vector<u32> file_size_list;
+		std::vector<u32> file_addr_list;
+
+		u16 remaining_size;
+		std::vector<u8> smid;
+
+		std::vector<u8> firmware_data;
+		std::vector<u8> card_data;
+	} am3;
+
+	//Structure to handle GBA Jukebox/Music Recorder
+	struct jukebox_cart
+	{
+		std::vector<u16> io_regs;
+		u16 status;
+		u16 config;
+		u16 io_index;
+		u8 current_category;
+		u8 current_frame;
+		u16 file_limit;
+		u32 progress;
+		u32 remaining_recording_time;
+		u32 remaining_playback_time;
+		u32 current_recording_time;
+		bool format_compact_flash;
+		bool is_recording;
+
+		u8 out_hi;
+		u8 out_lo;
+
+		u16 current_file;
+		u16 last_music_file;
+		u16 last_voice_file;
+		u16 last_karaoke_file;
+
+		std::vector<std::string> music_files;
+		std::vector<std::string> voice_files;
+		std::vector<std::string> karaoke_files;
+
+		std::vector<std::string> music_titles;
+		std::vector<std::string> music_artists;
+
+		std::vector<u16> music_times;
+		std::vector<u16> voice_times;
+		std::vector<u16> karaoke_times;
+
+		std::string recorded_file;
+
+		u32 spectrum_values[9];
+	} jukebox;
+
 	//Structure to handle GPIO reading and writing
 	struct gpio_controller
 	{
@@ -157,6 +239,8 @@ class AGB_MMU
 
 	bool read_file(std::string filename);
 	bool read_bios(std::string filename);
+	bool read_am3_firmware(std::string filename);
+	bool read_smid(std::string filename);
 	bool save_backup(std::string filename);
 	bool load_backup(std::string filename);
 
@@ -170,6 +254,23 @@ class AGB_MMU
 	void flash_erase_chip();
 	void flash_erase_sector(u32 sector);
 	void flash_switch_bank();
+
+	u8 read_dacs(u32 address);
+	void write_dacs(u32 address, u8 value);
+
+	void am3_reset();
+	void write_am3(u32 address, u8 value);
+	bool check_am3_fat();
+
+	void jukebox_reset();
+	void write_jukebox(u32 address, u8 value);
+	bool read_jukebox_file_list(std::string filename, u8 category);
+	bool jukebox_delete_file();
+	bool jukebox_save_recording();
+	void jukebox_set_file_info();
+	void jukebox_update_metadata();
+	bool jukebox_load_audio(std::string filename);
+	void process_jukebox();
 
 	//GPIO handling functions
 	void process_rtc();

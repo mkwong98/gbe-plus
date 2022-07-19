@@ -48,6 +48,15 @@ void AGB_MMU::reset()
 	flash_ram.data[0].resize(0x10000, 0xFF);
 	flash_ram.data[1].resize(0x10000, 0xFF);
 
+	dacs_flash.current_command = 0;
+	dacs_flash.status_register = 0x80;
+
+	//Reset AM3 data structure
+	am3_reset();
+
+	//Reset Jukebox data structure
+	jukebox_reset();
+
 	gpio.data = 0;
 	gpio.prev_data = 0;
 	gpio.direction = 0;
@@ -191,6 +200,12 @@ u8 AGB_MMU::read_u8(u32 address)
 		//ROM Waitstate 1 (mirror of Waitstate 0)
 		case 0xA:
 		case 0xB:
+			if(config::cart_type == AGB_JUKEBOX)
+			{
+				if(address == JB_REG_0C) { return jukebox.out_hi; }
+				else if(address == JB_REG_0E) { return jukebox.out_lo; }
+			}
+
 			address -= 0x2000000;
 			break;
 
@@ -200,6 +215,7 @@ u8 AGB_MMU::read_u8(u32 address)
 			break;
 
 		case 0xD:
+			if(current_save_type == DACS) { return read_dacs(address); }
 			if(current_save_type != EEPROM) { address -= 0x4000000; }
 			break;
 
@@ -345,6 +361,160 @@ u8 AGB_MMU::read_u8(u32 address)
 			else { return memory_map[GPIO_CNT]; }
 			break;
 
+		//AM3 Block Size
+		case AM_BLK_SIZE: return (config::cart_type == AGB_AM3) ? (am3.blk_size & 0xFF) : memory_map[address]; break;
+		case AM_BLK_SIZE+1: return (config::cart_type == AGB_AM3) ? ((am3.blk_size >> 8) & 0xFF) : memory_map[address]; break;
+
+		//AM3 Block Addr
+		case AM_BLK_ADDR: return (config::cart_type == AGB_AM3) ? (am3.blk_addr & 0xFF) : memory_map[address]; break;
+		case AM_BLK_ADDR+1: return (config::cart_type == AGB_AM3) ? ((am3.blk_addr >> 8) & 0xFF) : memory_map[address]; break;
+		case AM_BLK_ADDR+2: return (config::cart_type == AGB_AM3) ? ((am3.blk_addr >> 16) & 0xFF) : memory_map[address]; break;
+		case AM_BLK_ADDR+3: return (config::cart_type == AGB_AM3) ? ((am3.blk_addr >> 24) & 0xFF) : memory_map[address]; break;
+
+		//AM3 Remaining File Size Until EOF
+		case AM_SMC_EOF: return (config::cart_type == AGB_AM3) ? (am3.remaining_size & 0xFF) : memory_map[address]; break;
+		case AM_SMC_EOF+1: return (config::cart_type == AGB_AM3) ? ((am3.remaining_size >> 8) & 0xFF) : memory_map[address]; break;
+
+		//AM3 File Size / SmartMedia ID Bytes 0 - 3
+		case AM_FILE_SIZE:
+			if(config::cart_type == AGB_AM3) { return (am3.read_key) ? am3.smid[0] : (am3.file_size & 0xFF); }
+			return memory_map[address];
+
+		case AM_FILE_SIZE+1:
+			if(config::cart_type == AGB_AM3) { return (am3.read_key) ? am3.smid[1] : ((am3.file_size >> 8) & 0xFF); }
+			return memory_map[address];
+
+		case AM_FILE_SIZE+2:
+			if(config::cart_type == AGB_AM3) { return (am3.read_key) ? am3.smid[2] : ((am3.file_size >> 16) & 0xFF); }
+			return memory_map[address];
+
+		case AM_FILE_SIZE+3:
+			if(config::cart_type == AGB_AM3) { return (am3.read_key) ? am3.smid[3] : ((am3.file_size >> 24) & 0xFF); }
+			return memory_map[address];
+
+		//SmartMedia ID Bytes 4 - 15
+		case AM_FILE_SIZE+4:
+		case AM_FILE_SIZE+5:
+		case AM_FILE_SIZE+6:
+		case AM_FILE_SIZE+7:
+		case AM_FILE_SIZE+8:
+		case AM_FILE_SIZE+9:
+		case AM_FILE_SIZE+10:
+		case AM_FILE_SIZE+11:
+		case AM_FILE_SIZE+12:
+		case AM_FILE_SIZE+13:
+		case AM_FILE_SIZE+14:
+		case AM_FILE_SIZE+15:
+			if(config::cart_type == AGB_AM3) { return (am3.read_key) ? am3.smid[address - AM_FILE_SIZE] : 0; }
+			return memory_map[address];
+
+		//AM3 SmartMedia Card Offset
+		case AM_SMC_OFFS: return (config::cart_type == AGB_AM3) ? (am3.smc_offset & 0xFF) : memory_map[address]; break;
+		case AM_SMC_OFFS+1: return (config::cart_type == AGB_AM3) ? ((am3.smc_offset >> 8) & 0xFF) : memory_map[address]; break;
+		case AM_SMC_OFFS+2: return (config::cart_type == AGB_AM3) ? ((am3.smc_offset >> 16) & 0xFF) : memory_map[address]; break;
+		case AM_SMC_OFFS+3: return (config::cart_type == AGB_AM3) ? ((am3.smc_offset >> 24) & 0xFF) : memory_map[address]; break;
+
+		//AM3 SmartMedia Card Block Size
+		case AM_SMC_SIZE: return (config::cart_type == AGB_AM3) ? (am3.smc_size & 0xFF) : memory_map[address]; break;
+		case AM_SMC_SIZE+1: return (config::cart_type == AGB_AM3) ? ((am3.smc_size >> 8) & 0xFF) : memory_map[address]; break;
+
+		//AM3 Block Status
+		case AM_BLK_STAT:
+			return (config::cart_type == AGB_AM3) ? (am3.blk_stat & 0xFF) : memory_map[address];
+			break;
+
+		//AM3 Block Status
+		case AM_BLK_STAT+1:
+			if(config::cart_type == AGB_AM3)
+			{
+				//Delay operation (and update AM_BLK_STAT if necessary) - Based on CPU reads in GBE+ instead of execution time
+				if(am3.op_delay)
+				{
+					am3.op_delay--;
+
+					//Update AM_BLK_STAT - AM3 I/O ready to write
+					if((am3.blk_stat == 0x0B) && (am3.op_delay == 1))
+					{
+						am3.blk_stat |= 0x4000;
+						write_u16_fast(AM_BLK_STAT,  am3.blk_stat);
+					}
+
+					//Perform operation after delays
+					else if(am3.op_delay == 0)
+					{
+						//Read 1KB from firmware
+						if(((am3.blk_stat & 0xFF) == 0x09) && (!am3.read_sm_card))
+						{
+							//Copy data blocks from firmware
+							for(u32 x = 0; x < 0x400; x++)
+							{
+								memory_map[0x8000000 + x] = am3.firmware_data[am3.base_addr++];
+							}
+
+							//Set flag when all firmware blocks have been read
+							if(am3.base_addr >= am3.firmware_data.size()) { am3.blk_stat = 0x100; }
+							else { am3.blk_stat = 0; }
+
+							write_u16_fast(AM_BLK_STAT,  am3.blk_stat);
+						}
+
+						//Finish AM3 I/O Write
+						else if((am3.blk_stat & 0xFF) == 0x0B)
+						{
+							am3.blk_stat = 0;
+							write_u16_fast(AM_BLK_STAT,  am3.blk_stat);
+						}
+
+						//Update current value of FILE_SIZE
+						else if((am3.blk_stat & 0xFF) == 0x05)
+						{
+							am3.file_size = am3.file_size_list[am3.file_index];
+							am3.blk_stat = 0;
+							am3.read_key = false;
+							write_u16_fast(AM_BLK_STAT,  am3.blk_stat);
+						}
+
+						//Switch to DES Key Reading mode
+						else if((am3.blk_stat & 0xFF) == 0x03)
+						{
+							am3.blk_stat = 0;
+							am3.read_key = true;
+							write_u16_fast(AM_BLK_STAT,  am3.blk_stat);
+						}
+
+						//Read 1KB from SmartMedia card
+						else if(((am3.blk_stat & 0xFF) == 0x01) && (am3.read_sm_card))
+						{
+							u32 end_addr = am3.file_addr_list[am3.file_index] + am3.file_size_list[am3.file_index];
+							s32 diff_addr = end_addr - am3.base_addr;
+
+							//Update the remaining file size value after reading a block
+							if((diff_addr < am3.smc_size) && (diff_addr > 0)) { am3.remaining_size = diff_addr; }
+							else { am3.remaining_size = am3.smc_size; } 
+
+							//Copy data blocks from SmartMedia
+							for(u32 x = 0; x < am3.smc_size; x++)
+							{
+								memory_map[0x8000000 + x] = am3.card_data[am3.base_addr++];
+							}
+
+							//Raise Bit 8 if AM_BLK_STAT if reading past current file size
+							if(am3.base_addr > end_addr)
+							{
+								am3.blk_stat = 0x100;
+								am3.base_addr = am3.file_addr_list[am3.file_index];
+							}
+
+							am3.blk_stat = 0;
+							write_u16_fast(AM_BLK_STAT,  am3.blk_stat);
+						}
+					}
+				}
+			}
+
+			return ((am3.blk_stat >> 8) & 0xFF);
+			break;
+
 		default:
 			return memory_map[address];
 	}
@@ -390,7 +560,6 @@ void AGB_MMU::write_u8(u32 address, u8 value)
 		case 0x1:
 		case 0x4:
 		case 0x6:
-		case 0x8:
 		case 0x9:
 			break;
 
@@ -414,9 +583,15 @@ void AGB_MMU::write_u8(u32 address, u8 value)
 			address &= 0x7007FFF;
 			break;
 
+		//ROM Waitstate 0
+		case 0x8:
+			if(config::cart_type == AGB_AM3) { write_am3(address, value); }
+			break;
+
 		//ROM Waitstate 1 (mirror of Waitstate 0)
 		case 0xA:
 		case 0xB:
+			if(config::cart_type == AGB_JUKEBOX) { write_jukebox(address, value); }
 			address -= 0x2000000;
 			break;
 
@@ -426,6 +601,7 @@ void AGB_MMU::write_u8(u32 address, u8 value)
 			break;
 
 		case 0xD:
+			if(current_save_type == DACS) { write_dacs(address, value); }
 			if(current_save_type != EEPROM) { address -= 0x4000000; }
 			break;
 
@@ -2023,8 +2199,48 @@ bool AGB_MMU::read_file(std::string filename)
 
 	u8* ex_mem = &memory_map[0x8000000];
 
+	//For AM3 SmartMedia card dumps, only read 1st 1KB
+	//Also, forcibly disable saves for this type of cart
+	if(config::cart_type == AGB_AM3)
+	{
+		//Read firmware file first
+		std::string firm_file = config::data_path + "am3_firmware.bin";
+		if(!read_am3_firmware(firm_file))
+		{
+			file.close();
+			return false;
+		}
+
+		//Next read 16-byte SmartMedia ID from file
+		std::string smid_file = filename + ".smid";
+		if((!read_smid(smid_file)) && (!config::auto_gen_am3_id))
+		{
+			file.close();
+			return false;
+		}
+
+		//Read in all cart data for AM3 first
+		am3.card_data.clear();
+		am3.card_data.resize(file_size, 0x00);
+
+		u8* am_mem = &am3.card_data[0];
+		file.read((char*)am_mem, file_size);
+		file.seekg(0, file.beg);
+
+		//Check the FAT to grab
+		if(!check_am3_fat())
+		{
+			std::cout<<"MMU::Error - AM3 SmartMedia card data has bad File Allocation Table\n";
+			file.close();
+			return false;
+		}
+
+		file_size = 0x400;
+		config::agb_save_type = AGB_NO_SAVE;	
+	}		
+
 	//Read data from the ROM file
-	file.read((char*)ex_mem, file_size);
+	else { file.read((char*)ex_mem, file_size); }
 
 	file.close();
 
@@ -2105,13 +2321,36 @@ bool AGB_MMU::read_file(std::string filename)
 
 	std::string backup_file = filename + ".sav";
 
+	//For GBA Jukebox/Music Recorder, only read 1 byte configuration data
+	//Also forcibly set save type now
+	if(config::cart_type == AGB_JUKEBOX)
+	{
+		std::cout<<"MMU::Jukebox Config Data save type detected\n";
+		config::agb_save_type == AGB_JUKEBOX_CONFIG;
+		current_save_type = JUKEBOX_CONFIG;
+		load_backup(backup_file);
+		return true;
+	}
+
 	//Try to auto-detect save-type, if any
-	if(config::agb_save_type == AGB_AUTO_DETECT)
+	else if(config::agb_save_type == AGB_AUTO_DETECT)
 	{
 		for(u32 x = 0x8000000; x < (0x8000000 + file_size); x+=1)
 		{
 			switch(memory_map[x])
 			{
+				//8M DACS
+				case 0x41:
+					if((memory_map[x+1] == 0x47) && (memory_map[x+2] == 0x42) && (memory_map[x+3] == 0x38) && (memory_map[x+4] == 0x4D))
+					{
+						std::cout<<"MMU::8M DACS FLASH save type detected\n";
+						current_save_type = DACS;
+						config::save_file = filename;
+						return true;
+					}
+
+					break;
+
 				//EEPROM
 				case 0x45:
 					if((memory_map[x+1] == 0x45) && (memory_map[x+2] == 0x50) && (memory_map[x+3] == 0x52) && (memory_map[x+4] == 0x4F) && (memory_map[x+5] == 0x4D))
@@ -2175,6 +2414,12 @@ bool AGB_MMU::read_file(std::string filename)
 	//Otherwise, use specified save type
 	switch(config::agb_save_type)
 	{
+		case AGB_DACS_FLASH:
+			std::cout<<"MMU::Forcing 8M DACS FLASH save type\n";
+			current_save_type = DACS;
+			config::save_file = filename;
+			return true;
+
 		case AGB_SRAM:
 			std::cout<<"MMU::Forcing SRAM save type\n";
 			current_save_type = SRAM;
@@ -2357,6 +2602,36 @@ bool AGB_MMU::load_backup(std::string filename)
 		}
 	}
 
+	//Load Jukebox Config data
+	else if(current_save_type == JUKEBOX_CONFIG)
+	{
+		if(file_size < 0x10)
+		{
+			std::cout<<"MMU::Warning - Jukebox Config Data save size too small\n";
+			file.close();
+			return false;
+		}
+
+		//Read data from file
+		file.read(reinterpret_cast<char*> (&save_data[0]), file_size);
+
+		//Write data to Jukebox Config data at index 0x1C8
+		jukebox.config = (save_data[1] << 8) | save_data[0];
+
+		//Write last files selected for each audio category
+		jukebox.last_music_file = (save_data[3] << 8) | save_data[2];
+		jukebox.last_voice_file = (save_data[5] << 8) | save_data[4];
+		jukebox.last_karaoke_file = (save_data[7] << 8) | save_data[6];
+
+		jukebox.io_regs[0x0088] = (save_data[9] << 8) | save_data[8];
+		jukebox.io_regs[0x008A] = (save_data[11] << 8) | save_data[10];
+		jukebox.io_regs[0x008C] = (save_data[13] << 8) | save_data[12];
+		jukebox.io_regs[0x009B] = (save_data[15] << 8) | save_data[14];
+
+		jukebox.current_file = jukebox.last_music_file;
+		jukebox.io_regs[0x00A0] = jukebox.last_music_file;
+	}
+
 	file.close();
 
 	std::cout<<"MMU::Loaded save data file " << filename <<  "\n";
@@ -2462,7 +2737,6 @@ bool AGB_MMU::save_backup(std::string filename)
 			return false;
 		}
 
-
 		//Grab data from 0xE000000 to 0xE00FFFF from FLASH RAM
 		for(u32 x = 0; x < 0x10000; x++)
 		{
@@ -2480,6 +2754,69 @@ bool AGB_MMU::save_backup(std::string filename)
 
 		std::cout<<"MMU::Wrote save data file " << filename <<  "\n";
 	}
+
+	//Save 8M DACS FLASH
+	else if(current_save_type == DACS)
+	{
+		std::ofstream file(filename.c_str(), std::ios::binary);
+
+		if(!file.is_open()) 
+		{
+			std::cout<<"MMU::" << filename << " save data could not be written. Check file path or permissions. \n";
+			return false;
+		}
+
+		//Write the data to a file
+		file.write(reinterpret_cast<char*> (&memory_map[0x8000000]), 0x2000000);
+		file.close();
+
+		std::cout<<"MMU::Updated 8M DACS FLASH file " << filename <<  "\n";
+	}
+
+	//Save Jukebox Config data
+	else if(current_save_type == JUKEBOX_CONFIG)
+	{
+		std::ofstream file(filename.c_str(), std::ios::binary);
+
+		if(!file.is_open()) 
+		{
+			std::cout<<"MMU::" << filename << " save data could not be written. Check file path or permissions. \n";
+			return false;
+		}
+
+		//Write the data to a file
+		u8 cfg_data[16];
+
+		cfg_data[0] = jukebox.config & 0xFF;
+		cfg_data[1] = (jukebox.config >> 8) & 0xFF;
+
+		cfg_data[2] = jukebox.last_music_file & 0xFF;
+		cfg_data[3] = (jukebox.last_music_file >> 8) & 0xFF;
+
+		cfg_data[4] = jukebox.last_voice_file & 0xFF;
+		cfg_data[5] = (jukebox.last_voice_file >> 8) & 0xFF;
+
+		cfg_data[6] = jukebox.last_karaoke_file & 0xFF;
+		cfg_data[7] = (jukebox.last_karaoke_file >> 8) & 0xFF;
+
+		cfg_data[8] = jukebox.io_regs[0x88] & 0xFF;
+		cfg_data[9] = (jukebox.io_regs[0x88] >> 8) & 0xFF;
+
+		cfg_data[10] = jukebox.io_regs[0x8A] & 0xFF;
+		cfg_data[11] = (jukebox.io_regs[0x8A] >> 8) & 0xFF;
+
+		cfg_data[12] = jukebox.io_regs[0x8C] & 0xFF;
+		cfg_data[13] = (jukebox.io_regs[0x8C] >> 8) & 0xFF;
+
+		cfg_data[14] = jukebox.io_regs[0x9B] & 0xFF;
+		cfg_data[15] = (jukebox.io_regs[0x9B] >> 8) & 0xFF;
+
+		file.write(reinterpret_cast<char*> (&cfg_data[0]), 0x10);
+		file.close();
+
+		std::cout<<"MMU::Wrote save data " << filename <<  "\n";
+	}
+
 
 	return true;
 }
@@ -2639,6 +2976,99 @@ void AGB_MMU::flash_erase_sector(u32 sector)
 	}
 }
 
+/****** Read 8-bit data from 8M DACS FLASH cartridge or its commands ******/
+u8 AGB_MMU::read_dacs(u32 address)
+{
+	//Determine if CPU is reading results of a FLASH command
+	if(dacs_flash.current_command)
+	{
+		switch(dacs_flash.current_command)
+		{
+			//Read FLASH IDS + Lock Bits
+			case 0x90:
+				if((address & 0xFFF) <= 0x07) { return 0; }
+				break;
+
+			//Read Status Register
+			default:
+				if((address & 0xFFF) == 0xAAA) { return dacs_flash.status_register;; }
+				else if((address & 0xFFF) == 0xAAB) { return 0; }
+		}
+	}
+
+	//Read from DACS as ROM
+	address -= 0x4000000;
+	return memory_map[address];
+}
+
+/****** Write 8-bit data to 8M DACS FLASH cartridge and send commands ******/
+void AGB_MMU::write_dacs(u32 address, u8 value)
+{
+	bool do_command = true;
+
+	//Determine if CPU is sending a command/parameter
+	if((address & 0xFFF) == 0xAAA)
+	{
+		do_command = false;
+
+		//Set Lock Bit Parameter
+		if((dacs_flash.current_command == 0x60) && ((value == 0x1) || (value == 0x77) || (value == 0xD0))) { dacs_flash.current_command = 0x60; }
+
+		//Block Erase
+		else if((dacs_flash.current_command == 0x20) && (value == 0xD0)) { dacs_flash.current_command = 0x20; }
+	
+		//Clear current command on reset
+		else if(value == 0xFF) { dacs_flash.current_command = 0; }
+
+		//Otherwise set new current command
+		else { dacs_flash.current_command = value; }
+	}
+
+	else if((address & 0xFFF) == 0xAAB) { do_command = false; }
+
+	//Accept command for specific blocks
+	else if((address & 0xFFF) == 0x000)
+	{
+		do_command = false;
+
+		//Set Lock Bit Parameter
+		if((dacs_flash.current_command == 0x60) && ((value == 0x1) || (value == 0x77) || (value == 0xD0))) { dacs_flash.current_command = 0x60; }
+
+		//Block Erase
+		else if((dacs_flash.current_command == 0x20) && (value == 0xD0))
+		{
+			dacs_flash.current_command = 0x20;
+			do_command = true;
+		}
+
+		//Otherwise set new current command
+		else if((value == 0x60) || (value == 0x20)) { dacs_flash.current_command = value; }
+	}
+
+	//Process existing command if necessary
+	if(do_command)
+	{
+		switch(dacs_flash.current_command)
+		{
+			//Write data to 8M DACS FLASH
+			case 0x10:
+			case 0x40:
+				address -= 0x4000000;
+				memory_map[address] = value;
+
+				break;
+
+			//Block Erase 8KB
+			case 0x20:
+				address -= 0x4000000;
+				address &= ~0x1FFF;
+				for(u32 x = 0; x < 0x2000; x++) { memory_map[address++] = 0; }
+
+				break;
+		}
+	}
+}
+
 /****** Continually processes motion in specialty carts (for use by other components outside MMU like LCD) ******/
 void AGB_MMU::process_motion()
 {
@@ -2783,9 +3213,10 @@ void AGB_MMU::process_sio()
 		//Start transfer
 		if((sio_stat->player_id == 0) && (!sio_stat->active_transfer) && (sio_stat->internal_clock) && (sio_stat->cnt & 0x80))
 		{
+			//Initiate transfer to Mobile Adapter GB
 			//Initiate transfer to emulated Battle Chip Gate
 			//Initiate transfer to emulated GBA Wireless Adapter
-			if((sio_stat->sio_type == GBA_BATTLE_CHIP_GATE) || (sio_stat->sio_type == GBA_WIRELESS_ADAPTER))
+			if((sio_stat->sio_type == GBA_MOBILE_ADAPTER) || (sio_stat->sio_type == GBA_BATTLE_CHIP_GATE) || (sio_stat->sio_type == GBA_WIRELESS_ADAPTER))
 			{
 				sio_stat->transfer_data = read_u32_fast(SIO_DATA_32_L);
 				sio_stat->emu_device_ready = true;
@@ -3212,6 +3643,31 @@ bool AGB_MMU::mmu_read(u32 offset, std::string filename)
 	file.read((char*)&flash_ram.data[0][0], 0x10000);
 	file.read((char*)&flash_ram.data[1][0], 0x10000);
 
+	//Serialize AM3 data from save state
+	if(config::cart_type == AGB_AM3)
+	{
+		file.read((char*)&am3.read_sm_card, sizeof(am3.read_sm_card));
+		file.read((char*)&am3.read_key, sizeof(am3.read_key));
+		file.read((char*)&am3.op_delay, sizeof(am3.op_delay));
+		file.read((char*)&am3.transfer_delay, sizeof(am3.transfer_delay));
+		file.read((char*)&am3.base_addr, sizeof(am3.base_addr));
+		file.read((char*)&am3.blk_stat, sizeof(am3.blk_stat));
+		file.read((char*)&am3.blk_size, sizeof(am3.blk_size));
+		file.read((char*)&am3.blk_addr, sizeof(am3.blk_addr));
+		file.read((char*)&am3.smc_offset, sizeof(am3.smc_offset));
+		file.read((char*)&am3.last_offset, sizeof(am3.last_offset));
+		file.read((char*)&am3.smc_size, sizeof(am3.smc_size));
+		file.read((char*)&am3.smc_base, sizeof(am3.smc_base));
+		file.read((char*)&am3.file_index, sizeof(am3.file_index));
+		file.read((char*)&am3.file_count, sizeof(am3.file_count));
+		file.read((char*)&am3.file_size, sizeof(am3.file_size));
+		file.read((char*)&am3.remaining_size, sizeof(am3.remaining_size));
+		file.read((char*)&am3.file_size_list[0], (sizeof(u32) * am3.file_size_list.size()));
+		file.read((char*)&am3.file_addr_list[0], (sizeof(u32) * am3.file_addr_list.size()));
+		file.read((char*)&am3.smid[0], 0x10);
+		file.read((char*)&memory_map[0x8000000], 0x400);
+	}
+
 	file.close();
 	return true;
 }
@@ -3280,6 +3736,31 @@ bool AGB_MMU::mmu_write(std::string filename)
 	file.write((char*)&flash_ram.data[0][0], 0x10000);
 	file.write((char*)&flash_ram.data[1][0], 0x10000);
 
+	//Serialize AM3 data to save state
+	if(config::cart_type == AGB_AM3)
+	{ 
+		file.write((char*)&am3.read_sm_card, sizeof(am3.read_sm_card));
+		file.write((char*)&am3.read_key, sizeof(am3.read_key));
+		file.write((char*)&am3.op_delay, sizeof(am3.op_delay));
+		file.write((char*)&am3.transfer_delay, sizeof(am3.transfer_delay));
+		file.write((char*)&am3.base_addr, sizeof(am3.base_addr));
+		file.write((char*)&am3.blk_stat, sizeof(am3.blk_stat));
+		file.write((char*)&am3.blk_size, sizeof(am3.blk_size));
+		file.write((char*)&am3.blk_addr, sizeof(am3.blk_addr));
+		file.write((char*)&am3.smc_offset, sizeof(am3.smc_offset));
+		file.write((char*)&am3.last_offset, sizeof(am3.last_offset));
+		file.write((char*)&am3.smc_size, sizeof(am3.smc_size));
+		file.write((char*)&am3.smc_base, sizeof(am3.smc_base));
+		file.write((char*)&am3.file_index, sizeof(am3.file_index));
+		file.write((char*)&am3.file_count, sizeof(am3.file_count));
+		file.write((char*)&am3.file_size, sizeof(am3.file_size));
+		file.write((char*)&am3.remaining_size, sizeof(am3.remaining_size));
+		file.write((char*)&am3.file_size_list[0], (sizeof(u32) * am3.file_size_list.size()));
+		file.write((char*)&am3.file_addr_list[0], (sizeof(u32) * am3.file_addr_list.size()));
+		file.write((char*)&am3.smid[0], 0x10);
+		file.write((char*)&memory_map[0x8000000], 0x400);
+	}
+
 	file.close();
 	return true;
 }
@@ -3313,6 +3794,30 @@ u32 AGB_MMU::size()
 	mmu_size += sizeof(flash_ram.grab_ids);
 	mmu_size += sizeof(flash_ram.next_write);
 	mmu_size += 0x20000;
+
+	if(config::cart_type == AGB_AM3)
+	{
+		mmu_size += sizeof(am3.read_sm_card);
+		mmu_size += sizeof(am3.read_key);
+		mmu_size += sizeof(am3.op_delay);
+		mmu_size += sizeof(am3.transfer_delay);
+		mmu_size += sizeof(am3.base_addr);
+		mmu_size += sizeof(am3.blk_stat);
+		mmu_size += sizeof(am3.blk_size);
+		mmu_size += sizeof(am3.blk_addr);
+		mmu_size += sizeof(am3.smc_offset);
+		mmu_size += sizeof(am3.last_offset);
+		mmu_size += sizeof(am3.smc_size);
+		mmu_size += sizeof(am3.smc_base);
+		mmu_size += sizeof(am3.file_index);
+		mmu_size += sizeof(am3.file_count);
+		mmu_size += sizeof(am3.file_size);
+		mmu_size += sizeof(am3.remaining_size);
+		mmu_size += (sizeof(u32) * am3.file_size_list.size());
+		mmu_size += (sizeof(u32) * am3.file_addr_list.size());
+		mmu_size += 0x10;
+		mmu_size += 0x400;
+	}
 
 	return mmu_size;
 }

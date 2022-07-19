@@ -22,6 +22,9 @@ AGB_APU::AGB_APU()
 /****** APU Destructor ******/
 AGB_APU::~AGB_APU()
 {
+	//Always free external audio buffer, safe to call this function with NULL pointer!
+	SDL_FreeWAV(apu_stat.ext_audio.buffer);
+
 	SDL_CloseAudio();
 	std::cout<<"APU::Shutdown\n";
 }
@@ -36,6 +39,10 @@ void AGB_APU::reset()
 
 	apu_stat.sound_on = false;
 	apu_stat.stereo = false;
+	apu_stat.mic_init = false;
+	apu_stat.is_mic_on = false;
+	apu_stat.is_recording = false;
+	apu_stat.save_recording = false;
 
 	apu_stat.sample_rate = config::sample_rate;
 	apu_stat.main_volume = 4;
@@ -120,11 +127,28 @@ void AGB_APU::reset()
 		apu_stat.dma[0].buffer[x] = -127;
 		apu_stat.dma[1].buffer[x] = -127;
 	}
+
+	apu_stat.ext_audio.frequency = 0;
+	apu_stat.ext_audio.length = 0;
+	apu_stat.ext_audio.sample_pos = 0;
+	apu_stat.ext_audio.output_path = 0;
+	apu_stat.ext_audio.channels = 0;
+	apu_stat.ext_audio.volume = 0;
+	apu_stat.ext_audio.id = 0;
+	apu_stat.ext_audio.set_count = 0;
+	apu_stat.ext_audio.current_set = 0;
+	apu_stat.ext_audio.buffer = NULL;
+	apu_stat.ext_audio.playing = false;
+
+	mic_buffer.clear();
+	apu_stat.mic_id = 0;
 }
 
 /****** Initialize APU with SDL ******/
 bool AGB_APU::init()
 {
+	bool init_status = false;
+
 	//Initialize audio subsystem
 	if(SDL_InitSubSystem(SDL_INIT_AUDIO) == -1)
 	{
@@ -144,7 +168,7 @@ bool AGB_APU::init()
 	if(SDL_OpenAudio(&desired_spec, NULL) < 0) 
 	{ 
 		std::cout<<"APU::Failed to open audio\n";
-		return false; 
+		init_status = false;
 	}
 
 	else
@@ -156,9 +180,55 @@ bool AGB_APU::init()
 		apu_stat.psg_fill_rate = apu_stat.sample_rate / 60;
 
 		SDL_PauseAudio(0);
+		init_status = true;
 		std::cout<<"APU::Initialized\n";
-		return true;
 	}
+
+	//Open microphone if enabled and if possible
+	if(config::use_microphone)
+	{
+		SDL_AudioSpec final_spec;
+		SDL_AudioDeviceID mic_id = 0;
+		s32 max_devices = SDL_GetNumAudioDevices(1);
+
+		//Setup the desired audio specifications
+    		microphone_spec.freq = apu_stat.sample_rate;
+		microphone_spec.format = AUDIO_S16SYS;
+    		microphone_spec.channels = 1;
+    		microphone_spec.samples = (config::sample_size) ? config::sample_size : 1024;
+    		microphone_spec.callback = agb_microphone_callback;
+    		microphone_spec.userdata = this;
+
+		for(u32 x = 0; x < max_devices; x++)
+		{
+			//Open recording device
+			mic_id = SDL_OpenAudioDevice(SDL_GetAudioDeviceName(x, 1), 1, &microphone_spec, &final_spec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
+
+			if(mic_id != 0)
+			{
+				if(final_spec.format != AUDIO_S16SYS)
+				{
+					std::cout<<"APU::Microphone Recording Device - #" << std::dec << mic_id << " does not support S16 audio\n";
+				}
+
+				else
+				{
+					std::cout<<"APU::Microphone Recording Device - #" << std::dec << mic_id << " :: " << SDL_GetAudioDeviceName(x, 1) << "\n";
+					std::cout<<"APU::Microphone Channels - " << u32(final_spec.channels) << std::hex << "\n";
+
+					apu_stat.mic_init = true;
+					apu_stat.mic_id = mic_id;
+				}
+			}
+		}
+
+		if(!apu_stat.mic_init)
+		{
+			std::cout<<"APU::No Microphone Recording Device found\n";
+		}
+	}
+
+	return init_status;
 }
 
 /******* Generate samples for GBA sound channel 1 ******/
@@ -357,7 +427,75 @@ void AGB_APU::generate_dma_b_samples(s16* stream, int length)
 
 	if(apu_stat.dma[1].length > length) { apu_stat.dma[1].length -= length; }
 	else { apu_stat.dma[1].length = 0; }
-}	
+}
+
+/****** Generate raw samples for playback on external audio channel ******/
+void AGB_APU::generate_ext_audio_hi_samples(s16* stream, int length)
+{
+	double sample_ratio = apu_stat.ext_audio.frequency/apu_stat.sample_rate;
+	u32 last_pos = apu_stat.ext_audio.sample_pos;
+	u32 buffer_pos = 0;
+
+	u32 set_size = (apu_stat.sample_rate / 60.0) / 9.0;
+
+	//Convert existing buffer to S16
+	s16* e_stream = (s16*) apu_stat.ext_audio.buffer;
+
+	for(int x = 0; x < length; x++)
+	{
+		buffer_pos = last_pos + (sample_ratio * x);
+		u32 temp_pos = (apu_stat.ext_audio.channels == 1) ? buffer_pos : (buffer_pos * 2);
+
+		//Pull audio from buffer if possible
+		if((temp_pos << 1) < apu_stat.ext_audio.length)
+		{
+			//Mono Audio
+			if(apu_stat.ext_audio.channels == 1)
+			{
+				stream[x] = e_stream[temp_pos];
+			}
+
+			//Stereo Audio
+			else
+			{
+				s32 out_sample = (e_stream[temp_pos] + e_stream[temp_pos + 1]) / 2;
+				stream[x] = out_sample;
+			}	
+		}
+
+		//Otherwise, generate silence
+		else
+		{
+			stream[x] = -32768;
+			apu_stat.ext_audio.playing = false;
+		}
+
+		//GBA Jukebox - Average samples for spectrum analyzer
+		if(apu_stat.ext_audio.id == 1)
+		{
+			apu_stat.ext_audio.set_count++;
+			mem->jukebox.spectrum_values[apu_stat.ext_audio.current_set] += (u32(stream[x]) + 32768);
+
+			if(apu_stat.ext_audio.set_count >= set_size)
+			{
+				apu_stat.ext_audio.set_count = 0;
+				mem->jukebox.spectrum_values[apu_stat.ext_audio.current_set] /= set_size;
+			
+				u32 val_1 = mem->jukebox.spectrum_values[apu_stat.ext_audio.current_set];
+				double val_2 = (val_1 / 65535.0);
+				u16 final_val = 20 * val_2;
+			
+				mem->jukebox.io_regs[0x90 + apu_stat.ext_audio.current_set] = final_val;
+				mem->jukebox.spectrum_values[apu_stat.ext_audio.current_set] = 0;
+
+				apu_stat.ext_audio.current_set++;
+				if(apu_stat.ext_audio.current_set >= 0x09) { apu_stat.ext_audio.current_set = 0; }
+			}
+		}	
+	}
+
+	apu_stat.ext_audio.sample_pos = buffer_pos;
+}
 
 /****** SDL Audio Callback ******/ 
 void agb_audio_callback(void* _apu, u8 *_stream, int _length)
@@ -373,6 +511,8 @@ void agb_audio_callback(void* _apu, u8 *_stream, int _length)
 	std::vector<s16> dma_a_stream(length);
 	std::vector<s16> dma_b_stream(length);
 
+	std::vector<s16> ext_stream(length);
+
 	AGB_APU* apu_link = (AGB_APU*) _apu;
 	apu_link->generate_channel_1_samples(&channel_1_stream[0], length);
 	apu_link->generate_channel_2_samples(&channel_2_stream[0], length);
@@ -384,6 +524,8 @@ void agb_audio_callback(void* _apu, u8 *_stream, int _length)
 	double channel_ratio = apu_link->apu_stat.channel_master_volume / 128.0;
 	double dma_a_ratio = apu_link->apu_stat.dma[0].master_volume / 128.0;
 	double dma_b_ratio = apu_link->apu_stat.dma[1].master_volume / 128.0;
+
+	double ext_ratio = apu_link->apu_stat.ext_audio.volume / 63.0;
 
 	//Custom software mixing
 	for(u32 x = 0; x < length; x++)
@@ -398,6 +540,161 @@ void agb_audio_callback(void* _apu, u8 *_stream, int _length)
 		out_sample /= 6;
 
 		stream[x] = out_sample;
+	}
+
+	//Mix in external audio if necessary
+	if(apu_link->apu_stat.ext_audio.playing)
+	{
+		//Generate raw samples (high quality)
+		if(apu_link->apu_stat.ext_audio.output_path)
+		{
+			apu_link->generate_ext_audio_hi_samples(&ext_stream[0], length);
+		}
+
+		//Generate GBA samples (low quality)
+		else
+		{
+			//TODO
+		}
+
+		//Custom software mixing
+		for(u32 x = 0; x < length; x++)
+		{
+			s32 out_sample = stream[x] + (ext_stream[x] * ext_ratio);
+			
+			//Divide final wave by total amount of channels
+			out_sample /= 2;
+
+			stream[x] = out_sample;
+		}
+	}
+}
+
+/****** SDL Audio Callback - Microphone ******/ 
+void agb_microphone_callback(void* _apu, u8 *_stream, int _length)
+{
+	s16* stream = (s16*) _stream;
+	int length = _length/2;
+
+	AGB_APU* apu_link = (AGB_APU*) _apu;
+	u32 mic_volume = 0;
+
+	if(apu_link->apu_stat.mic_init)
+	{
+		//Save samples from microphone to file
+		if(apu_link->apu_stat.save_recording)
+		{
+			std::string filename = config::data_path + "jukebox/" + apu_link->mem->jukebox.recorded_file;
+			std::ofstream file(filename.c_str(), std::ios::binary | std::ios::trunc);
+			u32 file_size = apu_link->mic_buffer.size() * 2;
+
+			std::vector <u8> wav_header;
+
+			if(!file.is_open()) 
+			{
+				std::cout<<"APU::Error - Could not save microphone recording " << filename << "\n";
+				file.close();
+			}
+
+			else
+			{
+				//Build WAV header - Chunk ID - "RIFF" in ASCII
+				wav_header.push_back(0x52);
+				wav_header.push_back(0x49);
+				wav_header.push_back(0x46);
+				wav_header.push_back(0x46);
+
+				//Chunk Size - PCM data + 36
+				wav_header.push_back((file_size + 32) & 0xFF);
+				wav_header.push_back(((file_size + 32) >> 8) & 0xFF);
+				wav_header.push_back(((file_size + 32) >> 16) & 0xFF);
+				wav_header.push_back(((file_size + 32) >> 24) & 0xFF);
+
+				//Wave ID - "WAVE" in ASCII
+				wav_header.push_back(0x57);
+				wav_header.push_back(0x41);
+				wav_header.push_back(0x56);
+				wav_header.push_back(0x45);
+
+				//Chunk ID - "fmt " in ASCII
+				wav_header.push_back(0x66);
+				wav_header.push_back(0x6D);
+				wav_header.push_back(0x74);
+				wav_header.push_back(0x20);
+
+				//Chunk Size - 16
+				wav_header.push_back(0x10);
+				wav_header.push_back(0x00);
+				wav_header.push_back(0x00);
+				wav_header.push_back(0x00);
+
+				//Format Code - 1
+				wav_header.push_back(0x01);
+				wav_header.push_back(0x00);
+
+				//Number of Channels - 1
+				wav_header.push_back(0x01);
+				wav_header.push_back(0x00);
+
+				//Sampling Rate
+				u32 rate = apu_link->apu_stat.sample_rate;
+				wav_header.push_back(rate & 0xFF);
+				wav_header.push_back((rate >> 8) & 0xFF);
+				wav_header.push_back((rate >> 16) & 0xFF);
+				wav_header.push_back((rate >> 24) & 0xFF);
+
+				//Data Rate
+				rate *= 2;
+				wav_header.push_back(rate & 0xFF);
+				wav_header.push_back((rate >> 8) & 0xFF);
+				wav_header.push_back((rate >> 16) & 0xFF);
+				wav_header.push_back((rate >> 24) & 0xFF);
+				
+				//Block Align - 2
+				wav_header.push_back(0x02);
+				wav_header.push_back(0x00);
+
+				//Bits per sample - 16
+				wav_header.push_back(0x10);
+				wav_header.push_back(0x00);
+
+				//Chunk ID - "data" in ASCII
+				wav_header.push_back(0x64);
+				wav_header.push_back(0x61);
+				wav_header.push_back(0x74);
+				wav_header.push_back(0x61);
+
+				//Chunk Size
+				wav_header.push_back(file_size & 0xFF);
+				wav_header.push_back((file_size >> 8) & 0xFF);
+				wav_header.push_back((file_size >> 16) & 0xFF);
+				wav_header.push_back((file_size >> 24) & 0xFF);		
+
+				std::cout<<"APU::Writing microphone recording " << filename << "\n";
+				file.write(reinterpret_cast<char*> (&wav_header[0]), wav_header.size());
+				file.write(reinterpret_cast<char*> (&apu_link->mic_buffer[0]), file_size);
+				file.close();
+			}
+
+			apu_link->apu_stat.save_recording = false;
+			apu_link->apu_stat.is_recording = false;
+			apu_link->mic_buffer.clear();
+		}	
+
+		//Grab samples from microphone and add to the buffer
+		else if(apu_link->apu_stat.is_mic_on)
+		{
+			for(u32 x = 0; x < length; x++)
+			{
+				if(apu_link->apu_stat.is_recording) { apu_link->mic_buffer.push_back(stream[x]); }
+				mic_volume += std::abs(stream[x]);
+			}
+
+			//Calculate average mic volume
+			mic_volume /= length;
+			double ratio = (mic_volume / 32767.0);
+			apu_link->mem->jukebox.io_regs[0x008B] = 0xFFEE + (22 * ratio);
+		}
 	}
 }
 
@@ -746,7 +1043,6 @@ void AGB_APU::buffer_channel_3()
 		for(int x = 0; x < length; x++) { apu_stat.channel[2].buffer[apu_stat.channel[2].current_index++] = -32768; }
 	}
 }
-
 
 /****** Buffer GBA Channel 4 data ******/
 void AGB_APU::buffer_channel_4()

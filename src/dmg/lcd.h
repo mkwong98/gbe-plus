@@ -128,6 +128,7 @@ class DMG_LCD
 	int frame_current_time;
 	int fps_count;
 	int fps_time;
+	int frame_delay[60];
 
 	//OAM updates
 	void update_oam();

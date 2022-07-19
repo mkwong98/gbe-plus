@@ -20,6 +20,33 @@ void AGB_core::debug_step()
 {
 	bool printed = false;
 
+	//Special Handling - Dump SmartMedia ID if necessary and restart
+	if((config::auto_gen_am3_id) && (core_cpu.reg.r15 == 0x02002140))
+	{
+		u8 id[0x10];
+		for(u32 x = 0; x < 0x10; x++) { id[x] = core_mmu.memory_map[0x03007D84 + x]; }
+
+		std::string smid_file = config::rom_file + ".smid";
+		std::ofstream gen_file(smid_file.c_str());
+
+		if(gen_file.is_open())
+		{
+			std::cout<<"AM3 SmartMedia ID generated for " << config::rom_file << "\n";
+			gen_file.write(reinterpret_cast<char*> (&id[0]), 0x10);
+			gen_file.close();
+		}
+
+		//Restart the core with the new SmartMedia ID
+		reset();
+
+		config::auto_gen_am3_id = false;
+		db_unit.debug_mode = false;
+
+		for(u32 x = 0; x < 16; x++) { core_mmu.am3.smid[x] = id[x]; }
+
+		return;
+	}
+
 	//When running until next VBlank, stop when done
 	if((db_unit.vb_count) || (db_unit.last_command == "vb"))
 	{
@@ -164,7 +191,7 @@ void AGB_core::debug_step()
 	}
 
 	//Display current PC when print PC is enabled
-	if(db_unit.print_pc) { std::cout<<"PC -> 0x" << core_cpu.reg.r15 << "\n"; }
+	if(db_unit.print_pc) { std::cout<<"PC -> 0x" << core_cpu.reg.r15 << " :: " << debug_get_mnemonic(core_cpu.reg.r15, true) << "\n"; }
 }
 
 /****** Debugger - Display relevant info to the screen ******/
@@ -1277,7 +1304,7 @@ std::string AGB_core::debug_get_mnemonic(u32 addr) { return " "; }
 /****** Returns a string with the mnemonic assembly instruction ******/
 std::string AGB_core::debug_get_mnemonic(u32 data, bool is_addr)
 {
-	bool arm_debug = (core_cpu.debug_message > 0x13) ? true : false;
+	bool arm_debug = (core_cpu.arm_mode == ARM7::ARM) ? true : false;
 	std::string instr = "";
 
 	u32 opcode = 0;

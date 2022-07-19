@@ -72,11 +72,32 @@ struct agb_apu_data
 		s8 buffer[0x10000];
 	} dma[2];
 
+	//External audio channel for addittional sources of audio output
+	//For examples, cartriges with headphone jacks
+	struct extra_channels
+	{
+		u32 frequency;
+		u32 length;
+		u32 sample_pos;
+		u32 set_count;
+		u32 current_set;
+		u8* buffer;
+		u8 output_path;
+		u8 channels;
+		u8 volume;
+		u8 id;
+		bool playing;
+	} ext_audio;
+
 	bool psg_needs_fill;
 	u32 psg_fill_rate;
 
 	bool sound_on;
 	bool stereo;
+	bool mic_init;
+	bool is_mic_on;
+	bool is_recording;
+	bool save_recording;
 
 	u8 main_volume;
 	double sample_rate;
@@ -99,6 +120,8 @@ struct agb_apu_data
 	u8 noise_stages;
 	u8 noise_7_stage_lsfr;
 	u16 noise_15_stage_lsfr;
+
+	u32 mic_id;
 };
 
 #endif // GBA_APU_DATA
