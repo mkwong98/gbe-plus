@@ -237,6 +237,7 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="src\gba\am3.cpp" />
     <ClCompile Include="src\gba\apu.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
@@ -282,6 +283,7 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
     <ClCompile Include="src\gba\gpio.cpp" />
+    <ClCompile Include="src\gba\jukebox.cpp" />
     <ClCompile Include="src\gba\lcd.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>

@@ -369,6 +369,12 @@
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\gba\jukebox.cpp">
+      <Filter>Source Files\gba</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gba\am3.cpp">
+      <Filter>Source Files\gba</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dmg\apu.h">
