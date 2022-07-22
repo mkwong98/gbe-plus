@@ -102,7 +102,6 @@ namespace config
 	extern u8 gb_type;
 	extern bool sdl_render;
 	extern u8 dmg_gbc_pal;
-	extern u16 mpos_id;
 	extern u32 utp_steps;
 	extern u32 magic_reader_id;
 
@@ -162,8 +161,6 @@ namespace config
 	extern u8 turbo_file_options;
 
 	extern bool auto_gen_am3_id;
-
-	extern u32 jukebox_total_time;
 
 	extern bool use_osd;
 	extern std::vector <u32> osd_font;

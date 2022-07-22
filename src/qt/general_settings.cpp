@@ -1496,11 +1496,7 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	full_changer_menu = new zzh_menu;
 	chalien_menu = new con_ir_menu;
 
-	multi_plust_menu = new mpos_menu;
 	turbo_file_menu = new tbf_menu;
-
-	ubisoft_pedometer_menu = new utp_menu;
-	magic_reader_menu = new mr_menu;
 
 	get_chip_list();
 
@@ -1579,20 +1575,6 @@ void gen_settings::set_ini_options()
 	//Constant IR Light
 	if(config::ir_db_index < 2) { chalien_menu->ir_mode->setCurrentIndex(config::ir_db_index); }
 	else { chalien_menu->ir_mode->setCurrentIndex(0); }
-
-	//Ubisoft Pedometer
-	if(config::utp_steps < 0x99999)
-	{
-		u32 temp_val = config::utp_steps;
-		std::string temp_str = util::to_hex_str(temp_val);
-
-		temp_str = temp_str.substr(3);
-		util::from_str(temp_str, temp_val);
-
-		ubisoft_pedometer_menu->qt_steps->setValue(temp_val);
-	}
-
-	else { ubisoft_pedometer_menu->qt_steps->setValue(0); }
 
 	//Screen scale options
 	screen_scale->setCurrentIndex(config::scaling_factor - 1);
@@ -1882,7 +1864,6 @@ void gen_settings::show_sio_config()
 		case 10: tabs->setCurrentIndex(3); controls_combo->setCurrentIndex(3); chip_gate_type->setCurrentIndex(0); break;
 		case 11: tabs->setCurrentIndex(3); controls_combo->setCurrentIndex(3); chip_gate_type->setCurrentIndex(1); break;
 		case 12: tabs->setCurrentIndex(3); controls_combo->setCurrentIndex(3); chip_gate_type->setCurrentIndex(2); break;
-		case 15: multi_plust_menu->show(); break;
 		case 16: turbo_file_menu->show(); break;
 	}
 }

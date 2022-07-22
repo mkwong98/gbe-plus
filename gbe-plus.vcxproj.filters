@@ -141,16 +141,10 @@
     <ClCompile Include="src\qt\general_settings.cpp">
       <Filter>Source Files\qt</Filter>
     </ClCompile>
-    <ClCompile Include="src\qt\magic_reader_menu.cpp">
-      <Filter>Source Files\qt</Filter>
-    </ClCompile>
     <ClCompile Include="src\qt\main.cpp">
       <Filter>Source Files\qt</Filter>
     </ClCompile>
     <ClCompile Include="src\qt\main_menu.cpp">
-      <Filter>Source Files\qt</Filter>
-    </ClCompile>
-    <ClCompile Include="src\qt\mpos_menu.cpp">
       <Filter>Source Files\qt</Filter>
     </ClCompile>
     <ClCompile Include="src\qt\ogl_manager.cpp">
@@ -175,9 +169,6 @@
       <Filter>Source Files\qt</Filter>
     </ClCompile>
     <ClCompile Include="src\qt\tbf_menu.cpp">
-      <Filter>Source Files\qt</Filter>
-    </ClCompile>
-    <ClCompile Include="src\qt\utp_menu.cpp">
       <Filter>Source Files\qt</Filter>
     </ClCompile>
     <ClCompile Include="src\qt\zzh_menu.cpp">
@@ -425,13 +416,7 @@
     <CustomBuild Include="src\qt\general_settings.h">
       <Filter>Header Files\qt</Filter>
     </CustomBuild>
-    <CustomBuild Include="src\qt\magic_reader_menu.h">
-      <Filter>Header Files\qt</Filter>
-    </CustomBuild>
     <CustomBuild Include="src\qt\main_menu.h">
-      <Filter>Header Files\qt</Filter>
-    </CustomBuild>
-    <CustomBuild Include="src\qt\mpos_menu.h">
       <Filter>Header Files\qt</Filter>
     </CustomBuild>
     <CustomBuild Include="src\qt\pp2_menu.h">
@@ -447,9 +432,6 @@
       <Filter>Header Files\qt</Filter>
     </CustomBuild>
     <CustomBuild Include="src\qt\tbf_menu.h">
-      <Filter>Header Files\qt</Filter>
-    </CustomBuild>
-    <CustomBuild Include="src\qt\utp_menu.h">
       <Filter>Header Files\qt</Filter>
     </CustomBuild>
     <CustomBuild Include="src\qt\zzh_menu.h">

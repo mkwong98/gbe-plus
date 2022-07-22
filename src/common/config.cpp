@@ -100,7 +100,6 @@ namespace config
 
 	u32 sio_device = 0;
 	u32 ir_device = 0;
-	u16 mpos_id = 0;
 	u32 utp_steps = 0;
 	u32 magic_reader_id = 0x500000;
 	bool use_opengl = false;
@@ -233,9 +232,6 @@ namespace config
 
 	//AM3 SmartMedia ID Auto Generate Flag
 	bool auto_gen_am3_id = false;
-
-	//Total time (in seconds) for Jukebox recording
-	u32 jukebox_total_time = 0;
 
 	//On-screen display settings
 	bool use_osd = false;
@@ -2302,96 +2298,6 @@ bool parse_ini_file()
 			}
 		}
 
-		//Multi Plust On System ID
-		else if(ini_item == "#mpos_id")
-		{
-			if((x + 1) < size)
-			{
-				ini_item = ini_opts[++x];
-				std::size_t found = ini_item.find("0x");
-				std::string format = ini_item.substr(0, 2);
-
-				//Value must be in hex format with "0x"
-				if(format != "0x")
-				{
-					std::cout<<"GBE::Error - Could not parse gbe.ini (#mpos_id) \n";
-					return false;
-				}
-
-				std::string id = ini_item.substr(found + 2);
-
-				//Value must not be more than 4 characters long for 16-bit
-				if(id.size() > 4)
-				{
-					std::cout<<"GBE::Error - Could not parse gbe.ini (#mpos_id) \n";
-					return false;
-				}
-
-				u32 final_id = 0;
-
-				//Parse the string into hex
-				if(!util::from_hex_str(id, final_id))
-				{
-					std::cout<<"GBE::Error - Could not parse gbe.ini (#mpos_id) \n";
-					return false;
-				}
-
-				config::mpos_id = final_id;
-			}
-
-			else
-			{
-				std::cout<<"GBE::Error - Could not parse gbe.ini (#mpos_id) \n";
-				return false;
-			}
-		}
-
-		//Ubisoft Thrustmaster Pedometer steps
-		else if(ini_item == "#utp_steps")
-		{
-			if((x + 1) < size)
-			{
-				ini_item = ini_opts[++x];
-
-				//Make sure only 5 characters max are used
-				if(ini_item.size() > 5) { ini_item = ini_item.substr(0, 5); }
-
-				u32 steps = 0;
-
-				//Parse the string into hex
-				if(!util::from_hex_str(ini_item, steps))
-				{
-					std::cout<<"GBE::Error - Could not parse gbe.ini (#utp_steps) \n";
-					return false;
-				}
-
-				config::utp_steps = steps;
-			}
-
-			else
-			{
-				std::cout<<"GBE::Error - Could not parse gbe.ini (#utp_steps) \n";
-				return false;
-			}
-		}
-
-		//Total time for GBA Jukebox recording
-		else if(ini_item == "#jukebox_total_time")
-		{
-			if((x + 1) < size)
-			{
-				util::from_str(ini_opts[++x], output);
-
-				config::jukebox_total_time = output;
-			}
-
-			else 
-			{
-				std::cout<<"GBE::Error - Could not parse gbe.ini (#jukebox_total_time) \n";
-				return false;
-			}
-		}
-
 		//Recent files
 		else if(ini_item == "#recent_files")
 		{
@@ -2540,18 +2446,6 @@ bool save_ini_file()
 			line_pos = output_count[x];
 
 			output_lines[line_pos] = "[#slot2_device:" + util::to_str(config::nds_slot2_device) + "]";
-		}
-
-		//Ubisoft Thrustmaster Steps
-		if(ini_item == "#utp_steps")
-		{
-			line_pos = output_count[x];
-
-			u32 temp_val = config::utp_steps;
-			std::string val = util::to_hex_str(temp_val);
-			val = val.substr(3);
-
-			output_lines[line_pos] = "[#utp_steps:" + val + "]";
 		}
 
 		//Set emulated system type
@@ -3196,14 +3090,6 @@ bool save_ini_file()
 			std::string val = util::to_str(config::vc_timeout);
 
 			output_lines[line_pos] = "[#virtual_cursor_timeout:" + val + "]";
-		}
-
-		//Total time for GBA Jukebox
-		else if(ini_item == "#jukebox_total_time")
-		{
-			line_pos = output_count[x];
-
-			output_lines[line_pos] = "[#jukebox_total_time:" + util::to_str(config::jukebox_total_time) + "]";
 		}
 
 		else if(ini_item == "#recent_files")
