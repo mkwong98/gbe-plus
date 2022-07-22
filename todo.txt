@@ -1,0 +1,9 @@
+Auto add separate folders for games
+Save scale to manifest
+Use png
+Use proper transparency
+Fix mid screen changes
+
+Add background image
+Add link to metatile
+Add animation
