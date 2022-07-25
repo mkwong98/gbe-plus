@@ -522,7 +522,7 @@ void DMG_LCD::dump_dmg_obj(u8 obj_index)
 	obj_dump = SDL_CreateRGBSurface(SDL_SWSURFACE, 8, obj_height, 32, 0, 0, 0, 0);
 		
 	std::string dump_file =  "";
-	if(cgfx::dump_name.empty()) { dump_file = config::data_path + cgfx::dump_obj_path + final_hash + ".bmp"; }
+	if(cgfx::dump_name.empty()) { dump_file = config::data_path + cgfx::dump_obj_path + final_hash + ".png"; }
 	else { dump_file = config::data_path + cgfx::dump_obj_path + cgfx::dump_name; }
 
 	if(SDL_MUSTLOCK(obj_dump)) { SDL_LockSurface(obj_dump); }
@@ -590,7 +590,7 @@ void DMG_LCD::dump_dmg_obj(u8 obj_index)
 	}
 
 	//Save to BMP
-	if(SDL_SaveBMP(obj_dump, dump_file.c_str()) == 0)
+	if(IMG_SavePNG(obj_dump, dump_file.c_str()) == 0)
 	{
 		cgfx::last_saved = true;
 		std::cout<<"LCD::Saving Sprite - " << dump_file << "\n";
@@ -677,7 +677,7 @@ void DMG_LCD::dump_gbc_obj(u8 obj_index)
 	obj_dump = SDL_CreateRGBSurface(SDL_SWSURFACE, 8, obj_height, 32, 0, 0, 0, 0);
 
 	std::string dump_file =  "";
-	if(cgfx::dump_name.empty()) { dump_file = config::data_path + cgfx::dump_obj_path + final_hash + ".bmp"; }
+	if(cgfx::dump_name.empty()) { dump_file = config::data_path + cgfx::dump_obj_path + final_hash + ".png"; }
 	else { dump_file = config::data_path + cgfx::dump_obj_path + cgfx::dump_name; }
 
 	if(SDL_MUSTLOCK(obj_dump)) { SDL_LockSurface(obj_dump); }
@@ -724,7 +724,7 @@ void DMG_LCD::dump_gbc_obj(u8 obj_index)
 	}
 
 	//Save to BMP
-	if(SDL_SaveBMP(obj_dump, dump_file.c_str()) == 0)
+	if(IMG_SavePNG(obj_dump, dump_file.c_str()) == 0)
 	{
 		cgfx::last_saved = true;
 		std::cout<<"LCD::Saving Sprite - " << dump_file << "\n";
@@ -797,7 +797,7 @@ void DMG_LCD::dump_dmg_bg(u16 bg_index)
 	bg_dump = SDL_CreateRGBSurface(SDL_SWSURFACE, 8, 8, 32, 0, 0, 0, 0);
 
 	std::string dump_file =  "";
-	if(cgfx::dump_name.empty()) { dump_file = config::data_path + cgfx::dump_bg_path + final_hash + ".bmp"; }
+	if(cgfx::dump_name.empty()) { dump_file = config::data_path + cgfx::dump_bg_path + final_hash + ".png"; }
 	else { dump_file = config::data_path + cgfx::dump_bg_path + cgfx::dump_name; }
 
 	if(SDL_MUSTLOCK(bg_dump)) { SDL_LockSurface(bg_dump); }
@@ -860,7 +860,7 @@ void DMG_LCD::dump_dmg_bg(u16 bg_index)
 	}
 
 	//Save to BMP
-	if(SDL_SaveBMP(bg_dump, dump_file.c_str()) == 0)
+	if(IMG_SavePNG(bg_dump, dump_file.c_str()) == 0)
 	{
 		cgfx::last_saved = true;
 		std::cout<<"LCD::Background Tile - " << dump_file << "\n";
@@ -943,7 +943,7 @@ void DMG_LCD::dump_gbc_bg(u16 bg_index)
 	bg_dump = SDL_CreateRGBSurface(SDL_SWSURFACE, 8, 8, 32, 0, 0, 0, 0);
 
 	std::string dump_file =  "";
-	if(cgfx::dump_name.empty()) { dump_file = config::data_path + cgfx::dump_bg_path + final_hash + ".bmp"; }
+	if(cgfx::dump_name.empty()) { dump_file = config::data_path + cgfx::dump_bg_path + final_hash + ".png"; }
 	else { dump_file = config::data_path + cgfx::dump_bg_path + cgfx::dump_name; }
 
 	if(SDL_MUSTLOCK(bg_dump)) { SDL_LockSurface(bg_dump); }
@@ -989,7 +989,7 @@ void DMG_LCD::dump_gbc_bg(u16 bg_index)
 	}
 
 	//Save to BMP
-	if(SDL_SaveBMP(bg_dump, dump_file.c_str()) == 0)
+	if(IMG_SavePNG(bg_dump, dump_file.c_str()) == 0)
 	{
 		cgfx::last_saved = true;
 		std::cout<<"LCD::Background Tile - " << dump_file << "\n";

@@ -24,11 +24,6 @@ namespace config
 	std::string save_file = "";
 	std::string dmg_bios_path = "";
 	std::string gbc_bios_path = "";
-	std::string agb_bios_path = "";
-	std::string nds7_bios_path = "";
-	std::string nds9_bios_path = "";
-	std::string nds_firmware_path = "";
-	std::string min_bios_path = "";
 	std::string save_path = "";
 	std::string ss_path = "";
 	std::string cfg_path = "";
@@ -92,7 +87,6 @@ namespace config
 	u32 flags = 0x4;
 	bool pause_emu = false;
 	bool use_bios = false;
-	bool use_firmware = false;
 	bool no_cart = false;
 	bool ignore_illegal_opcodes = true;
 
@@ -204,11 +198,6 @@ namespace config
 		{ 0xFF000000, 0xFF000000 }
 	};
 
-	//NDS Slot-2 device and file
-	u8 nds_slot1_device = 0;
-	u8 nds_slot2_device = 0;
-	std::string nds_slot2_file = "";
-
 	//Real-time clock offsets
 	u16 rtc_offset[6] = { 0, 0, 0, 0, 0, 0 };
 
@@ -226,9 +215,6 @@ namespace config
 
 	//Turbo File options flags
 	u8 turbo_file_options = 0;
-
-	//Magical Watch Data
-	u8 mw_data[6] = { 0, 0, 0, 0, 0, 0 };
 
 	//AM3 SmartMedia ID Auto Generate Flag
 	bool auto_gen_am3_id = false;
@@ -889,24 +875,6 @@ bool parse_ini_file()
 			}
 		}
 
-		//Use firmware
-		if(ini_item == "#use_firmware")
-		{
-			if((x + 1) < size) 
-			{
-				util::from_str(ini_opts[++x], output);
-
-				if(output == 1) { config::use_firmware = true; }
-				else { config::use_firmware = false; }
-			}
-
-			else 
-			{ 
-				std::cout<<"GBE::Error - Could not parse gbe.ini (#use_firmware) \n";
-				return false;
-			}
-		}
-
 		//Emulated SIO device
 		if(ini_item == "#sio_device")
 		{
@@ -937,40 +905,6 @@ bool parse_ini_file()
 			else 
 			{ 
 				std::cout<<"GBE::Error - Could not parse gbe.ini (#ir_device) \n";
-				return false;
-			}
-		}
-
-		//Emulated Slot1 device
-		if(ini_item == "#slot1_device")
-		{
-			if((x + 1) < size) 
-			{
-				util::from_str(ini_opts[++x], output);
-
-				if((output >= 0) && (output <= 1)) { config::nds_slot1_device = output; }
-			}
-
-			else 
-			{ 
-				std::cout<<"GBE::Error - Could not parse gbe.ini (#slot1_device) \n";
-				return false;
-			}
-		}
-
-		//Emulated Slot2 device
-		if(ini_item == "#slot2_device")
-		{
-			if((x + 1) < size) 
-			{
-				util::from_str(ini_opts[++x], output);
-
-				if((output >= 0) && (output <= 7)) { config::nds_slot2_device = output; }
-			}
-
-			else 
-			{ 
-				std::cout<<"GBE::Error - Could not parse gbe.ini (#slot2_device) \n";
 				return false;
 			}
 		}
@@ -1083,96 +1017,6 @@ bool parse_ini_file()
 			}
 
 			else { config::gbc_bios_path = ""; }
-		}
-
-		//GBA BIOS path
-		else if(ini_item == "#agb_bios_path")
-		{
-			if((x + 1) < size) 
-			{
-				ini_item = ini_opts[++x];
-				std::string first_char = "";
-				first_char = ini_item[0];
-				
-				//When left blank, don't parse the next line item
-				if(first_char != "#") { config::agb_bios_path = ini_item; }
-				else { config::agb_bios_path = ""; x--;}
- 
-			}
-
-			else { config::agb_bios_path = ""; }
-		}
-
-		//NDS9 BIOS path
-		else if(ini_item == "#nds9_bios_path")
-		{
-			if((x + 1) < size) 
-			{
-				ini_item = ini_opts[++x];
-				std::string first_char = "";
-				first_char = ini_item[0];
-				
-				//When left blank, don't parse the next line item
-				if(first_char != "#") { config::nds9_bios_path = ini_item; }
-				else { config::nds9_bios_path = ""; x--;}
- 
-			}
-
-			else { config::nds9_bios_path = ""; }
-		}
-
-		//NDS7 BIOS path
-		else if(ini_item == "#nds7_bios_path")
-		{
-			if((x + 1) < size) 
-			{
-				ini_item = ini_opts[++x];
-				std::string first_char = "";
-				first_char = ini_item[0];
-				
-				//When left blank, don't parse the next line item
-				if(first_char != "#") { config::nds7_bios_path = ini_item; }
-				else { config::nds7_bios_path = ""; x--;}
- 
-			}
-
-			else { config::nds7_bios_path = ""; }
-		}
-
-		//NDS firmware path
-		else if(ini_item == "#nds_firmware_path")
-		{
-			if((x + 1) < size) 
-			{
-				ini_item = ini_opts[++x];
-				std::string first_char = "";
-				first_char = ini_item[0];
-				
-				//When left blank, don't parse the next line item
-				if(first_char != "#") { config::nds_firmware_path = ini_item; }
-				else { config::nds_firmware_path = ""; x--;}
- 
-			}
-
-			else { config::nds_firmware_path = ""; }
-		}
-
-		//MIN BIOS path
-		else if(ini_item == "#min_bios_path")
-		{
-			if((x + 1) < size) 
-			{
-				ini_item = ini_opts[++x];
-				std::string first_char = "";
-				first_char = ini_item[0];
-				
-				//When left blank, don't parse the next line item
-				if(first_char != "#") { config::min_bios_path = ini_item; }
-				else { config::min_bios_path = ""; x--;}
- 
-			}
-
-			else { config::min_bios_path = ""; }
 		}
 
 		//Game save path
@@ -1793,21 +1637,7 @@ bool parse_ini_file()
 				}
 			}
 		}
-
-		//Magical Watch Data
-		else if(ini_item == "#mw_data")
-		{
-			if((x + 6) < size)
-			{
-				for(u32 y = 0; y < 6; y++)
-				{
-					u32 val = 0;
-					util::from_str(ini_opts[++x], val);
-					config::mw_data[y] = val;
-				}
-			}
-		}
-			
+	
 		//Hotkeys
 		else if(ini_item == "#hotkeys")
 		{
@@ -2328,793 +2158,308 @@ bool save_ini_file()
 	//Test for Windows or Portable version first
 	//Always give preference to portable .ini settings on every OS
 	std::string ini_path = config::cfg_path + "gbe.ini";
-	std::ifstream in_file(ini_path.c_str(), std::ios::in);
-
-	std::string input_line = "";
-	std::string line_char = "";
 
 	std::vector <std::string> output_lines;
 	std::vector <u32> output_count;
 	int line_counter = 0;
 	int recent_count = config::recent_files.size();
+	std::string val;
 
-	//Clear existing .ini parameters
-	std::vector <std::string> ini_opts;
-	ini_opts.clear();
-
-	if(!in_file.is_open())
-	{
-		std::cout<<"GBE::Error - Could not open gbe.ini configuration file. Check file path or permissions. \n";
-		return false; 
-	}
-
-	//Cycle through whole file, line-by-line
-	while(getline(in_file, input_line))
-	{
-		line_char = input_line[0];
-		bool ignore = false;	
-
-		//Push line to output text for later manipulation
-		output_lines.push_back(input_line);
-	
-		//Check if line starts with [ - if not, skip line
-		if(line_char == "[")
-		{
-			std::string line_item = "";
-
-			//Cycle through line, character-by-character
-			for(int x = 0; ++x < input_line.length();)
-			{
-				line_char = input_line[x];
-
-				//Check for single-quotes, don't parse ":" or "]" within them
-				if((line_char == "'") && (!ignore)) { ignore = true; }
-				else if((line_char == "'") && (ignore)) { ignore = false; }
-
-				//Check the character for item limiter : or ] - Push to Vector
-				else if(((line_char == ":") || (line_char == "]")) && (!ignore)) 
-				{
-					ini_opts.push_back(line_item);
-					output_count.push_back(line_counter);
-					line_item = "";
-				}
-
-				else { line_item += line_char; }
-			}
-		}
-
-		line_counter++;
-	}
-	
-	in_file.close();
-
-	//Cycle through all items in the .ini file
-	//Save options as appropiate
-	int size = ini_opts.size();
-	int line_pos = 0;
-	std::string ini_item = "";
-
-	for(int x = 0; x < size; x++)
-	{
-		ini_item = ini_opts[x];
-
-		//Use BIOS
-		if(ini_item == "#use_bios")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::use_bios) ? "1" : "0";
-
-			output_lines[line_pos] = "[#use_bios:" + val + "]";
-		}
-
-		//Use firmware
-		if(ini_item == "#use_firmware")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::use_firmware) ? "1" : "0";
-
-			output_lines[line_pos] = "[#use_firmware:" + val + "]";
-		}
-
-		//Emulated SIO device
-		if(ini_item == "#sio_device")
-		{
-			line_pos = output_count[x];
-
-			output_lines[line_pos] = "[#sio_device:" + util::to_str(config::sio_device) + "]";
-		}
-
-		//Emulated IR device
-		if(ini_item == "#ir_device")
-		{
-			line_pos = output_count[x];
-
-			output_lines[line_pos] = "[#ir_device:" + util::to_str(config::ir_device) + "]";
-		}
-
-		//Emulated Slot1 device
-		if(ini_item == "#slot1_device")
-		{
-			line_pos = output_count[x];
-
-			output_lines[line_pos] = "[#slot1_device:" + util::to_str(config::nds_slot1_device) + "]";
-		}
-
-		//Emulated Slot2 device
-		if(ini_item == "#slot2_device")
-		{
-			line_pos = output_count[x];
-
-			output_lines[line_pos] = "[#slot2_device:" + util::to_str(config::nds_slot2_device) + "]";
-		}
-
-		//Set emulated system type
-		else if(ini_item == "#system_type")
-		{
-			line_pos = output_count[x];
-
-			output_lines[line_pos] = "[#system_type:" + util::to_str(config::gb_type) + "]";
-		}
-
-		//Use cheats
-		else if(ini_item == "#use_cheats")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::use_cheats) ? "1" : "0";
-
-			output_lines[line_pos] = "[#use_cheats:" + val + "]";
-		}
-
-		//Use patches
-		else if(ini_item == "#use_patches")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::use_patches) ? "1" : "0";
-
-			output_lines[line_pos] = "[#use_patches:" + val + "]";
-		}
-
-		//Use OSD
-		else if(ini_item == "#use_osd")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::use_osd) ? "1" : "0";
-
-			output_lines[line_pos] = "[#use_osd:" + val + "]";
-		}
-
-		//DMG BIOS path
-		else if(ini_item == "#dmg_bios_path")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::dmg_bios_path == "") ? "" : (":'" + config::dmg_bios_path + "'");
-
-			output_lines[line_pos] = "[#dmg_bios_path" + val + "]";
-		}
-
-		//GBC BIOS path
-		else if(ini_item == "#gbc_bios_path")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::gbc_bios_path == "") ? "" : (":'" + config::gbc_bios_path + "'");
-
-			output_lines[line_pos] = "[#gbc_bios_path" + val + "]";
-		}
-
-		//GBA BIOS path
-		else if(ini_item == "#agb_bios_path")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::agb_bios_path == "") ? "" : (":'" + config::agb_bios_path + "'");
-
-			output_lines[line_pos] = "[#agb_bios_path" + val + "]";
-		}
-
-		//NDS9 BIOS path
-		else if(ini_item == "#nds9_bios_path")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::nds9_bios_path == "") ? "" : (":'" + config::nds9_bios_path + "'");
-
-			output_lines[line_pos] = "[#nds9_bios_path" + val + "]";
-		}
-
-		//NDS7 BIOS path
-		else if(ini_item == "#nds7_bios_path")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::nds7_bios_path == "") ? "" : (":'" + config::nds7_bios_path + "'");
-
-			output_lines[line_pos] = "[#nds7_bios_path" + val + "]";
-		}
-
-		//NDS9 firmware path
-		else if(ini_item == "#nds_firmware_path")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::nds_firmware_path == "") ? "" : (":'" + config::nds_firmware_path + "'");
-
-			output_lines[line_pos] = "[#nds_firmware_path" + val + "]";
-		}
-
-		//MIN BIOS path
-		else if(ini_item == "#min_bios_path")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::min_bios_path == "") ? "" : (":'" + config::min_bios_path + "'");
-
-			output_lines[line_pos] = "[#min_bios_path" + val + "]";
-		}
-
-		//Game save path
-		else if(ini_item == "#save_path")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::save_path == "") ? "" : (":'" + config::save_path + "'");
-
-			output_lines[line_pos] = "[#save_path" + val + "]";
-		}
-
-		//Screenshots path
-		else if(ini_item == "#screenshot_path")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::ss_path == "") ? "" : (":'" + config::ss_path + "'");
-
-			output_lines[line_pos] = "[#screenshot_path" + val + "]";
-		}
-
-		//Cheats path
-		else if(ini_item == "#cheats_path")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::cheats_path == "") ? "" : (":'" + config::cheats_path + "'");
-
-			output_lines[line_pos] = "[#cheats_path" + val + "]";
-		}
-
-		//External camera file
-		else if(ini_item == "#camera_file")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::external_camera_file == "") ? "" : (":'" + config::external_camera_file + "'");
-
-			output_lines[line_pos] = "[#camera_file" + val + "]";
-		}
-
-		//External card file
-		else if(ini_item == "#card_file")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::external_card_file == "") ? "" : (":'" + config::external_card_file + "'");
-
-			output_lines[line_pos] = "[#card_file" + val + "]";
-		}
-
-		//External image file
-		else if(ini_item == "#image_file")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::external_image_file == "") ? "" : (":'" + config::external_image_file + "'");
-
-			output_lines[line_pos] = "[#image_file" + val + "]";
-		}
-
-		//External image file
-		else if(ini_item == "#data_file")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::external_data_file == "") ? "" : (":'" + config::external_data_file + "'");
-
-			output_lines[line_pos] = "[#data_file" + val + "]";
-		}
-
-		//Use OpenGL
-		else if(ini_item == "#use_opengl")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::use_opengl) ? "1" : "0";
-
-			output_lines[line_pos] = "[#use_opengl:" + val + "]";
-		}
-
-		//Use gamepad dead zone
-		else if(ini_item == "#dead_zone")
-		{
-			line_pos = output_count[x];
-
-			output_lines[line_pos] = "[#dead_zone:" + util::to_str(config::dead_zone) + "]";
-		}
-
-		//Use haptics
-		else if(ini_item == "#use_haptics")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::use_haptics) ? "1" : "0";
-
-			output_lines[line_pos] = "[#use_haptics:" + val + "]";
-		}
-
-		//Volume settings
-		else if(ini_item == "#volume")
-		{
-			line_pos = output_count[x];
-
-			output_lines[line_pos] = "[#volume:" + util::to_str(config::volume) + "]";
-		}
-
-		//Mute settings
-		else if(ini_item == "#mute")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::mute) ? "1" : "0";
-
-			output_lines[line_pos] = "[#mute:" + val + "]";
-		}
-
-		//Stereo settings
-		else if(ini_item == "#use_stereo")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::use_stereo) ? "1" : "0";
-
-			output_lines[line_pos] = "[#use_stereo:" + val + "]";
-		}
-
-		//Enable microphone
-		else if(ini_item == "#use_microphone")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::use_microphone) ? "1" : "0";
-
-			output_lines[line_pos] = "[#use_microphone:" + val + "]";
-		}
-
-		//Sample rate
-		else if(ini_item == "#sample_rate")
-		{
-			line_pos = output_count[x];
-
-			output_lines[line_pos] = "[#sample_rate:" + util::to_str(config::sample_rate) + "]";
-		}
-
-		//Sample size
-		else if(ini_item == "#sample_size")
-		{
-			line_pos = output_count[x];
-
-			output_lines[line_pos] = "[#sample_size:" + util::to_str(config::sample_size) + "]";
-		}
-
-		//Scaling factor
-		else if(ini_item == "#scaling_factor")
-		{
-			line_pos = output_count[x];
-
-			output_lines[line_pos] = "[#scaling_factor:" + util::to_str(config::scaling_factor) + "]";
-		}
-
-		//Maintain aspect ratio
-		else if(ini_item == "#maintain_aspect_ratio")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::maintain_aspect_ratio) ? "1" : "0";
-
-			output_lines[line_pos] = "[#maintain_aspect_ratio:" + val + "]";
-		}
-
-		//Real-time clock offsets
-		else if(ini_item == "#rtc_offset")
-		{
-			line_pos = output_count[x];
-			std::string val = util::to_str(config::rtc_offset[0]) + ":";
-			val += util::to_str(config::rtc_offset[1]) + ":";
-			val += util::to_str(config::rtc_offset[2]) + ":";
-			val += util::to_str(config::rtc_offset[3]) + ":";
-			val += util::to_str(config::rtc_offset[4]) + ":";
-			val += util::to_str(config::rtc_offset[5]);
-
-			output_lines[line_pos] = "[#rtc_offset:" + val + "]";
-		}
-
-		//CPU overclocking flags
-		else if(ini_item == "#oc_flags")
-		{
-			line_pos = output_count[x];
-			std::string val = util::to_str(config::oc_flags);
-
-			output_lines[line_pos] = "[#oc_flags:" + val + "]";
-		}
-
-		//Emulated DMG-on-GBC palette
-		else if(ini_item == "#dmg_on_gbc_pal")
-		{
-			line_pos = output_count[x];
-
-			output_lines[line_pos] = "[#dmg_on_gbc_pal:" + util::to_str(config::dmg_gbc_pal) + "]";
-		}
-
-		//OpenGL Fragment Shader
-		else if(ini_item == "#fragment_shader")
-		{
-			line_pos = output_count[x];
-
-			if(config::fragment_shader == (config::data_path + "shaders/fragment.fs")) { config::fragment_shader = "fragment.fs"; }
-			else if(config::fragment_shader == (config::data_path + "shaders/2xBR.fs")) { config::fragment_shader = "2xBR.fs"; }
-			else if(config::fragment_shader == (config::data_path + "shaders/4xBR.fs")) { config::fragment_shader = "4xBR.fs"; }
-			else if(config::fragment_shader == (config::data_path + "shaders/bad_bloom.fs")) { config::fragment_shader = "bad_bloom.fs"; }
-			else if(config::fragment_shader == (config::data_path + "shaders/badder_bloom.fs")) { config::fragment_shader = "badder_bloom.fs"; }
-			else if(config::fragment_shader == (config::data_path + "shaders/chrono.fs")) { config::fragment_shader = "chrono.fs"; }
-			else if(config::fragment_shader == (config::data_path + "shaders/dmg_mode.fs")) { config::fragment_shader = "dmg_mode.fs"; }
-			else if(config::fragment_shader == (config::data_path + "shaders/gba_gamma.fs")) { config::fragment_shader = "gba_gamma.fs"; }
-			else if(config::fragment_shader == (config::data_path + "shaders/gbc_gamma.fs")) { config::fragment_shader = "gbc_gamma.fs"; }
-			else if(config::fragment_shader == (config::data_path + "shaders/grayscale.fs")) { config::fragment_shader = "grayscale.fs"; }
-			else if(config::fragment_shader == (config::data_path + "shaders/lcd_mode.fs")) { config::fragment_shader = "lcd_mode.fs"; }
-			else if(config::fragment_shader == (config::data_path + "shaders/pastel.fs")) { config::fragment_shader = "pastel.fs"; }
-			else if(config::fragment_shader == (config::data_path + "shaders/scale2x.fs")) { config::fragment_shader = "scale2x.fs"; }
-			else if(config::fragment_shader == (config::data_path + "shaders/scale3x.fs")) { config::fragment_shader = "scale3x.fs"; }
-			else if(config::fragment_shader == (config::data_path + "shaders/sepia.fs")) { config::fragment_shader = "sepia.fs"; }
-			else if(config::fragment_shader == (config::data_path + "shaders/spotlight.fs")) { config::fragment_shader = "spotlight.fs"; }
-			else if(config::fragment_shader == (config::data_path + "shaders/tv_mode.fs")) { config::fragment_shader = "tv_mode.fs"; }
-			else if(config::fragment_shader == (config::data_path + "shaders/washout.fs")) { config::fragment_shader = "washout.fs"; }
-
-			output_lines[line_pos] = "[#fragment_shader:'" + config::fragment_shader + "']";
-		}
-
-		//OpenGL Vertex Shader
-		else if(ini_item == "#vertex_shader")
-		{
-			line_pos = output_count[x];
-
-			if(config::vertex_shader == (config::data_path + "shaders/vertex.vs")) { config::vertex_shader = "vertex.vs"; }
-			else if(config::vertex_shader == (config::data_path + "shaders/invert_x.vs")) { config::vertex_shader = "invert_x.vs"; }
-
-			output_lines[line_pos] = "[#vertex_shader:'" + config::vertex_shader + "']";
-		}
-
-		//Max FPS
-		else if(ini_item == "#max_fps")
-		{
-			line_pos = output_count[x];
-
-			output_lines[line_pos] = "[#max_fps:" + util::to_str(config::max_fps) + "]";
-		}
-
-		//Keyboard controls
-		else if(ini_item == "#gbe_key_controls")
-		{
-			line_pos = output_count[x];
-			std::string val = util::to_str(config::gbe_key_a) + ":";
-			val += util::to_str(config::gbe_key_b) + ":";
-			val += util::to_str(config::gbe_key_x) + ":";
-			val += util::to_str(config::gbe_key_y) + ":";
-			val += util::to_str(config::gbe_key_start) + ":";
-			val += util::to_str(config::gbe_key_select) + ":";
-			val += util::to_str(config::gbe_key_left) + ":";
-			val += util::to_str(config::gbe_key_right) + ":";
-			val += util::to_str(config::gbe_key_up) + ":";
-			val += util::to_str(config::gbe_key_down) + ":";
-			val += util::to_str(config::gbe_key_l_trigger) + ":";
-			val += util::to_str(config::gbe_key_r_trigger);
-
-			output_lines[line_pos] = "[#gbe_key_controls:" + val + "]";
-		}
-
-		//Gamepad controls
-		else if(ini_item == "#gbe_joy_controls")
-		{
-			line_pos = output_count[x];
-			std::string val = util::to_str(config::gbe_joy_a) + ":";
-			val += util::to_str(config::gbe_joy_b) + ":";
-			val += util::to_str(config::gbe_joy_x) + ":";
-			val += util::to_str(config::gbe_joy_y) + ":";
-			val += util::to_str(config::gbe_joy_start) + ":";
-			val += util::to_str(config::gbe_joy_select) + ":";
-			val += util::to_str(config::gbe_joy_left) + ":";
-			val += util::to_str(config::gbe_joy_right) + ":";
-			val += util::to_str(config::gbe_joy_up) + ":";
-			val += util::to_str(config::gbe_joy_down) + ":";
-			val += util::to_str(config::gbe_joy_l_trigger) + ":";
-			val += util::to_str(config::gbe_joy_r_trigger);
-
-			output_lines[line_pos] = "[#gbe_joy_controls:" + val + "]";
-		}
-
-		//Context keyboard controls
-		else if(ini_item == "#con_key_controls")
-		{
-			line_pos = output_count[x];
-			std::string val = util::to_str(config::con_key_left) + ":";
-			val += util::to_str(config::con_key_right) + ":";
-			val += util::to_str(config::con_key_up) + ":";
-			val += util::to_str(config::con_key_down) + ":";
-			val += util::to_str(config::con_key_1) + ":";
-			val += util::to_str(config::con_key_2);
-
-			output_lines[line_pos] = "[#con_key_controls:" + val + "]";
-		}
-
-		//Context joystick controls
-		else if(ini_item == "#con_joy_controls")
-		{
-			line_pos = output_count[x];
-			std::string val = util::to_str(config::con_joy_left) + ":";
-			val += util::to_str(config::con_joy_right) + ":";
-			val += util::to_str(config::con_joy_up) + ":";
-			val += util::to_str(config::con_joy_down) + ":";
-			val += util::to_str(config::con_joy_1) + ":";
-			val += util::to_str(config::con_joy_2);
-
-			output_lines[line_pos] = "[#con_joy_controls:" + val + "]";
-		}
-
-		//Battle Chip List
-		else if(ini_item == "#chip_list")
-		{
-			line_pos = output_count[x];
-			std::string val = util::to_str(config::chip_list[0]) + ":";
-			val += util::to_str(config::chip_list[1]) + ":";
-			val += util::to_str(config::chip_list[2]) + ":";
-			val += util::to_str(config::chip_list[3]) + ":";
-			val += util::to_str(config::chip_list[4]) + ":";
-			val += util::to_str(config::chip_list[5]);
-
-			output_lines[line_pos] = "[#chip_list:" + val + "]";
-		}
-
-		//Magical Watch Data
-		else if(ini_item == "#mw_data")
-		{
-			line_pos = output_count[x];
-			std::string val = util::to_str(config::mw_data[0]) + ":";
-			val += util::to_str(config::mw_data[1]) + ":";
-			val += util::to_str(config::mw_data[2]) + ":";
-			val += util::to_str(config::mw_data[3]) + ":";
-			val += util::to_str(config::mw_data[4]) + ":";
-			val += util::to_str(config::mw_data[5]);
-
-			output_lines[line_pos] = "[#mw_data:" + val + "]";
-		}
-
-		//Hotkeys
-		else if(ini_item == "#hotkeys")
-		{
-			line_pos = output_count[x];
-			std::string val_1 = util::to_str(config::hotkey_turbo);
-			std::string val_2 = util::to_str(config::hotkey_mute);
-			std::string val_3 = util::to_str(config::hotkey_camera);
-			std::string val_4 = util::to_str(config::hotkey_swap_screen);
-			std::string val_5 = util::to_str(config::hotkey_shift_screen);
-
-			output_lines[line_pos] = "[#hotkeys:" + val_1 + ":" + val_2 + ":" + val_3 + ":" + val_4 + ":" + val_5 + "]";
-		}
-
-		//Use CGFX
-		else if(ini_item == "#use_cgfx")
-		{
-			line_pos = output_count[x];
-			std::string val = (cgfx::load_cgfx) ? "1" : "0";
-
-			output_lines[line_pos] = "[#use_cgfx:" + val + "]";
-		}
-
-		//CGFX manifest path
-		else if(ini_item == "#manifest_path")
-		{
-			line_pos = output_count[x];
-			std::string val = (cgfx::manifest_file == "") ? "" : (":'" + cgfx::manifest_file + "'");
-
-			output_lines[line_pos] = "[#manifest_path" + val + "]";
-		}
-
-		//CGFX BG Tile dump folder
-		else if(ini_item == "#dump_bg_path")
-		{
-			line_pos = output_count[x];
-			std::string val = (cgfx::dump_bg_path == "") ? "" : (":'" + cgfx::dump_bg_path + "'");
-
-			output_lines[line_pos] = "[#dump_bg_path" + val + "]";
-		}
-
-		//CGFX OBJ Tile dump folder
-		else if(ini_item == "#dump_obj_path")
-		{
-			line_pos = output_count[x];
-			std::string val = (cgfx::dump_obj_path == "") ? "" : (":'" + cgfx::dump_obj_path + "'");
-
-			output_lines[line_pos] = "[#dump_obj_path" + val + "]";
-		}
-
-		//CGFX Scaling factor
-		else if(ini_item == "#cgfx_scaling_factor")
-		{
-			line_pos = output_count[x];
-			std::string val = util::to_str(cgfx::scaling_factor);
-
-			output_lines[line_pos] = "[#cgfx_scaling_factor:" + val + "]";
-		}
-
-		//CGFX Transparency color
-		else if(ini_item == "#cgfx_transparency")
-		{
-			line_pos = output_count[x];
-			std::string val = util::to_hex_str(cgfx::transparency_color);
-
-			output_lines[line_pos] = "[#cgfx_transparency:" + val + "]";
-		}
-
-		//Use netplay
-		else if(ini_item == "#use_netplay")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::use_netplay) ? "1" : "0";
-
-			output_lines[line_pos] = "[#use_netplay:" + val + "]";
-		}
-
-		//Use Net Gate
-		else if(ini_item == "#use_net_gate")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::use_net_gate) ? "1" : "0";
-
-			output_lines[line_pos] = "[#use_net_gate:" + val + "]";
-		}
-
-		//Use netplay hard sync
-		else if(ini_item == "#use_netplay_hard_sync")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::netplay_hard_sync) ? "1" : "0";
-
-			output_lines[line_pos] = "[#use_netplay_hard_sync:" + val + "]";
-		}
-
-		//Use netplay sync threshold
-		else if(ini_item == "#netplay_sync_threshold")
-		{
-			line_pos = output_count[x];
-			std::string val = util::to_str(config::netplay_sync_threshold);
-
-			output_lines[line_pos] = "[#netplay_sync_threshold:" + val + "]";
-		}
-
-		//Netplay server port
-		else if(ini_item == "#netplay_server_port")
-		{
-			line_pos = output_count[x];
-			std::string val = util::to_str(config::netplay_server_port);
-
-			output_lines[line_pos] = "[#netplay_server_port:" + val + "]";
-		}
-
-		//Netplay client port
-		else if(ini_item == "#netplay_client_port")
-		{
-			line_pos = output_count[x];
-			std::string val = util::to_str(config::netplay_client_port);
-
-			output_lines[line_pos] = "[#netplay_client_port:" + val + "]";
-		}
-
-		//Netplay client IP address
-		else if(ini_item == "#netplay_client_ip")
-		{
-			line_pos = output_count[x];
-			output_lines[line_pos] = "[#netplay_client_ip:" + config::netplay_client_ip + "]";
-		}
-
-		//Netplay Player ID
-		else if(ini_item == "#netplay_id")
-		{
-			line_pos = output_count[x];
-			std::string val = util::to_str(config::netplay_id);
-
-			output_lines[line_pos] = "[#netplay_id:" + val + "]";
-		}
-
-		//Use real GBMA server
-		else if(ini_item == "#use_real_gbma_server")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::use_real_gbma_server) ? "1" : "0";
-
-			output_lines[line_pos] = "[#use_real_gbma_server:" + val + "]";
-		}
-
-		//GBMA server IP or hostname
-		else if(ini_item == "#gbma_server_ip")
-		{
-			line_pos = output_count[x];
-			output_lines[line_pos] = "[#gbma_server_ip:" + config::gbma_server + "]";
-		}
-
-		//GBMA server HTTP port
-		else if(ini_item == "#gbma_server_http_port")
-		{
-			line_pos = output_count[x];
-			std::string val = util::to_str(config::gbma_server_http_port);
-
-			output_lines[line_pos] = "[#gbma_server_http_port:" + val + "]";
-		}
-
-		//IR database index
-		else if(ini_item == "#ir_db_index")
-		{
-			line_pos = output_count[x];
-			std::string val = util::to_str(config::ir_db_index);
-
-			output_lines[line_pos] = "[#ir_db_index:" + val + "]";
-		}
-
-		//NDS touch mode
-		else if(ini_item == "#nds_touch_mode")
-		{
-			line_pos = output_count[x];
-			std::string val = util::to_str(config::touch_mode);
-
-			output_lines[line_pos] = "[#nds_touch_mode:" + val + "]";
-		}
-
-		//NDS virtual cursor enable
-		else if(ini_item == "#virtual_cursor_enable")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::vc_enable) ? "1" : "0";
-
-			output_lines[line_pos] = "[#virtual_cursor_enable:" + val + "]";
-		}
-
-		//NDS virtual cursor file
-		else if(ini_item == "#virtual_cursor_file")
-		{
-			line_pos = output_count[x];
-			std::string val = (config::vc_file == "") ? "" : (":'" + config::vc_file + "'");
-
-			output_lines[line_pos] = "[#virtual_cursor_file" + val + "]";
-		}
-
-		//NDS virtual cursor opacity
-		else if(ini_item == "#virtual_cursor_opacity")
-		{
-			line_pos = output_count[x];
-			std::string val = util::to_str(config::vc_opacity);
-
-			output_lines[line_pos] = "[#virtual_cursor_opacity:" + val + "]";
-		}
-
-		//NDS virtual cursor timeout
-		else if(ini_item == "#virtual_cursor_timeout")
-		{
-			line_pos = output_count[x];
-			std::string val = util::to_str(config::vc_timeout);
-
-			output_lines[line_pos] = "[#virtual_cursor_timeout:" + val + "]";
-		}
-
-		else if(ini_item == "#recent_files")
-		{
-			line_pos = output_count[x];
-			output_lines[line_pos] = "[#ignore#]";
-		}
-	}
+	//Use BIOS
+	val = (config::use_bios) ? "1" : "0";
+	output_lines.push_back("[#use_bios:" + val + "]");
+
+	//Emulated SIO device
+	output_lines.push_back("[#sio_device:" + util::to_str(config::sio_device) + "]");
+
+	//Emulated IR device
+	output_lines.push_back("[#ir_device:" + util::to_str(config::ir_device) + "]");
+
+	//Set emulated system type
+	output_lines.push_back("[#system_type:" + util::to_str(config::gb_type) + "]");
+
+	//Use cheats
+	val = (config::use_cheats) ? "1" : "0";
+	output_lines.push_back("[#use_cheats:" + val + "]");
+
+	//Use patches
+	val = (config::use_patches) ? "1" : "0";
+	output_lines.push_back("[#use_patches:" + val + "]");
+
+	//Use OSD
+	val = (config::use_osd) ? "1" : "0";
+	output_lines.push_back("[#use_osd:" + val + "]");
+
+	//DMG BIOS path
+	val = (config::dmg_bios_path == "") ? "" : (":'" + config::dmg_bios_path + "'");
+	output_lines.push_back("[#dmg_bios_path" + val + "]");
+
+
+	//GBC BIOS path
+	val = (config::gbc_bios_path == "") ? "" : (":'" + config::gbc_bios_path + "'");
+	output_lines.push_back("[#gbc_bios_path" + val + "]");
+
+	//Game save path
+	val = (config::save_path == "") ? "" : (":'" + config::save_path + "'");
+	output_lines.push_back("[#save_path" + val + "]");
+
+	//Screenshots path
+	val = (config::ss_path == "") ? "" : (":'" + config::ss_path + "'");
+	output_lines.push_back("[#screenshot_path" + val + "]");
+
+	//Cheats path
+	val = (config::cheats_path == "") ? "" : (":'" + config::cheats_path + "'");
+	output_lines.push_back("[#cheats_path" + val + "]");
+
+	//External camera file
+	val = (config::external_camera_file == "") ? "" : (":'" + config::external_camera_file + "'");
+	output_lines.push_back("[#camera_file" + val + "]");
+
+	//External card file
+	val = (config::external_card_file == "") ? "" : (":'" + config::external_card_file + "'");
+	output_lines.push_back("[#card_file" + val + "]");
+
+	//External image file
+	val = (config::external_image_file == "") ? "" : (":'" + config::external_image_file + "'");
+	output_lines.push_back("[#image_file" + val + "]");
+
+	//External image file
+	val = (config::external_data_file == "") ? "" : (":'" + config::external_data_file + "'");
+	output_lines.push_back("[#data_file" + val + "]");
+
+	//Use OpenGL
+	val = (config::use_opengl) ? "1" : "0";
+	output_lines.push_back("[#use_opengl:" + val + "]");
+
+	//Use gamepad dead zone
+	output_lines.push_back("[#dead_zone:" + util::to_str(config::dead_zone) + "]");
+
+	//Use haptics
+	val = (config::use_haptics) ? "1" : "0";
+	output_lines.push_back("[#use_haptics:" + val + "]");
+
+	//Volume settings
+	output_lines.push_back("[#volume:" + util::to_str(config::volume) + "]");
+
+	//Mute settings
+	val = (config::mute) ? "1" : "0";
+	output_lines.push_back("[#mute:" + val + "]");
+
+	//Stereo settings
+	val = (config::use_stereo) ? "1" : "0";
+	output_lines.push_back("[#use_stereo:" + val + "]");
+
+	//Enable microphone
+	val = (config::use_microphone) ? "1" : "0";
+	output_lines.push_back("[#use_microphone:" + val + "]");
+
+	//Sample rate
+	output_lines.push_back("[#sample_rate:" + util::to_str(config::sample_rate) + "]");
+
+	//Sample size
+	output_lines.push_back("[#sample_size:" + util::to_str(config::sample_size) + "]");
+
+	//Scaling factor
+	output_lines.push_back("[#scaling_factor:" + util::to_str(config::scaling_factor) + "]");
+
+	//Maintain aspect ratio
+	val = (config::maintain_aspect_ratio) ? "1" : "0";
+	output_lines.push_back("[#maintain_aspect_ratio:" + val + "]");
+
+	//Real-time clock offsets
+	val = util::to_str(config::rtc_offset[0]) + ":";
+	val += util::to_str(config::rtc_offset[1]) + ":";
+	val += util::to_str(config::rtc_offset[2]) + ":";
+	val += util::to_str(config::rtc_offset[3]) + ":";
+	val += util::to_str(config::rtc_offset[4]) + ":";
+	val += util::to_str(config::rtc_offset[5]);
+	output_lines.push_back("[#rtc_offset:" + val + "]");
+
+	//CPU overclocking flags
+	val = util::to_str(config::oc_flags);
+	output_lines.push_back("[#oc_flags:" + val + "]");
+
+	//Emulated DMG-on-GBC palette
+	output_lines.push_back("[#dmg_on_gbc_pal:" + util::to_str(config::dmg_gbc_pal) + "]");
+
+	//OpenGL Fragment Shader
+	if(config::fragment_shader == (config::data_path + "shaders/fragment.fs")) { config::fragment_shader = "fragment.fs"; }
+	else if(config::fragment_shader == (config::data_path + "shaders/2xBR.fs")) { config::fragment_shader = "2xBR.fs"; }
+	else if(config::fragment_shader == (config::data_path + "shaders/4xBR.fs")) { config::fragment_shader = "4xBR.fs"; }
+	else if(config::fragment_shader == (config::data_path + "shaders/bad_bloom.fs")) { config::fragment_shader = "bad_bloom.fs"; }
+	else if(config::fragment_shader == (config::data_path + "shaders/badder_bloom.fs")) { config::fragment_shader = "badder_bloom.fs"; }
+	else if(config::fragment_shader == (config::data_path + "shaders/chrono.fs")) { config::fragment_shader = "chrono.fs"; }
+	else if(config::fragment_shader == (config::data_path + "shaders/dmg_mode.fs")) { config::fragment_shader = "dmg_mode.fs"; }
+	else if(config::fragment_shader == (config::data_path + "shaders/gba_gamma.fs")) { config::fragment_shader = "gba_gamma.fs"; }
+	else if(config::fragment_shader == (config::data_path + "shaders/gbc_gamma.fs")) { config::fragment_shader = "gbc_gamma.fs"; }
+	else if(config::fragment_shader == (config::data_path + "shaders/grayscale.fs")) { config::fragment_shader = "grayscale.fs"; }
+	else if(config::fragment_shader == (config::data_path + "shaders/lcd_mode.fs")) { config::fragment_shader = "lcd_mode.fs"; }
+	else if(config::fragment_shader == (config::data_path + "shaders/pastel.fs")) { config::fragment_shader = "pastel.fs"; }
+	else if(config::fragment_shader == (config::data_path + "shaders/scale2x.fs")) { config::fragment_shader = "scale2x.fs"; }
+	else if(config::fragment_shader == (config::data_path + "shaders/scale3x.fs")) { config::fragment_shader = "scale3x.fs"; }
+	else if(config::fragment_shader == (config::data_path + "shaders/sepia.fs")) { config::fragment_shader = "sepia.fs"; }
+	else if(config::fragment_shader == (config::data_path + "shaders/spotlight.fs")) { config::fragment_shader = "spotlight.fs"; }
+	else if(config::fragment_shader == (config::data_path + "shaders/tv_mode.fs")) { config::fragment_shader = "tv_mode.fs"; }
+	else if(config::fragment_shader == (config::data_path + "shaders/washout.fs")) { config::fragment_shader = "washout.fs"; }
+	output_lines.push_back("[#fragment_shader:'" + config::fragment_shader + "']");
+
+	//OpenGL Vertex Shader
+	if (config::vertex_shader == (config::data_path + "shaders/vertex.vs")) { config::vertex_shader = "vertex.vs"; }
+	else if (config::vertex_shader == (config::data_path + "shaders/invert_x.vs")) { config::vertex_shader = "invert_x.vs"; }
+	output_lines.push_back("[#vertex_shader:'" + config::vertex_shader + "']");
+
+	//Max FPS
+	output_lines.push_back("[#max_fps:" + util::to_str(config::max_fps) + "]");
+
+	//Keyboard controls
+	val = util::to_str(config::gbe_key_a) + ":";
+	val += util::to_str(config::gbe_key_b) + ":";
+	val += util::to_str(config::gbe_key_x) + ":";
+	val += util::to_str(config::gbe_key_y) + ":";
+	val += util::to_str(config::gbe_key_start) + ":";
+	val += util::to_str(config::gbe_key_select) + ":";
+	val += util::to_str(config::gbe_key_left) + ":";
+	val += util::to_str(config::gbe_key_right) + ":";
+	val += util::to_str(config::gbe_key_up) + ":";
+	val += util::to_str(config::gbe_key_down) + ":";
+	val += util::to_str(config::gbe_key_l_trigger) + ":";
+	val += util::to_str(config::gbe_key_r_trigger);
+	output_lines.push_back("[#gbe_key_controls:" + val + "]");
+
+	//Gamepad controls
+	val = util::to_str(config::gbe_joy_a) + ":";
+	val += util::to_str(config::gbe_joy_b) + ":";
+	val += util::to_str(config::gbe_joy_x) + ":";
+	val += util::to_str(config::gbe_joy_y) + ":";
+	val += util::to_str(config::gbe_joy_start) + ":";
+	val += util::to_str(config::gbe_joy_select) + ":";
+	val += util::to_str(config::gbe_joy_left) + ":";
+	val += util::to_str(config::gbe_joy_right) + ":";
+	val += util::to_str(config::gbe_joy_up) + ":";
+	val += util::to_str(config::gbe_joy_down) + ":";
+	val += util::to_str(config::gbe_joy_l_trigger) + ":";
+	val += util::to_str(config::gbe_joy_r_trigger);
+	output_lines.push_back("[#gbe_joy_controls:" + val + "]");
+
+	//Context keyboard controls
+	val = util::to_str(config::con_key_left) + ":";
+	val += util::to_str(config::con_key_right) + ":";
+	val += util::to_str(config::con_key_up) + ":";
+	val += util::to_str(config::con_key_down) + ":";
+	val += util::to_str(config::con_key_1) + ":";
+	val += util::to_str(config::con_key_2);
+	output_lines.push_back("[#con_key_controls:" + val + "]");
+
+	//Context joystick controls
+	val = util::to_str(config::con_joy_left) + ":";
+	val += util::to_str(config::con_joy_right) + ":";
+	val += util::to_str(config::con_joy_up) + ":";
+	val += util::to_str(config::con_joy_down) + ":";
+	val += util::to_str(config::con_joy_1) + ":";
+	val += util::to_str(config::con_joy_2);
+	output_lines.push_back("[#con_joy_controls:" + val + "]");
+
+	//Battle Chip List
+	val = util::to_str(config::chip_list[0]) + ":";
+	val += util::to_str(config::chip_list[1]) + ":";
+	val += util::to_str(config::chip_list[2]) + ":";
+	val += util::to_str(config::chip_list[3]) + ":";
+	val += util::to_str(config::chip_list[4]) + ":";
+	val += util::to_str(config::chip_list[5]);
+	output_lines.push_back("[#chip_list:" + val + "]");
+
+	//Hotkeys
+	std::string val_1 = util::to_str(config::hotkey_turbo);
+	std::string val_2 = util::to_str(config::hotkey_mute);
+	std::string val_3 = util::to_str(config::hotkey_camera);
+	std::string val_4 = util::to_str(config::hotkey_swap_screen);
+	std::string val_5 = util::to_str(config::hotkey_shift_screen);
+	output_lines.push_back("[#hotkeys:" + val_1 + ":" + val_2 + ":" + val_3 + ":" + val_4 + ":" + val_5 + "]");
+
+	//Use CGFX
+	val = (cgfx::load_cgfx) ? "1" : "0";
+	output_lines.push_back("[#use_cgfx:" + val + "]");
+
+	//CGFX manifest path
+	val = (cgfx::manifest_file == "") ? "" : (":'" + cgfx::manifest_file + "'");
+	output_lines.push_back("[#manifest_path" + val + "]");
+
+	//CGFX BG Tile dump folder
+	val = (cgfx::dump_bg_path == "") ? "" : (":'" + cgfx::dump_bg_path + "'");
+	output_lines.push_back("[#dump_bg_path" + val + "]");
+
+	//CGFX OBJ Tile dump folder
+	val = (cgfx::dump_obj_path == "") ? "" : (":'" + cgfx::dump_obj_path + "'");
+	output_lines.push_back("[#dump_obj_path" + val + "]");
+
+	//CGFX Scaling factor
+	val = util::to_str(cgfx::scaling_factor);
+	output_lines.push_back("[#cgfx_scaling_factor:" + val + "]");
+
+	//CGFX Transparency color
+	val = util::to_hex_str(cgfx::transparency_color);
+	output_lines.push_back("[#cgfx_transparency:" + val + "]");
+
+	//Use netplay
+	val = (config::use_netplay) ? "1" : "0";
+	output_lines.push_back("[#use_netplay:" + val + "]");
+
+	//Use Net Gate
+	val = (config::use_net_gate) ? "1" : "0";
+	output_lines.push_back("[#use_net_gate:" + val + "]");
+
+	//Use netplay hard sync
+	val = (config::netplay_hard_sync) ? "1" : "0";
+	output_lines.push_back("[#use_netplay_hard_sync:" + val + "]");
+
+	//Use netplay sync threshold
+	val = util::to_str(config::netplay_sync_threshold);
+	output_lines.push_back("[#netplay_sync_threshold:" + val + "]");
+
+	//Netplay server port
+	val = util::to_str(config::netplay_server_port);
+	output_lines.push_back("[#netplay_server_port:" + val + "]");
+
+	//Netplay client port
+	val = util::to_str(config::netplay_client_port);
+	output_lines.push_back("[#netplay_client_port:" + val + "]");
+
+	//Netplay client IP address
+	output_lines.push_back("[#netplay_client_ip:" + config::netplay_client_ip + "]");
+
+	//Netplay Player ID
+	val = util::to_str(config::netplay_id);
+	output_lines.push_back("[#netplay_id:" + val + "]");
+
+	//Use real GBMA server
+	val = (config::use_real_gbma_server) ? "1" : "0";
+	output_lines.push_back("[#use_real_gbma_server:" + val + "]");
+
+	//GBMA server IP or hostname
+	output_lines.push_back("[#gbma_server_ip:" + config::gbma_server + "]");
+
+	//GBMA server HTTP port
+	val = util::to_str(config::gbma_server_http_port);
+	output_lines.push_back("[#gbma_server_http_port:" + val + "]");
+
+	//IR database index
+	val = util::to_str(config::ir_db_index);
+	output_lines.push_back("[#ir_db_index:" + val + "]");
 
 	//Write contents to .ini file
 	std::ofstream out_file(ini_path.c_str(), std::ios::out);
 
 	if(!out_file.is_open())
 	{
+		//SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "", ini_path.c_str(), NULL);
 		std::cout<<"GBE::Error - Could not save gbe.ini configuration file. Check file path or permissions. \n";
 		return false; 
 	}
 
 	for(int x = 0; x < output_lines.size(); x++)
 	{
-		if(output_lines[x] != "[#ignore#]")
-		{
-			output_lines[x] += "\n";
-			out_file << output_lines[x];
-		}
+		output_lines[x] += "\n";
+		out_file << output_lines[x];
 	}
 
 	for(int x = 0; x < recent_count; x++)
@@ -3130,7 +2475,7 @@ bool save_ini_file()
 			else { config::recent_files[x].replace(seq, std::string("'").length(), "^^^^"); }
 		}
 
-		std::string val = "'" + config::recent_files[x] + "'";
+		val = "'" + config::recent_files[x] + "'";
 		val = "[#recent_files:" + val + "]";
 		
 		if(x == 0) { out_file << val; }

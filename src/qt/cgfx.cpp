@@ -519,7 +519,7 @@ gbe_cgfx::gbe_cgfx(QWidget *parent) : QDialog(parent)
 	//Graphics dump failure pop-up
 	save_fail = new QMessageBox;
 	QPushButton* save_fail_ok = save_fail->addButton("OK", QMessageBox::AcceptRole);
-	save_fail->setText("Error - Could not write BMP to destination file. Check file path and permissions");
+	save_fail->setText("Error - Could not write PNG to destination file. Check file path and permissions");
 	save_fail->setIcon(QMessageBox::Warning);
 	save_fail->hide();
 
@@ -2332,7 +2332,7 @@ void gbe_cgfx::write_manifest_entry()
 	QString path = dest_name->text();
 
 	if(path.toStdString().empty()) { cgfx::dump_name.clear(); }
-	else if(!path.isNull()) { cgfx::dump_name = path.toStdString() + ".bmp"; }
+	else if(!path.isNull()) { cgfx::dump_name = path.toStdString() + ".png"; }
 	else { cgfx::dump_name.clear(); }
 
 	//Dump BG
@@ -2360,8 +2360,8 @@ void gbe_cgfx::write_manifest_entry()
 	std::string gfx_name = "";
 	std::string dest_file = (dest_name->text().toStdString().empty()) ? cgfx::last_hash : dest_name->text().toStdString();
 
-	if(dest_folder->text().isNull()) { gfx_name = cgfx::last_hash + ".bmp"; }
-	else { gfx_name = dest_folder->text().toStdString() + dest_file + ".bmp"; }
+	if(dest_folder->text().isNull()) { gfx_name = cgfx::last_hash + ".png"; }
+	else { gfx_name = dest_folder->text().toStdString() + dest_file + ".png"; }
 	
 	std::string gfx_type = util::to_str(cgfx::last_type);
 	std::string gfx_addr = (ext_vram->isChecked()) ? util::to_hex_str(cgfx::last_vram_addr).substr(2) : "0";

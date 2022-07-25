@@ -24,11 +24,12 @@ namespace cgfx
 
 	u8 scaling_factor = 1;
 	u8 scale_squared = 1;
-	u32 transparency_color = 0xFF00FF00;
+	u32 transparency_color = 0x00000000;
 
+	std::string cgfx_path = "cgfx/";
 	std::string manifest_file = "";
-	std::string dump_bg_path = "Dump/BG/";
-	std::string dump_obj_path = "Dump/OBJ/";
+	std::string dump_bg_path = "";
+	std::string dump_obj_path = "";
 	std::string dump_name = "";
 	std::string meta_dump_name = "META";
 
