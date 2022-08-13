@@ -323,7 +323,6 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 	display_height = QApplication::desktop()->screenGeometry().height();
 
 	fullscreen_mode = false;
-	is_sgb_core = false;
 }
 
 /****** Opens a file from the CLI arguments ******/
@@ -644,11 +643,9 @@ void main_menu::boot_game()
 
 	menu_height = menu_bar->height();
 
-	//Determine Gameboy type based on file name
-	//Note, DMG and GBC games are automatically detected in the Gameboy MMU, so only check for GBA and NDS types here
 	if(config::rom_file != "NOCART")
 	{
-		config::gb_type = settings->sys_type->currentIndex();
+		config::gb_type = system_type;
 	}
 
 	//Determine CGFX scaling factor
@@ -659,8 +656,14 @@ void main_menu::boot_game()
 	base_width = (160 * cgfx::scaling_factor);
 	base_height = (144 * cgfx::scaling_factor);
 
-	main_menu::gbe_plus = new DMG_core();
-	is_sgb_core = false;
+	if (config::gb_type < 2)
+	{
+		main_menu::gbe_plus = new DMG_core();
+	}
+	else
+	{
+		main_menu::gbe_plus = new GBC_core();
+	}
 
 	resize((base_width * config::scaling_factor), (base_height * config::scaling_factor) + menu_height);
 

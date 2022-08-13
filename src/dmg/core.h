@@ -18,11 +18,11 @@
 #include "mmu.h"
 #include "z80.h"
 
-class DMG_core : virtual public core_emu
+class GB_core : virtual public core_emu
 {
 	public:
-		DMG_core();
-		~DMG_core();
+		GB_core();
+		~GB_core();
 
 		//Core control
 		void start();
@@ -65,6 +65,17 @@ class DMG_core : virtual public core_emu
 		DMG_MMU core_mmu;
 		Z80 core_cpu;
 		DMG_GamePad core_pad;
+};
+
+
+class DMG_core : public GB_core
+{
+
+};
+
+class GBC_core : public GB_core
+{
+
 };
 		
 #endif // GB_CORE

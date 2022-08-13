@@ -20,7 +20,7 @@
 #include "core.h"
 
 /****** Core Constructor ******/
-DMG_core::DMG_core()
+GB_core::GB_core()
 {
 	//Link CPU and MMU
 	core_cpu.mem = &core_mmu;
@@ -49,7 +49,7 @@ DMG_core::DMG_core()
 }
 
 /****** Start the core ******/
-void DMG_core::start()
+void GB_core::start()
 {
 	running = true;
 	core_cpu.running = true;
@@ -76,21 +76,21 @@ void DMG_core::start()
 }
 
 /****** Stop the core ******/
-void DMG_core::stop()
+void GB_core::stop()
 {
 	running = false;
 	core_cpu.running = false;
 }
 
 /****** Shutdown core's components ******/
-void DMG_core::shutdown()
+void GB_core::shutdown()
 {
 	core_mmu.DMG_MMU::~DMG_MMU();
 	core_cpu.Z80::~Z80();
 }
 
 /****** Reset the core ******/
-void DMG_core::reset()
+void GB_core::reset()
 {
 	bool can_reset = true;
 
@@ -127,7 +127,7 @@ void DMG_core::reset()
 }
 
 /****** Loads a save state ******/
-void DMG_core::load_state(u8 slot)
+void GB_core::load_state(u8 slot)
 {
 	std::string id = (slot > 0) ? util::to_str(slot) : "";
 
@@ -172,7 +172,7 @@ void DMG_core::load_state(u8 slot)
 }
 
 /****** Saves a save state ******/
-void DMG_core::save_state(u8 slot)
+void GB_core::save_state(u8 slot)
 {
 	std::string id = (slot > 0) ? util::to_str(slot) : "";
 
@@ -192,7 +192,7 @@ void DMG_core::save_state(u8 slot)
 }
 
 /****** Run the core in a loop until exit ******/
-void DMG_core::run_core()
+void GB_core::run_core()
 {
 	if(config::gb_type == 2) { core_cpu.reg.a = 0x11; }
 
@@ -508,7 +508,7 @@ void DMG_core::run_core()
 }
 
 /****** Manually run core for 1 instruction ******/
-void DMG_core::step()
+void GB_core::step()
 {
 	//Run the CPU
 	if(core_cpu.running)
@@ -767,7 +767,7 @@ void DMG_core::step()
 }
 	
 /****** Process hotkey input ******/
-void DMG_core::handle_hotkey(SDL_Event& event)
+void GB_core::handle_hotkey(SDL_Event& event)
 {
 	//Disallow key repeats
 	if(event.key.repeat) { return; }
@@ -1023,7 +1023,7 @@ void DMG_core::handle_hotkey(SDL_Event& event)
 }
 
 /****** Process hotkey input - Use exsternally when not using SDL ******/
-void DMG_core::handle_hotkey(int input, bool pressed)
+void GB_core::handle_hotkey(int input, bool pressed)
 {
 	//Toggle turbo on
 	if((input == config::hotkey_turbo) && (pressed)) { config::turbo = true; }
@@ -1130,21 +1130,21 @@ void DMG_core::handle_hotkey(int input, bool pressed)
 }
 
 /****** Updates the core's volume ******/
-void DMG_core::update_volume(u8 volume)
+void GB_core::update_volume(u8 volume)
 {
 	config::volume = volume;
 	core_cpu.controllers.audio.apu_stat.channel_master_volume = (config::volume >> 2);
 }
 
 /****** Feeds key input from an external source (useful for TAS) ******/
-void DMG_core::feed_key_input(int sdl_key, bool pressed)
+void GB_core::feed_key_input(int sdl_key, bool pressed)
 {
 	core_pad.process_keyboard(sdl_key, pressed);
 	handle_hotkey(sdl_key, pressed);
 }
 
 /****** Return a CPU register ******/
-u32 DMG_core::ex_get_reg(u8 reg_index)
+u32 GB_core::ex_get_reg(u8 reg_index)
 {
 	switch(reg_index)
 	{
@@ -1163,22 +1163,22 @@ u32 DMG_core::ex_get_reg(u8 reg_index)
 }
 
 /****** Read binary file to memory ******/
-bool DMG_core::read_file(std::string filename) { return core_mmu.read_file(filename); }
+bool GB_core::read_file(std::string filename) { return core_mmu.read_file(filename); }
 
 /****** Read BIOS file into memory ******/
-bool DMG_core::read_bios(std::string filename) { return core_mmu.read_bios(config::bios_file); }
+bool GB_core::read_bios(std::string filename) { return core_mmu.read_bios(config::bios_file); }
 
 /****** Read firmware file into memory (not applicable) ******/
-bool DMG_core::read_firmware(std::string filename) { return true; }
+bool GB_core::read_firmware(std::string filename) { return true; }
 
 /****** Returns a byte from core memory ******/
-u8 DMG_core::ex_read_u8(u16 address) { return core_mmu.read_u8(address); }
+u8 GB_core::ex_read_u8(u16 address) { return core_mmu.read_u8(address); }
 
 /****** Writes a byte to core memory ******/
-void DMG_core::ex_write_u8(u16 address, u8 value) { core_mmu.write_u8(address, value); }
+void GB_core::ex_write_u8(u16 address, u8 value) { core_mmu.write_u8(address, value); }
 
 /****** Dumps selected OBJ to a file ******/
-void DMG_core::dump_obj(int obj_index)
+void GB_core::dump_obj(int obj_index)
 {
 	//DMG OBJs
 	if(config::gb_type < 2) { core_cpu.controllers.video.dump_dmg_obj(obj_index); }
@@ -1188,7 +1188,7 @@ void DMG_core::dump_obj(int obj_index)
 }
 
 /****** Dumps selected BG tile to a file ******/
-void DMG_core::dump_bg(int bg_index)
+void GB_core::dump_bg(int bg_index)
 {
 	//DMG BG tiles
 	if(config::gb_type < 2) { core_cpu.controllers.video.dump_dmg_bg(bg_index); }
@@ -1198,25 +1198,25 @@ void DMG_core::dump_bg(int bg_index)
 }
 
 /****** Grabs the OBJ palette ******/
-u32* DMG_core::get_obj_palette(int pal_index)
+u32* GB_core::get_obj_palette(int pal_index)
 {
 	return &core_cpu.controllers.video.lcd_stat.obj_colors_final[0][pal_index];
 }
 
 /****** Grabs the BG palette ******/
-u32* DMG_core::get_bg_palette(int pal_index)
+u32* GB_core::get_bg_palette(int pal_index)
 {
 	return &core_cpu.controllers.video.lcd_stat.bg_colors_final[0][pal_index];
 }
 
 /****** Grabs the hash for a specific tile ******/
-std::string DMG_core::get_hash(u32 addr, u8 gfx_type)
+std::string GB_core::get_hash(u32 addr, u8 gfx_type)
 {
 	return core_cpu.controllers.video.get_hash(addr, gfx_type);
 }
 
 /****** Starts netplay connection ******/
-void DMG_core::start_netplay()
+void GB_core::start_netplay()
 {
 	//Do nothing if netplay is not enabled
 	if(!config::use_netplay) { return; }
@@ -1243,7 +1243,7 @@ void DMG_core::start_netplay()
 }
 
 /****** Stops netplay connection ******/
-void DMG_core::stop_netplay()
+void GB_core::stop_netplay()
 {
 	//Only attempt to disconnect if connected at all
 	if(core_cpu.controllers.serial_io.sio_stat.connected)
@@ -1254,7 +1254,7 @@ void DMG_core::stop_netplay()
 }
 
 /****** Returns miscellaneous data from the core ******/
-u32 DMG_core::get_core_data(u32 core_index)
+u32 GB_core::get_core_data(u32 core_index)
 {
 	u32 result = 0;
 
