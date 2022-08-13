@@ -160,4 +160,13 @@ class Z80
 	inline u8 daa();
 };
 
+class DMG_Z80 : public Z80
+{
+
+};
+
+class GBC_Z80 : public Z80
+{
+
+};
 #endif // GB_CPU

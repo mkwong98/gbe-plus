@@ -134,7 +134,7 @@ namespace config
 
 	//Emulated Gameboy type
 	//TODO - Make this an enum
-	//0 - DMG, 1 - DMG on GBC, 2 - GBC, 3 - GBA, 4 - NDS????
+	//0 - DMG, 1 - DMG on GBC, 2 - GBC
 	u8 gb_type = 0;
 
 	//Boolean dictating whether this is a DMG/GBC game on a GBA

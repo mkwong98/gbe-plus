@@ -20,56 +20,84 @@
 #include "core.h"
 
 /****** Core Constructor ******/
-GB_core::GB_core()
+DMG_core::DMG_core()
 {
-	//Link CPU and MMU
-	core_cpu.mem = &core_mmu;
-
-	//Link LCD and MMU
-	core_cpu.controllers.video.mem = &core_mmu;
-	core_mmu.set_lcd_data(&core_cpu.controllers.video.lcd_stat);
-	core_mmu.set_cgfx_data(&core_cpu.controllers.video.cgfx_stat);
-
-	//Link APU and MMU
-	core_cpu.controllers.audio.mem = &core_mmu;
-	core_mmu.set_apu_data(&core_cpu.controllers.audio.apu_stat);
-
-	//Link SIO and MMU
-	core_cpu.controllers.serial_io.mem = &core_mmu;
-	core_mmu.set_sio_data(&core_cpu.controllers.serial_io.sio_stat);
-
-	//Link MMU and GamePad
-	core_cpu.mem->g_pad = &core_pad;
-
-	std::cout<<"GBE::Launching DMG-GBC core\n";
+	core_cpu = new Z80();
+	init_cpu();
+	std::cout << "GBE::Launching DMG core\n";
 
 	//OSD
-	config::osd_message = "DMG GBC CORE INIT";
+	config::osd_message = "DMG CORE INIT";
 	config::osd_count = 180;
 }
+
+GBC_core::GBC_core()
+{
+	core_cpu = new Z80();
+	init_cpu();
+	std::cout << "GBE::Launching GBC core\n";
+
+	//OSD
+	config::osd_message = "GBC CORE INIT";
+	config::osd_count = 180;
+}
+
+DMG_core::~DMG_core()
+{
+	delete core_cpu;
+}
+
+GBC_core::~GBC_core()
+{
+	delete core_cpu;
+}
+
+void GB_core::init_cpu()
+{
+	//Link CPU and MMU
+	core_cpu->mem = &core_mmu;
+
+	//Link LCD and MMU
+	core_cpu->controllers.video.mem = &core_mmu;
+	core_mmu.set_lcd_data(&core_cpu->controllers.video.lcd_stat);
+	core_mmu.set_cgfx_data(&core_cpu->controllers.video.cgfx_stat);
+
+	//Link APU and MMU
+	core_cpu->controllers.audio.mem = &core_mmu;
+	core_mmu.set_apu_data(&core_cpu->controllers.audio.apu_stat);
+
+	//Link SIO and MMU
+	core_cpu->controllers.serial_io.mem = &core_mmu;
+	core_mmu.set_sio_data(&core_cpu->controllers.serial_io.sio_stat);
+
+	//Link MMU and GamePad
+	core_cpu->mem->g_pad = &core_pad;
+}
+
+
 
 /****** Start the core ******/
 void GB_core::start()
 {
 	running = true;
-	core_cpu.running = true;
+	core_cpu->running = true;
 
 	//Initialize video output
-	if(!core_cpu.controllers.video.init())
+	if(!core_cpu->controllers.video.init())
 	{
 		running = false;
-		core_cpu.running = false;
+		core_cpu->running = false;
 	}
 
 	//Initialize audio output
-	if(!core_cpu.controllers.audio.init())
+	if(!core_cpu->controllers.audio.init())
 	{
 		running = false;
-		core_cpu.running = false;
+		core_cpu->running = false;
 	}
 
 	//Initialize SIO
-	core_cpu.controllers.serial_io.init();
+	core_cpu->controllers.serial_io.init();
 
 	//Initialize the GamePad
 	core_pad.init();
@@ -79,14 +107,14 @@ void GB_core::start()
 void GB_core::stop()
 {
 	running = false;
-	core_cpu.running = false;
+	core_cpu->running = false;
 }
 
 /****** Shutdown core's components ******/
 void GB_core::shutdown()
 {
 	core_mmu.DMG_MMU::~DMG_MMU();
-	core_cpu.Z80::~Z80();
+	core_cpu->Z80::~Z80();
 }
 
 /****** Reset the core ******/
@@ -94,26 +122,26 @@ void GB_core::reset()
 {
 	bool can_reset = true;
 
-	core_cpu.reset();
-	core_cpu.controllers.video.reset();
-	core_cpu.controllers.audio.reset();
-	core_cpu.controllers.serial_io.reset();
+	core_cpu->reset();
+	core_cpu->controllers.video.reset();
+	core_cpu->controllers.audio.reset();
+	core_cpu->controllers.serial_io.reset();
 	core_mmu.reset();
 
 	//Link CPU and MMU
-	core_cpu.mem = &core_mmu;
+	core_cpu->mem = &core_mmu;
 
 	//Link LCD and MMU
-	core_cpu.controllers.video.mem = &core_mmu;
+	core_cpu->controllers.video.mem = &core_mmu;
 
 	//Link APU and MMU
-	core_cpu.controllers.audio.mem = &core_mmu;
+	core_cpu->controllers.audio.mem = &core_mmu;
 
 	//Link SIO and MMU
-	core_cpu.controllers.serial_io.mem = &core_mmu;
+	core_cpu->controllers.serial_io.mem = &core_mmu;
 
 	//Link MMU and GamePad
-	core_cpu.mem->g_pad = &core_pad;
+	core_cpu->mem->g_pad = &core_pad;
 
 	//Re-read specified ROM file
 	if(!core_mmu.read_file(config::rom_file)) { can_reset = false; }
@@ -147,24 +175,24 @@ void GB_core::load_state(u8 slot)
 	}
 
 	//Offset 0, size 43
-	if(!core_cpu.cpu_read(offset, state_file)) { return; }
-	offset += core_cpu.size();	
+	if(!core_cpu->cpu_read(offset, state_file)) { return; }
+	offset += core_cpu->size();	
 
 	//Offset 43, size 213047
 	if(!core_mmu.mmu_read(offset, state_file)) { return; }
 	offset += core_mmu.size();
 
 	//Offset 213090, size 320
-	if(!core_cpu.controllers.audio.apu_read(offset, state_file)) { return; }
-	offset += core_cpu.controllers.audio.size();
+	if(!core_cpu->controllers.audio.apu_read(offset, state_file)) { return; }
+	offset += core_cpu->controllers.audio.size();
 
 	//Offset 213410
-	if(!core_cpu.controllers.video.lcd_read(offset, state_file)) { return; }
+	if(!core_cpu->controllers.video.lcd_read(offset, state_file)) { return; }
 
 	std::cout<<"GBE::Loaded state " << state_file << "\n";
 
 	//Invalidate current CGFX
-	if(cgfx::load_cgfx) { core_cpu.controllers.video.invalidate_cgfx(); }
+	if(cgfx::load_cgfx) { core_cpu->controllers.video.invalidate_cgfx(); }
 
 	//OSD
 	config::osd_message = "LOADED STATE " + util::to_str(slot);
@@ -179,10 +207,10 @@ void GB_core::save_state(u8 slot)
 	std::string state_file = config::rom_file + ".ss";
 	state_file += id;
 
-	if(!core_cpu.cpu_write(state_file)) { return; }
+	if(!core_cpu->cpu_write(state_file)) { return; }
 	if(!core_mmu.mmu_write(state_file)) { return; }
-	if(!core_cpu.controllers.audio.apu_write(state_file)) { return; }
-	if(!core_cpu.controllers.video.lcd_write(state_file)) { return; }
+	if(!core_cpu->controllers.audio.apu_write(state_file)) { return; }
+	if(!core_cpu->controllers.video.lcd_write(state_file)) { return; }
 
 	std::cout<<"GBE::Saved state " << state_file << "\n";
 
@@ -194,13 +222,11 @@ void GB_core::save_state(u8 slot)
 /****** Run the core in a loop until exit ******/
 void GB_core::run_core()
 {
-	if(config::gb_type == 2) { core_cpu.reg.a = 0x11; }
-
 	//Begin running the core
 	while(running)
 	{
 		//Handle SDL Events
-		if(core_cpu.controllers.video.lcd_stat.current_scanline == 144)
+		if(core_cpu->controllers.video.lcd_stat.current_scanline == 144)
 		{
 			if(SDL_PollEvent(&event))
 			{
@@ -224,56 +250,56 @@ void GB_core::run_core()
 			}
 			
 			//Update subscreen if necessary
-			if((core_pad.con_update) && (config::sio_device == 14)) { core_cpu.controllers.serial_io.singer_izek_update(); }
+			if((core_pad.con_update) && (config::sio_device == 14)) { core_cpu->controllers.serial_io.singer_izek_update(); }
 
 			//Perform reset for GB Memory Cartridge
 			if((config::cart_type == DMG_GBMEM) && (core_mmu.cart.flash_stat == 0xF0)) { reset(); }
 		}
 
 		//Run the CPU
-		if(core_cpu.running)
+		if(core_cpu->running)
 		{
 			//Receive byte from another instance of GBE+ via netplay
-			if(core_cpu.controllers.serial_io.sio_stat.connected)
+			if(core_cpu->controllers.serial_io.sio_stat.connected)
 			{
 				//Perform syncing operations when hard sync is enabled
 				if(config::netplay_hard_sync)
 				{
-					core_cpu.controllers.serial_io.sio_stat.sync_counter += (core_cpu.double_speed) ? (core_cpu.cycles >> 1) : core_cpu.cycles;
+					core_cpu->controllers.serial_io.sio_stat.sync_counter += (core_cpu->double_speed) ? (core_cpu->cycles >> 1) : core_cpu->cycles;
 
 					//Once this Game Boy has reached a specified amount of cycles, freeze until the other Game Boy finished that many cycles
-					if(core_cpu.controllers.serial_io.sio_stat.sync_counter >= core_cpu.controllers.serial_io.sio_stat.sync_clock)
+					if(core_cpu->controllers.serial_io.sio_stat.sync_counter >= core_cpu->controllers.serial_io.sio_stat.sync_clock)
 					{
-						core_cpu.controllers.serial_io.request_sync();
+						core_cpu->controllers.serial_io.request_sync();
 						u32 current_time = SDL_GetTicks();
 						u32 timeout = 0;
 
-						while(core_cpu.controllers.serial_io.sio_stat.sync)
+						while(core_cpu->controllers.serial_io.sio_stat.sync)
 						{
-							core_cpu.controllers.serial_io.receive_byte();
-							if(core_cpu.controllers.serial_io.is_master) { core_cpu.controllers.serial_io.four_player_request_sync(); }
+							core_cpu->controllers.serial_io.receive_byte();
+							if(core_cpu->controllers.serial_io.is_master) { core_cpu->controllers.serial_io.four_player_request_sync(); }
 
 							//Timeout if 10 seconds passes
 							timeout = SDL_GetTicks();
 							
 							if((timeout - current_time) >= 10000)
 							{
-								core_cpu.controllers.serial_io.reset();
+								core_cpu->controllers.serial_io.reset();
 							}						
 						}
 					}
 				}
 
 				//Send IR signal for GBC games
-				if(core_mmu.ir_send) { core_cpu.controllers.serial_io.send_ir_signal(); }
+				if(core_mmu.ir_send) { core_cpu->controllers.serial_io.send_ir_signal(); }
 
 				//Receive bytes normally
-				core_cpu.controllers.serial_io.receive_byte();
+				core_cpu->controllers.serial_io.receive_byte();
 
 				//Fade IR signal after a certain amount of time
 				if(core_mmu.ir_counter > 0)
 				{
-					core_mmu.ir_counter -= core_cpu.cycles;
+					core_mmu.ir_counter -= core_cpu->cycles;
 
 					if(core_mmu.ir_counter <= 0)
 					{
@@ -283,47 +309,47 @@ void GB_core::run_core()
 				}
 			}
 
-			core_cpu.cycles = 0;
+			core_cpu->cycles = 0;
 
 			//Handle Interrupts
-			core_cpu.handle_interrupts();
+			core_cpu->handle_interrupts();
 
 			//Halt CPU if necessary
-			if(core_cpu.halt == true)
+			if(core_cpu->halt == true)
 			{
 				//Normal HALT mode
-				if(core_cpu.interrupt || !core_cpu.skip_instruction) { core_cpu.cycles += 4; }
+				if(core_cpu->interrupt || !core_cpu->skip_instruction) { core_cpu->cycles += 4; }
 
 				//HALT bug
-				else if(core_cpu.skip_instruction)
+				else if(core_cpu->skip_instruction)
 				{
 					//Exit HALT mode
-					core_cpu.halt = false;
-					core_cpu.skip_instruction = false;
+					core_cpu->halt = false;
+					core_cpu->skip_instruction = false;
 
 					//Execute next opcode, but do not increment PC
-					core_cpu.opcode = core_mmu.read_u8(core_cpu.reg.pc);
-					core_cpu.exec_op(core_cpu.opcode);
+					core_cpu->opcode = core_mmu.read_u8(core_cpu->reg.pc);
+					core_cpu->exec_op(core_cpu->opcode);
 				}
 			}
 
 			//Process Opcodes
 			else 
 			{
-				core_cpu.opcode = core_mmu.read_u8(core_cpu.reg.pc++);
-				core_cpu.exec_op(core_cpu.opcode);
+				core_cpu->opcode = core_mmu.read_u8(core_cpu->reg.pc++);
+				core_cpu->exec_op(core_cpu->opcode);
 			}
 
 			//Update LCD
-			if(core_cpu.double_speed) { core_cpu.controllers.video.step(core_cpu.cycles >> 1); }
-			else { core_cpu.controllers.video.step(core_cpu.cycles); }
+			if(core_cpu->double_speed) { core_cpu->controllers.video.step(core_cpu->cycles >> 1); }
+			else { core_cpu->controllers.video.step(core_cpu->cycles); }
 
 			//Update DIV timer - Every 4 M clocks
-			core_cpu.div_counter += core_cpu.cycles;
+			core_cpu->div_counter += core_cpu->cycles;
 		
-			if(core_cpu.div_counter >= 256) 
+			if(core_cpu->div_counter >= 256) 
 			{
-				core_cpu.div_counter -= 256;
+				core_cpu->div_counter -= 256;
 				core_mmu.memory_map[REG_DIV]++;
 			}
 
@@ -333,23 +359,23 @@ void GB_core::run_core()
 				if(core_mmu.div_reset)
 				{
 					core_mmu.div_reset = false;
-					core_cpu.tima_counter = 0;
+					core_cpu->tima_counter = 0;
 				}
 
-				core_cpu.tima_counter += core_cpu.cycles;
+				core_cpu->tima_counter += core_cpu->cycles;
 
 				switch(core_mmu.memory_map[REG_TAC] & 0x3)
 				{
-					case 0x00: core_cpu.tima_speed = 1024; break;
-					case 0x01: core_cpu.tima_speed = 16; break;
-					case 0x02: core_cpu.tima_speed = 64; break;
-					case 0x03: core_cpu.tima_speed = 256; break;
+					case 0x00: core_cpu->tima_speed = 1024; break;
+					case 0x01: core_cpu->tima_speed = 16; break;
+					case 0x02: core_cpu->tima_speed = 64; break;
+					case 0x03: core_cpu->tima_speed = 256; break;
 				}
 	
-				if(core_cpu.tima_counter >= core_cpu.tima_speed)
+				if(core_cpu->tima_counter >= core_cpu->tima_speed)
 				{
 					core_mmu.memory_map[REG_TIMA]++;
-					core_cpu.tima_counter -= core_cpu.tima_speed;
+					core_cpu->tima_counter -= core_cpu->tima_speed;
 
 					if(core_mmu.memory_map[REG_TIMA] == 0)
 					{
@@ -361,73 +387,73 @@ void GB_core::run_core()
 			}
 
 			//Update serial input-output operations
-			if(core_cpu.controllers.serial_io.sio_stat.shifts_left != 0)
+			if(core_cpu->controllers.serial_io.sio_stat.shifts_left != 0)
 			{
-				core_cpu.controllers.serial_io.sio_stat.shift_counter += (core_cpu.double_speed) ? (core_cpu.cycles >> 1) : core_cpu.cycles;
+				core_cpu->controllers.serial_io.sio_stat.shift_counter += (core_cpu->double_speed) ? (core_cpu->cycles >> 1) : core_cpu->cycles;
 
-				if((core_cpu.controllers.serial_io.barcode_boy.send_data) && ((core_mmu.memory_map[REG_SC] & 0x80) == 0))
+				if((core_cpu->controllers.serial_io.barcode_boy.send_data) && ((core_mmu.memory_map[REG_SC] & 0x80) == 0))
 				{
-					core_cpu.controllers.serial_io.sio_stat.shifts_left = 8;
-					core_cpu.controllers.serial_io.sio_stat.shift_counter = 0;
+					core_cpu->controllers.serial_io.sio_stat.shifts_left = 8;
+					core_cpu->controllers.serial_io.sio_stat.shift_counter = 0;
 				}	
 
 				//After SIO clocks, perform SIO operations now
-				if(core_cpu.controllers.serial_io.sio_stat.shift_counter >= core_cpu.controllers.serial_io.sio_stat.shift_clock)
+				if(core_cpu->controllers.serial_io.sio_stat.shift_counter >= core_cpu->controllers.serial_io.sio_stat.shift_clock)
 				{
 					//Shift bit out from SB, transfer it
 					core_mmu.memory_map[REG_SB] <<= 1;
 
-					core_cpu.controllers.serial_io.sio_stat.shift_counter -= core_cpu.controllers.serial_io.sio_stat.shift_clock;
-					core_cpu.controllers.serial_io.sio_stat.shifts_left--;
+					core_cpu->controllers.serial_io.sio_stat.shift_counter -= core_cpu->controllers.serial_io.sio_stat.shift_clock;
+					core_cpu->controllers.serial_io.sio_stat.shifts_left--;
 
 					//Complete the transfer
-					if(core_cpu.controllers.serial_io.sio_stat.shifts_left == 0)
+					if(core_cpu->controllers.serial_io.sio_stat.shifts_left == 0)
 					{
 						//Reset Bit 7 in SC
 						core_mmu.memory_map[REG_SC] &= ~0x80;
 
-						core_cpu.controllers.serial_io.sio_stat.active_transfer = false;
+						core_cpu->controllers.serial_io.sio_stat.active_transfer = false;
 
-						switch(core_cpu.controllers.serial_io.sio_stat.sio_type)
+						switch(core_cpu->controllers.serial_io.sio_stat.sio_type)
 						{
 							//Process normal SIO communications
 							case NO_GB_DEVICE:
 							case GB_LINK:
 								//Emulate disconnected link cable (on an internal clock) with no netplay
-								if((core_cpu.controllers.serial_io.sio_stat.internal_clock)
-								&& (!config::use_netplay || !core_cpu.controllers.serial_io.sio_stat.connected))
+								if((core_cpu->controllers.serial_io.sio_stat.internal_clock)
+								&& (!config::use_netplay || !core_cpu->controllers.serial_io.sio_stat.connected))
 								{
 									core_mmu.memory_map[REG_SB] = 0xFF;
 									core_mmu.memory_map[IF_FLAG] |= 0x08;
 								}
 
 								//Send byte to another instance of GBE+ via netplay
-								if(core_cpu.controllers.serial_io.sio_stat.connected) { core_cpu.controllers.serial_io.send_byte(); }
+								if(core_cpu->controllers.serial_io.sio_stat.connected) { core_cpu->controllers.serial_io.send_byte(); }
 						
 								break;
 
 							//Process GB Printer communications
 							case GB_PRINTER:
-								core_cpu.controllers.serial_io.printer_process();
+								core_cpu->controllers.serial_io.printer_process();
 								break;
 
 							//Process GB Mobile Adapter communications
 							case GB_MOBILE_ADAPTER:
-								core_cpu.controllers.serial_io.mobile_adapter_process();
+								core_cpu->controllers.serial_io.mobile_adapter_process();
 								break;
 
 							//Process Bardigun card scanner communications
 							case GB_BARDIGUN_SCANNER:
-								core_cpu.controllers.serial_io.bardigun_process();
+								core_cpu->controllers.serial_io.bardigun_process();
 								break;
 
 							//Process Barcode Boy communications
 							case GB_BARCODE_BOY:
-								core_cpu.controllers.serial_io.barcode_boy_process();
+								core_cpu->controllers.serial_io.barcode_boy_process();
 
-								if(core_cpu.controllers.serial_io.barcode_boy.send_data)
+								if(core_cpu->controllers.serial_io.barcode_boy.send_data)
 								{
-									core_mmu.memory_map[REG_SB] = core_cpu.controllers.serial_io.barcode_boy.byte;
+									core_mmu.memory_map[REG_SB] = core_cpu->controllers.serial_io.barcode_boy.byte;
 									core_mmu.memory_map[IF_FLAG] |= 0x08;
 								}
 									
@@ -435,23 +461,23 @@ void GB_core::run_core()
 
 							//Process 4 Player communications
 							case GB_FOUR_PLAYER_ADAPTER:
-								core_cpu.controllers.serial_io.four_player_process();
+								core_cpu->controllers.serial_io.four_player_process();
 								break;
 
 							//Process Power Antenna communications
 							case GB_POWER_ANTENNA:
-								if(core_cpu.controllers.serial_io.sio_stat.transfer_byte & 0x1)
+								if(core_cpu->controllers.serial_io.sio_stat.transfer_byte & 0x1)
 								{
-									core_cpu.controllers.serial_io.power_antenna_on = true;
-									core_cpu.controllers.video.power_antenna_osd = true;
+									core_cpu->controllers.serial_io.power_antenna_on = true;
+									core_cpu->controllers.video.power_antenna_osd = true;
 									core_mmu.memory_map[REG_SB] = 0xF2;
 									core_mmu.memory_map[IF_FLAG] |= 0x08;
 								}
 								
-								else if(core_cpu.controllers.serial_io.sio_stat.transfer_byte == 0)
+								else if(core_cpu->controllers.serial_io.sio_stat.transfer_byte == 0)
 								{
-									core_cpu.controllers.serial_io.power_antenna_on = false;
-									core_cpu.controllers.video.power_antenna_osd = false;
+									core_cpu->controllers.serial_io.power_antenna_on = false;
+									core_cpu->controllers.video.power_antenna_osd = false;
 									core_mmu.memory_map[REG_SB] = 0xF3;
 									core_mmu.memory_map[IF_FLAG] |= 0x08;
 								}
@@ -460,41 +486,41 @@ void GB_core::run_core()
 
 							//Process Singer IZEK communications
 							case GB_SINGER_IZEK:
-								core_cpu.controllers.serial_io.singer_izek_process();
+								core_cpu->controllers.serial_io.singer_izek_process();
 								break;
 
 							//Process Turbo File GB communications
 							case GB_ASCII_TURBO_FILE:
-								core_cpu.controllers.serial_io.turbo_file_process();
+								core_cpu->controllers.serial_io.turbo_file_process();
 								break;
 						}
 
-						switch(core_cpu.controllers.serial_io.sio_stat.ir_type)
+						switch(core_cpu->controllers.serial_io.sio_stat.ir_type)
 						{
 							//Process Full Changer communications
 							case GBC_FULL_CHANGER:
-								core_cpu.controllers.serial_io.full_changer_process();
+								core_cpu->controllers.serial_io.full_changer_process();
 								break;
 
 							//Process Pokemon Pikachu 2 communications
 							//Process Pocket Sakura communications
 							case GBC_POKEMON_PIKACHU_2:
 							case GBC_POCKET_SAKURA:
-								core_cpu.controllers.serial_io.pocket_ir_process();
+								core_cpu->controllers.serial_io.pocket_ir_process();
 								break;
 
 							//Process TV Remote commnications
 							case GBC_TV_REMOTE:
-								core_cpu.controllers.serial_io.tv_remote_process();
+								core_cpu->controllers.serial_io.tv_remote_process();
 								break;
 						}
 					}
 				}
 
 				//Process Singer IZEK data communications on external transfers
-				if((core_cpu.controllers.serial_io.sio_stat.sio_type == GB_SINGER_IZEK) && (core_cpu.controllers.serial_io.sio_stat.ping_count == 0x02))
+				if((core_cpu->controllers.serial_io.sio_stat.sio_type == GB_SINGER_IZEK) && (core_cpu->controllers.serial_io.sio_stat.ping_count == 0x02))
 				{
-					core_cpu.controllers.serial_io.singer_izek_data_process();
+					core_cpu->controllers.serial_io.singer_izek_data_process();
 				}
 			}
 		}
@@ -507,53 +533,60 @@ void GB_core::run_core()
 	shutdown();
 }
 
+void GBC_core::run_core()
+{
+	core_cpu->reg.a = 0x11;
+	GB_core::run_core();
+}
+
+
 /****** Manually run core for 1 instruction ******/
 void GB_core::step()
 {
 	//Run the CPU
-	if(core_cpu.running)
+	if(core_cpu->running)
 	{
 		//Receive byte from another instance of GBE+ via netplay
-		if(core_cpu.controllers.serial_io.sio_stat.connected)
+		if(core_cpu->controllers.serial_io.sio_stat.connected)
 		{
 			//Perform syncing operations when hard sync is enabled
 			if(config::netplay_hard_sync)
 			{
-				core_cpu.controllers.serial_io.sio_stat.sync_counter += (core_cpu.double_speed) ? (core_cpu.cycles >> 1) : core_cpu.cycles;;
+				core_cpu->controllers.serial_io.sio_stat.sync_counter += (core_cpu->double_speed) ? (core_cpu->cycles >> 1) : core_cpu->cycles;;
 
 				//Once this Game Boy has reached a specified amount of cycles, freeze until the other Game Boy finished that many cycles
-				if(core_cpu.controllers.serial_io.sio_stat.sync_counter >= core_cpu.controllers.serial_io.sio_stat.sync_clock)
+				if(core_cpu->controllers.serial_io.sio_stat.sync_counter >= core_cpu->controllers.serial_io.sio_stat.sync_clock)
 				{
-					core_cpu.controllers.serial_io.request_sync();
+					core_cpu->controllers.serial_io.request_sync();
 					u32 current_time = SDL_GetTicks();
 					u32 timeout = 0;
 
-					while(core_cpu.controllers.serial_io.sio_stat.sync)
+					while(core_cpu->controllers.serial_io.sio_stat.sync)
 					{
-						core_cpu.controllers.serial_io.receive_byte();
-						if(core_cpu.controllers.serial_io.is_master) { core_cpu.controllers.serial_io.four_player_request_sync(); }
+						core_cpu->controllers.serial_io.receive_byte();
+						if(core_cpu->controllers.serial_io.is_master) { core_cpu->controllers.serial_io.four_player_request_sync(); }
 
 						//Timeout if 10 seconds passes
 						timeout = SDL_GetTicks();
 							
 						if((timeout - current_time) >= 10000)
 						{
-							core_cpu.controllers.serial_io.reset();
+							core_cpu->controllers.serial_io.reset();
 						}						
 					}
 				}
 			}
 
 			//Send IR signal for GBC games
-			if(core_mmu.ir_send) { core_cpu.controllers.serial_io.send_ir_signal(); }
+			if(core_mmu.ir_send) { core_cpu->controllers.serial_io.send_ir_signal(); }
 
 			//Receive bytes normally
-			core_cpu.controllers.serial_io.receive_byte();
+			core_cpu->controllers.serial_io.receive_byte();
 
 			//Fade IR signal after a certain amount of time
 			if(core_mmu.ir_counter > 0)
 			{
-				core_mmu.ir_counter -= core_cpu.cycles;
+				core_mmu.ir_counter -= core_cpu->cycles;
 
 				if(core_mmu.ir_counter <= 0)
 				{
@@ -563,67 +596,67 @@ void GB_core::step()
 			}
 		}
 
-		core_cpu.cycles = 0;
+		core_cpu->cycles = 0;
 
 		//Handle Interrupts
-		core_cpu.handle_interrupts();
+		core_cpu->handle_interrupts();
 	
 		//Halt CPU if necessary
-		if(core_cpu.halt == true)
+		if(core_cpu->halt == true)
 		{
 			//Normal HALT mode
-			if(core_cpu.interrupt || !core_cpu.skip_instruction) { core_cpu.cycles += 4; }
+			if(core_cpu->interrupt || !core_cpu->skip_instruction) { core_cpu->cycles += 4; }
 
 			//HALT bug
-			else if(core_cpu.skip_instruction)
+			else if(core_cpu->skip_instruction)
 			{
 				//Exit HALT mode
-				core_cpu.halt = false;
-				core_cpu.skip_instruction = false;
+				core_cpu->halt = false;
+				core_cpu->skip_instruction = false;
 
 				//Execute next opcode, but do not increment PC
-				core_cpu.opcode = core_mmu.read_u8(core_cpu.reg.pc);
-				core_cpu.exec_op(core_cpu.opcode);
+				core_cpu->opcode = core_mmu.read_u8(core_cpu->reg.pc);
+				core_cpu->exec_op(core_cpu->opcode);
 			}
 		}
 
 		//Process Opcodes
 		else 
 		{
-			core_cpu.opcode = core_mmu.read_u8(core_cpu.reg.pc++);
-			core_cpu.exec_op(core_cpu.opcode);
+			core_cpu->opcode = core_mmu.read_u8(core_cpu->reg.pc++);
+			core_cpu->exec_op(core_cpu->opcode);
 		}
 
 		//Update LCD
-		if(core_cpu.double_speed) { core_cpu.controllers.video.step(core_cpu.cycles >> 1); }
-		else { core_cpu.controllers.video.step(core_cpu.cycles); }
+		if(core_cpu->double_speed) { core_cpu->controllers.video.step(core_cpu->cycles >> 1); }
+		else { core_cpu->controllers.video.step(core_cpu->cycles); }
 
 		//Update DIV timer - Every 4 M clocks
-		core_cpu.div_counter += core_cpu.cycles;
+		core_cpu->div_counter += core_cpu->cycles;
 		
-		if(core_cpu.div_counter >= 256) 
+		if(core_cpu->div_counter >= 256) 
 		{
-			core_cpu.div_counter -= 256;
+			core_cpu->div_counter -= 256;
 			core_mmu.memory_map[REG_DIV]++;
 		}
 
 		//Update TIMA timer
 		if(core_mmu.memory_map[REG_TAC] & 0x4) 
 		{	
-			core_cpu.tima_counter += core_cpu.cycles;
+			core_cpu->tima_counter += core_cpu->cycles;
 
 			switch(core_mmu.memory_map[REG_TAC] & 0x3)
 			{
-				case 0x00: core_cpu.tima_speed = 1024; break;
-				case 0x01: core_cpu.tima_speed = 16; break;
-				case 0x02: core_cpu.tima_speed = 64; break;
-				case 0x03: core_cpu.tima_speed = 256; break;
+				case 0x00: core_cpu->tima_speed = 1024; break;
+				case 0x01: core_cpu->tima_speed = 16; break;
+				case 0x02: core_cpu->tima_speed = 64; break;
+				case 0x03: core_cpu->tima_speed = 256; break;
 			}
 	
-			if(core_cpu.tima_counter >= core_cpu.tima_speed)
+			if(core_cpu->tima_counter >= core_cpu->tima_speed)
 			{
 				core_mmu.memory_map[REG_TIMA]++;
-				core_cpu.tima_counter -= core_cpu.tima_speed;
+				core_cpu->tima_counter -= core_cpu->tima_speed;
 
 				if(core_mmu.memory_map[REG_TIMA] == 0)
 				{
@@ -635,73 +668,73 @@ void GB_core::step()
 		}
 
 		//Update serial input-output operations
-		if(core_cpu.controllers.serial_io.sio_stat.shifts_left != 0)
+		if(core_cpu->controllers.serial_io.sio_stat.shifts_left != 0)
 		{
-			core_cpu.controllers.serial_io.sio_stat.shift_counter += (core_cpu.double_speed) ? (core_cpu.cycles >> 1) : core_cpu.cycles;;
+			core_cpu->controllers.serial_io.sio_stat.shift_counter += (core_cpu->double_speed) ? (core_cpu->cycles >> 1) : core_cpu->cycles;;
 
-			if((core_cpu.controllers.serial_io.barcode_boy.send_data) && ((core_mmu.memory_map[REG_SC] & 0x80) == 0))
+			if((core_cpu->controllers.serial_io.barcode_boy.send_data) && ((core_mmu.memory_map[REG_SC] & 0x80) == 0))
 			{
-				core_cpu.controllers.serial_io.sio_stat.shifts_left = 8;
-				core_cpu.controllers.serial_io.sio_stat.shift_counter = 0;
+				core_cpu->controllers.serial_io.sio_stat.shifts_left = 8;
+				core_cpu->controllers.serial_io.sio_stat.shift_counter = 0;
 			}	
 
 			//After SIO clocks, perform SIO operations now
-			if(core_cpu.controllers.serial_io.sio_stat.shift_counter >= core_cpu.controllers.serial_io.sio_stat.shift_clock)
+			if(core_cpu->controllers.serial_io.sio_stat.shift_counter >= core_cpu->controllers.serial_io.sio_stat.shift_clock)
 			{
 				//Shift bit out from SB, transfer it
 				core_mmu.memory_map[REG_SB] <<= 1;
 
-				core_cpu.controllers.serial_io.sio_stat.shift_counter -= core_cpu.controllers.serial_io.sio_stat.shift_clock;
-				core_cpu.controllers.serial_io.sio_stat.shifts_left--;
+				core_cpu->controllers.serial_io.sio_stat.shift_counter -= core_cpu->controllers.serial_io.sio_stat.shift_clock;
+				core_cpu->controllers.serial_io.sio_stat.shifts_left--;
 
 				//Complete the transfer
-				if(core_cpu.controllers.serial_io.sio_stat.shifts_left == 0)
+				if(core_cpu->controllers.serial_io.sio_stat.shifts_left == 0)
 				{
 					//Reset Bit 7 in SC
 					core_mmu.memory_map[REG_SC] &= ~0x80;
 
-					core_cpu.controllers.serial_io.sio_stat.active_transfer = false;
+					core_cpu->controllers.serial_io.sio_stat.active_transfer = false;
 
-					switch(core_cpu.controllers.serial_io.sio_stat.sio_type)
+					switch(core_cpu->controllers.serial_io.sio_stat.sio_type)
 					{
 						//Process normal SIO communications
 						case NO_GB_DEVICE:
 						case GB_LINK:
 							//Emulate disconnected link cable (on an internal clock) with no netplay
-							if((core_cpu.controllers.serial_io.sio_stat.internal_clock)
-							&& (!config::use_netplay || !core_cpu.controllers.serial_io.sio_stat.connected))
+							if((core_cpu->controllers.serial_io.sio_stat.internal_clock)
+							&& (!config::use_netplay || !core_cpu->controllers.serial_io.sio_stat.connected))
 							{
 								core_mmu.memory_map[REG_SB] = 0xFF;
 								core_mmu.memory_map[IF_FLAG] |= 0x08;
 							}
 
 							//Send byte to another instance of GBE+ via netplay
-							if(core_cpu.controllers.serial_io.sio_stat.connected) { core_cpu.controllers.serial_io.send_byte(); }
+							if(core_cpu->controllers.serial_io.sio_stat.connected) { core_cpu->controllers.serial_io.send_byte(); }
 						
 							break;
 
 						//Process GB Printer communications
 						case GB_PRINTER:
-							core_cpu.controllers.serial_io.printer_process();
+							core_cpu->controllers.serial_io.printer_process();
 							break;
 
 						//Process GB Mobile Adapter communications
 						case GB_MOBILE_ADAPTER:
-							core_cpu.controllers.serial_io.mobile_adapter_process();
+							core_cpu->controllers.serial_io.mobile_adapter_process();
 							break;
 
 						//Process Bardigun card scanner communications
 						case GB_BARDIGUN_SCANNER:
-							core_cpu.controllers.serial_io.bardigun_process();
+							core_cpu->controllers.serial_io.bardigun_process();
 							break;
 
 						//Process Barcode Boy communications
 						case GB_BARCODE_BOY:
-							core_cpu.controllers.serial_io.barcode_boy_process();
+							core_cpu->controllers.serial_io.barcode_boy_process();
 
-							if(core_cpu.controllers.serial_io.barcode_boy.send_data)
+							if(core_cpu->controllers.serial_io.barcode_boy.send_data)
 							{
-								core_mmu.memory_map[REG_SB] = core_cpu.controllers.serial_io.barcode_boy.byte;
+								core_mmu.memory_map[REG_SB] = core_cpu->controllers.serial_io.barcode_boy.byte;
 								core_mmu.memory_map[IF_FLAG] |= 0x08;
 							}
 								
@@ -709,55 +742,55 @@ void GB_core::step()
 
 						//Process 4 Player communications
 						case GB_FOUR_PLAYER_ADAPTER:
-							core_cpu.controllers.serial_io.four_player_process();
+							core_cpu->controllers.serial_io.four_player_process();
 							break;
 
 						//Process Power Antenna communications
 						case GB_POWER_ANTENNA:
-							if(core_cpu.controllers.serial_io.sio_stat.transfer_byte & 0x1)
+							if(core_cpu->controllers.serial_io.sio_stat.transfer_byte & 0x1)
 							{
-								core_cpu.controllers.serial_io.power_antenna_on = true;
-								core_cpu.controllers.video.power_antenna_osd = true;
+								core_cpu->controllers.serial_io.power_antenna_on = true;
+								core_cpu->controllers.video.power_antenna_osd = true;
 								core_mmu.memory_map[REG_SB] = 0xF2;
 								core_mmu.memory_map[IF_FLAG] |= 0x08;
 							}
 								
-							else if(core_cpu.controllers.serial_io.sio_stat.transfer_byte == 0)
+							else if(core_cpu->controllers.serial_io.sio_stat.transfer_byte == 0)
 							{
-								core_cpu.controllers.serial_io.power_antenna_on = false;
-								core_cpu.controllers.video.power_antenna_osd = false;
+								core_cpu->controllers.serial_io.power_antenna_on = false;
+								core_cpu->controllers.video.power_antenna_osd = false;
 								core_mmu.memory_map[REG_SB] = 0xF3;
 								core_mmu.memory_map[IF_FLAG] |= 0x08;
 							}
 
 						//Process Singer IZEK communications
 						case GB_SINGER_IZEK:
-							core_cpu.controllers.serial_io.singer_izek_process();
+							core_cpu->controllers.serial_io.singer_izek_process();
 							break;
 
 						//Process Turbo File GB communications
 						case GB_ASCII_TURBO_FILE:
-							core_cpu.controllers.serial_io.turbo_file_process();
+							core_cpu->controllers.serial_io.turbo_file_process();
 							break;
 					}
 
-					switch(core_cpu.controllers.serial_io.sio_stat.ir_type)
+					switch(core_cpu->controllers.serial_io.sio_stat.ir_type)
 					{
 						//Process Full Changer communications
 						case GBC_FULL_CHANGER:
-							core_cpu.controllers.serial_io.full_changer_process();
+							core_cpu->controllers.serial_io.full_changer_process();
 							break;
 
 						//Process Pokemon Pikachu 2 communications
 						//Process Pocket Sakura communications
 						case GBC_POKEMON_PIKACHU_2:
 						case GBC_POCKET_SAKURA:
-							core_cpu.controllers.serial_io.pocket_ir_process();
+							core_cpu->controllers.serial_io.pocket_ir_process();
 							break;
 
 						//Process TV Remote commnications
 						case GBC_TV_REMOTE:
-							core_cpu.controllers.serial_io.tv_remote_process();
+							core_cpu->controllers.serial_io.tv_remote_process();
 							break;
 					}
 				}
@@ -834,7 +867,7 @@ void GB_core::handle_hotkey(SDL_Event& event)
 		save_stream << rand() % 1024 << rand() % 1024 << rand() % 1024;
 		save_name += save_stream.str() + ".bmp";
 	
-		SDL_SaveBMP(core_cpu.controllers.video.final_screen, save_name.c_str());
+		SDL_SaveBMP(core_cpu->controllers.video.final_screen, save_name.c_str());
 
 		//OSD
 		config::osd_message = "SAVED SCREENSHOT";
@@ -859,14 +892,14 @@ void GB_core::handle_hotkey(SDL_Event& event)
 		}
 
 		//Destroy old window
-		SDL_DestroyWindow(core_cpu.controllers.video.window);
+		SDL_DestroyWindow(core_cpu->controllers.video.window);
 
 		//Initialize new window - SDL
 		if(!config::use_opengl)
 		{
-			core_cpu.controllers.video.window = SDL_CreateWindow("GBE+", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, config::sys_width, config::sys_height, config::flags);
-			core_cpu.controllers.video.final_screen = SDL_GetWindowSurface(core_cpu.controllers.video.window);
-			SDL_GetWindowSize(core_cpu.controllers.video.window, &config::win_width, &config::win_height);
+			core_cpu->controllers.video.window = SDL_CreateWindow("GBE+", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, config::sys_width, config::sys_height, config::flags);
+			core_cpu->controllers.video.final_screen = SDL_GetWindowSurface(core_cpu->controllers.video.window);
+			SDL_GetWindowSize(core_cpu->controllers.video.window, &config::win_width, &config::win_height);
 
 			//Find the maximum fullscreen dimensions that maintain the original aspect ratio
 			if(config::flags & SDL_WINDOW_FULLSCREEN_DESKTOP)
@@ -879,14 +912,14 @@ void GB_core::handle_hotkey(SDL_Event& event)
 				if(max_width <= max_height) { ratio = max_width; }
 				else { ratio = max_height; }
 
-				core_cpu.controllers.video.max_fullscreen_ratio = ratio;
+				core_cpu->controllers.video.max_fullscreen_ratio = ratio;
 			}
 		}
 
 		//Initialize new window - OpenGL
 		else
 		{
-			core_cpu.controllers.video.opengl_init();
+			core_cpu->controllers.video.opengl_init();
 		}
 	}
 
@@ -975,35 +1008,35 @@ void GB_core::handle_hotkey(SDL_Event& event)
 	//TV Remote - Send signal
 	else if((event.type == SDL_KEYDOWN) && (event.key.keysym.sym == SDLK_F3))
 	{
-		switch(core_cpu.controllers.serial_io.sio_stat.sio_type)
+		switch(core_cpu->controllers.serial_io.sio_stat.sio_type)
 		{
 
 			//Bardigun reswipe card
 			case GB_BARDIGUN_SCANNER:
-				core_cpu.controllers.serial_io.bardigun_scanner.current_state = BARDIGUN_INACTIVE;
-				core_cpu.controllers.serial_io.bardigun_scanner.inactive_counter = 0x500;
-				core_cpu.controllers.serial_io.bardigun_scanner.barcode_pointer = 0;
+				core_cpu->controllers.serial_io.bardigun_scanner.current_state = BARDIGUN_INACTIVE;
+				core_cpu->controllers.serial_io.bardigun_scanner.inactive_counter = 0x500;
+				core_cpu->controllers.serial_io.bardigun_scanner.barcode_pointer = 0;
 				break;
 
 			//Barcode Boy reswipe card
 			case GB_BARCODE_BOY:
-				if(core_cpu.controllers.serial_io.barcode_boy.current_state == BARCODE_BOY_ACTIVE)
+				if(core_cpu->controllers.serial_io.barcode_boy.current_state == BARCODE_BOY_ACTIVE)
 				{
-					core_cpu.controllers.serial_io.barcode_boy.current_state = BARCODE_BOY_SEND_BARCODE;
-					core_cpu.controllers.serial_io.barcode_boy.send_data = true;
+					core_cpu->controllers.serial_io.barcode_boy.current_state = BARCODE_BOY_SEND_BARCODE;
+					core_cpu->controllers.serial_io.barcode_boy.send_data = true;
 
-					core_cpu.controllers.serial_io.sio_stat.shifts_left = 8;
-					core_cpu.controllers.serial_io.sio_stat.shift_counter = 0;
+					core_cpu->controllers.serial_io.sio_stat.shifts_left = 8;
+					core_cpu->controllers.serial_io.sio_stat.shift_counter = 0;
 				}
 
 				break;
 		}
 
-		switch(core_cpu.controllers.serial_io.sio_stat.ir_type)
+		switch(core_cpu->controllers.serial_io.sio_stat.ir_type)
 		{
 			//Full Changer - Draw Cosmic Character
 			case GBC_FULL_CHANGER:
-				core_cpu.controllers.serial_io.full_changer.delay_counter = (core_cpu.controllers.serial_io.full_changer.current_character * 72);
+				core_cpu->controllers.serial_io.full_changer.delay_counter = (core_cpu->controllers.serial_io.full_changer.current_character * 72);
 				core_mmu.ir_trigger = 1;
 				break;
 
@@ -1068,35 +1101,35 @@ void GB_core::handle_hotkey(int input, bool pressed)
 	//TV Remote - Send Signal
 	else if((input == SDLK_F3) && (pressed))
 	{
-		switch(core_cpu.controllers.serial_io.sio_stat.sio_type)
+		switch(core_cpu->controllers.serial_io.sio_stat.sio_type)
 		{
 
 			//Bardigun reswipe card
 			case GB_BARDIGUN_SCANNER:
-				core_cpu.controllers.serial_io.bardigun_scanner.current_state = BARDIGUN_INACTIVE;
-				core_cpu.controllers.serial_io.bardigun_scanner.inactive_counter = 0x500;
-				core_cpu.controllers.serial_io.bardigun_scanner.barcode_pointer = 0;
+				core_cpu->controllers.serial_io.bardigun_scanner.current_state = BARDIGUN_INACTIVE;
+				core_cpu->controllers.serial_io.bardigun_scanner.inactive_counter = 0x500;
+				core_cpu->controllers.serial_io.bardigun_scanner.barcode_pointer = 0;
 				break;
 
 			//Barcode Boy reswipe card
 			case GB_BARCODE_BOY:
-				if(core_cpu.controllers.serial_io.barcode_boy.current_state == BARCODE_BOY_ACTIVE)
+				if(core_cpu->controllers.serial_io.barcode_boy.current_state == BARCODE_BOY_ACTIVE)
 				{
-					core_cpu.controllers.serial_io.barcode_boy.current_state = BARCODE_BOY_SEND_BARCODE;
-					core_cpu.controllers.serial_io.barcode_boy.send_data = true;
+					core_cpu->controllers.serial_io.barcode_boy.current_state = BARCODE_BOY_SEND_BARCODE;
+					core_cpu->controllers.serial_io.barcode_boy.send_data = true;
 
-					core_cpu.controllers.serial_io.sio_stat.shifts_left = 8;
-					core_cpu.controllers.serial_io.sio_stat.shift_counter = 0;
+					core_cpu->controllers.serial_io.sio_stat.shifts_left = 8;
+					core_cpu->controllers.serial_io.sio_stat.shift_counter = 0;
 				}
 
 				break;
 		}
 
-		switch(core_cpu.controllers.serial_io.sio_stat.ir_type)
+		switch(core_cpu->controllers.serial_io.sio_stat.ir_type)
 		{
 			//Full Changer draw Cosmic Character
 			case GBC_FULL_CHANGER:
-				core_cpu.controllers.serial_io.full_changer.delay_counter = (core_cpu.controllers.serial_io.full_changer.current_character * 72);
+				core_cpu->controllers.serial_io.full_changer.delay_counter = (core_cpu->controllers.serial_io.full_changer.current_character * 72);
 				core_mmu.ir_trigger = 1;
 				break;
 
@@ -1133,7 +1166,7 @@ void GB_core::handle_hotkey(int input, bool pressed)
 void GB_core::update_volume(u8 volume)
 {
 	config::volume = volume;
-	core_cpu.controllers.audio.apu_stat.channel_master_volume = (config::volume >> 2);
+	core_cpu->controllers.audio.apu_stat.channel_master_volume = (config::volume >> 2);
 }
 
 /****** Feeds key input from an external source (useful for TAS) ******/
@@ -1148,16 +1181,16 @@ u32 GB_core::ex_get_reg(u8 reg_index)
 {
 	switch(reg_index)
 	{
-		case 0x0: return core_cpu.reg.a;
-		case 0x1: return core_cpu.reg.b;
-		case 0x2: return core_cpu.reg.c;
-		case 0x3: return core_cpu.reg.d;
-		case 0x4: return core_cpu.reg.e;
-		case 0x5: return core_cpu.reg.h;
-		case 0x6: return core_cpu.reg.l;
-		case 0x7: return core_cpu.reg.f;
-		case 0x8: return core_cpu.reg.sp;
-		case 0x9: return core_cpu.reg.pc;
+		case 0x0: return core_cpu->reg.a;
+		case 0x1: return core_cpu->reg.b;
+		case 0x2: return core_cpu->reg.c;
+		case 0x3: return core_cpu->reg.d;
+		case 0x4: return core_cpu->reg.e;
+		case 0x5: return core_cpu->reg.h;
+		case 0x6: return core_cpu->reg.l;
+		case 0x7: return core_cpu->reg.f;
+		case 0x8: return core_cpu->reg.sp;
+		case 0x9: return core_cpu->reg.pc;
 		default: return 0;
 	}
 }
@@ -1178,41 +1211,49 @@ u8 GB_core::ex_read_u8(u16 address) { return core_mmu.read_u8(address); }
 void GB_core::ex_write_u8(u16 address, u8 value) { core_mmu.write_u8(address, value); }
 
 /****** Dumps selected OBJ to a file ******/
-void GB_core::dump_obj(int obj_index)
+void DMG_core::dump_obj(int obj_index)
 {
 	//DMG OBJs
-	if(config::gb_type < 2) { core_cpu.controllers.video.dump_dmg_obj(obj_index); }
-
-	//GBC OBJs
-	else { core_cpu.controllers.video.dump_gbc_obj(obj_index); }
+	core_cpu->controllers.video.dump_dmg_obj(obj_index);
 }
 
 /****** Dumps selected BG tile to a file ******/
-void GB_core::dump_bg(int bg_index)
+void DMG_core::dump_bg(int bg_index)
 {
 	//DMG BG tiles
-	if(config::gb_type < 2) { core_cpu.controllers.video.dump_dmg_bg(bg_index); }
+	core_cpu->controllers.video.dump_dmg_bg(bg_index);
+}
 
+/****** Dumps selected OBJ to a file ******/
+void GBC_core::dump_obj(int obj_index)
+{
+	//GBC OBJs
+	core_cpu->controllers.video.dump_gbc_obj(obj_index);
+}
+
+/****** Dumps selected BG tile to a file ******/
+void GBC_core::dump_bg(int bg_index)
+{
 	//GBC BG tiles
-	else { core_cpu.controllers.video.dump_gbc_bg(bg_index); }
+	core_cpu->controllers.video.dump_gbc_bg(bg_index);
 }
 
 /****** Grabs the OBJ palette ******/
 u32* GB_core::get_obj_palette(int pal_index)
 {
-	return &core_cpu.controllers.video.lcd_stat.obj_colors_final[0][pal_index];
+	return &core_cpu->controllers.video.lcd_stat.obj_colors_final[0][pal_index];
 }
 
 /****** Grabs the BG palette ******/
 u32* GB_core::get_bg_palette(int pal_index)
 {
-	return &core_cpu.controllers.video.lcd_stat.bg_colors_final[0][pal_index];
+	return &core_cpu->controllers.video.lcd_stat.bg_colors_final[0][pal_index];
 }
 
 /****** Grabs the hash for a specific tile ******/
 std::string GB_core::get_hash(u32 addr, u8 gfx_type)
 {
-	return core_cpu.controllers.video.get_hash(addr, gfx_type);
+	return core_cpu->controllers.video.get_hash(addr, gfx_type);
 }
 
 /****** Starts netplay connection ******/
@@ -1232,13 +1273,13 @@ void GB_core::start_netplay()
 		SDL_Delay(100);
 
 		//Process network connections
-		core_cpu.controllers.serial_io.process_network_communication();
+		core_cpu->controllers.serial_io.process_network_communication();
 
 		//Check again if the GBE+ instances connected, exit waiting if not the 4-Player adapter
-		if((core_cpu.controllers.serial_io.sio_stat.connected) && (core_cpu.controllers.serial_io.sio_stat.sio_type != GB_FOUR_PLAYER_ADAPTER)) { break; }
+		if((core_cpu->controllers.serial_io.sio_stat.connected) && (core_cpu->controllers.serial_io.sio_stat.sio_type != GB_FOUR_PLAYER_ADAPTER)) { break; }
 	}
 
-	if(!core_cpu.controllers.serial_io.sio_stat.connected) { std::cout<<"SIO::No netplay connection established\n"; }
+	if(!core_cpu->controllers.serial_io.sio_stat.connected) { std::cout<<"SIO::No netplay connection established\n"; }
 	else { std::cout<<"SIO::Netplay connection established\n"; }
 }
 
@@ -1246,9 +1287,9 @@ void GB_core::start_netplay()
 void GB_core::stop_netplay()
 {
 	//Only attempt to disconnect if connected at all
-	if(core_cpu.controllers.serial_io.sio_stat.connected)
+	if(core_cpu->controllers.serial_io.sio_stat.connected)
 	{
-		core_cpu.controllers.serial_io.reset();
+		core_cpu->controllers.serial_io.reset();
 		std::cout<<"SIO::Netplay connection terminated. Restart to reconnect.\n";
 	}
 }
@@ -1268,15 +1309,15 @@ u32 GB_core::get_core_data(u32 core_index)
 
 		//Load card data
 		case 0x1:
-			if(core_cpu.controllers.serial_io.sio_stat.sio_type == GB_BARDIGUN_SCANNER)
+			if(core_cpu->controllers.serial_io.sio_stat.sio_type == GB_BARDIGUN_SCANNER)
 			{
-				bool card_result = core_cpu.controllers.serial_io.bardigun_load_barcode(config::external_card_file);
+				bool card_result = core_cpu->controllers.serial_io.bardigun_load_barcode(config::external_card_file);
 				result = card_result ? 1 : 0;
 			}
 
-			else if(core_cpu.controllers.serial_io.sio_stat.sio_type == GB_BARCODE_BOY)
+			else if(core_cpu->controllers.serial_io.sio_stat.sio_type == GB_BARCODE_BOY)
 			{
-				bool card_result = core_cpu.controllers.serial_io.barcode_boy_load_barcode(config::external_card_file);
+				bool card_result = core_cpu->controllers.serial_io.barcode_boy_load_barcode(config::external_card_file);
 				result = card_result ? 1 : 0;
 			}
 
@@ -1284,55 +1325,55 @@ u32 GB_core::get_core_data(u32 core_index)
 
 		//Invalidate CGFX
 		case 0x2:
-			core_cpu.controllers.video.invalidate_cgfx();
+			core_cpu->controllers.video.invalidate_cgfx();
 			result = 1;
 			break;
 
 		//Grab current scanline pixel
 		case 0x3:
 			//Use bits 8-15 as index
-			result = core_cpu.controllers.video.get_scanline_pixel((core_index >> 8) & 0xFF);
+			result = core_cpu->controllers.video.get_scanline_pixel((core_index >> 8) & 0xFF);
 			break;
 
 		//Render DMG BG Scanline
 		case 0x4:
 			//Use bits 8-15 as index
-			core_cpu.controllers.video.render_scanline(((core_index >> 8) & 0xFF), 0);
+			core_cpu->controllers.video.render_scanline(((core_index >> 8) & 0xFF), 0);
 			result = 1;
 			break;
 
 		//Render DMG Window Scanline
 		case 0x5:
 			//Use bits 8-15 as index
-			core_cpu.controllers.video.render_scanline(((core_index >> 8) & 0xFF), 1);
+			core_cpu->controllers.video.render_scanline(((core_index >> 8) & 0xFF), 1);
 			result = 1;
 			break;
 
 		//Render DMG OBJ Scanline
 		case 0x6:
 			//Use bits 8-15 as index
-			core_cpu.controllers.video.render_scanline(((core_index >> 8) & 0xFF), 2);
+			core_cpu->controllers.video.render_scanline(((core_index >> 8) & 0xFF), 2);
 			result = 1;
 			break;
 
 		//Render GBC BG Scanline
 		case 0x7:
 			//Use bits 8-15 as index
-			core_cpu.controllers.video.render_scanline(((core_index >> 8) & 0xFF), 3);
+			core_cpu->controllers.video.render_scanline(((core_index >> 8) & 0xFF), 3);
 			result = 1;
 			break;
 
 		//Render GBC Window Scanline
 		case 0x8:
 			//Use bits 8-15 as index
-			core_cpu.controllers.video.render_scanline(((core_index >> 8) & 0xFF), 4);
+			core_cpu->controllers.video.render_scanline(((core_index >> 8) & 0xFF), 4);
 			result = 1;
 			break;
 
 		//Render GBC OBJ Scanline
 		case 0x9:
 			//Use bits 8-15 as index
-			core_cpu.controllers.video.render_scanline(((core_index >> 8) & 0xFF), 5);
+			core_cpu->controllers.video.render_scanline(((core_index >> 8) & 0xFF), 5);
 			result = 1;
 			break;
 	}

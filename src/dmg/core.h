@@ -21,10 +21,8 @@
 class GB_core : virtual public core_emu
 {
 	public:
-		GB_core();
-		~GB_core();
-
 		//Core control
+		void init_cpu();
 		void start();
 		void stop();
 		void reset();
@@ -36,14 +34,14 @@ class GB_core : virtual public core_emu
 		void feed_key_input(int sdl_key, bool pressed);
 		void save_state(u8 slot);
 		void load_state(u8 slot);
-		void run_core();
+		virtual void run_core();
 
 		//CPU related functions
 		u32 ex_get_reg(u8 reg_index);
 
 		//CGFX interface
-		void dump_obj(int obj_index);
-		void dump_bg(int bg_index);
+		virtual void dump_obj(int obj_index) = 0;
+		virtual void dump_bg(int bg_index) = 0;
 		u32* get_obj_palette(int pal_index);
 		u32* get_bg_palette(int pal_index);
 		std::string get_hash(u32 addr, u8 gfx_type);
@@ -63,19 +61,28 @@ class GB_core : virtual public core_emu
 		u32 get_core_data(u32 core_index);
 
 		DMG_MMU core_mmu;
-		Z80 core_cpu;
+		Z80* core_cpu;
 		DMG_GamePad core_pad;
 };
 
 
 class DMG_core : public GB_core
 {
-
+public:
+	DMG_core();
+	~DMG_core();
+	void dump_obj(int obj_index);
+	void dump_bg(int bg_index);
 };
 
 class GBC_core : public GB_core
 {
-
+public:
+	GBC_core();
+	~GBC_core();
+	void run_core();
+	void dump_obj(int obj_index);
+	void dump_bg(int bg_index);
 };
 		
 #endif // GB_CORE
