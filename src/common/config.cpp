@@ -15,6 +15,7 @@
 
 #include "config.h"
 #include "cgfx_common.h"
+#include "dmg\common.h"
 #include "util.h"
 
 namespace config
@@ -545,30 +546,23 @@ u8 get_system_type_from_file(std::string filename)
 	if(filename == "NOCART")
 	{
 		config::no_cart = true;
-		return config::gb_type;
+		return 0;
 	}
-
-	u8 gb_type = config::gb_type;
 
 	//For Auto or GBC mode, determine what the CGB Flag is
-	if((gb_type == 0) || (gb_type == 2))
-	{
-		std::ifstream test_stream(filename.c_str(), std::ios::binary);
+	std::ifstream test_stream(filename.c_str(), std::ios::binary);
 		
-		if(test_stream.is_open())
-		{
-			u8 color_byte;
+	if(test_stream.is_open())
+	{
+		u8 color_byte;
 
-			test_stream.seekg(0x143);
-			test_stream.read((char*)&color_byte, 1);
+		test_stream.seekg(ROM_COLOR);
+		test_stream.read((char*)&color_byte, 1);
 
-			//If GBC compatible, use GBC mode. Otherwise, use DMG mode
-			if((color_byte == 0xC0) || (color_byte == 0x80)) { gb_type = 2; }
-			else { gb_type = 1; }
-		}
+		//If GBC compatible, use GBC mode. Otherwise, use DMG mode
+		if((color_byte == 0xC0) || (color_byte == 0x80)) { return 2; }
 	}
-
-	return gb_type;
+	return 0;
 }
 
 /****** Parse arguments passed from the command-line ******/

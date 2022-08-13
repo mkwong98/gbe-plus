@@ -47,7 +47,6 @@ class gen_settings : public QDialog
 	u8 last_control_id;
 
 	//General tab widgets
-	QComboBox* sys_type;
 	QCheckBox* bios;
 	QComboBox* special_cart;
 	QComboBox* overclock;

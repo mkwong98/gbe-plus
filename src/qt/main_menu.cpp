@@ -509,7 +509,6 @@ void main_menu::quit()
 	}
 
 	//Save .ini options
-	config::gb_type = settings->sys_type->currentIndex();
 	config::use_cheats = (settings->cheats->isChecked()) ? true : false;
 	config::mute = (settings->sound_on->isChecked()) ? false : true;
 	config::use_stereo = (settings->stereo_enable->isChecked()) ? true : false;
@@ -761,7 +760,6 @@ void main_menu::closeEvent(QCloseEvent* event)
 	}
 
 	//Save .ini options
-	config::gb_type = settings->sys_type->currentIndex();
 	config::use_cheats = (settings->cheats->isChecked()) ? true : false;
 	config::mute = (settings->sound_on->isChecked()) ? false : true;
 	config::use_stereo = (settings->stereo_enable->isChecked()) ? true : false;

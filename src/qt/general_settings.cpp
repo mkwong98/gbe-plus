@@ -59,21 +59,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	button_layout->addWidget(tabs_button);
 	button_set->setLayout(button_layout);
 
-	//General settings - Emulated system type
-	QWidget* sys_type_set = new QWidget(general);
-	QLabel* sys_type_label = new QLabel("Emulated System Type : ", sys_type_set);
-	sys_type = new QComboBox(sys_type_set);
-	sys_type->setToolTip("Forces GBE+ to emulate a certain system");
-	sys_type->addItem("Auto");
-	sys_type->addItem("Game Boy [DMG]");
-	sys_type->addItem("Game Boy Color [GBC]");
-
-	QHBoxLayout* sys_type_layout = new QHBoxLayout;
-	sys_type_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	sys_type_layout->addWidget(sys_type_label);
-	sys_type_layout->addWidget(sys_type);
-	sys_type_set->setLayout(sys_type_layout);
-
 	//General settings - Use BIOS
 	QWidget* bios_set = new QWidget(general);
 	QLabel* bios_label = new QLabel("Use BIOS/Boot ROM", bios_set);
@@ -215,7 +200,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 
 	QVBoxLayout* gen_layout = new QVBoxLayout;
 	gen_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	gen_layout->addWidget(sys_type_set);
 	gen_layout->addWidget(sio_set);
 	gen_layout->addWidget(ir_set);
 	gen_layout->addWidget(special_cart_set);
@@ -1507,9 +1491,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 /****** Sets various widgets to values based on the current config paramters (from .ini file) ******/
 void gen_settings::set_ini_options()
 {
-	//Emulated system type
-	sys_type->setCurrentIndex(config::gb_type);
-
 	//Emulated SIO device
 	sio_dev->setCurrentIndex(config::sio_device);
 
