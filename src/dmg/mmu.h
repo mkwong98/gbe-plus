@@ -147,13 +147,6 @@ class DMG_MMU
 	u32 sub_screen_update;
 	bool sub_screen_lock;
 
-	//Advanced debugging
-	#ifdef GBE_DEBUG
-	bool debug_write;
-	bool debug_read;
-	u16 debug_addr;
-	#endif
-
 	DMG_MMU();
 	~DMG_MMU();
 

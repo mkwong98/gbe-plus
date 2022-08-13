@@ -35,7 +35,6 @@ namespace config
 	std::string external_data_file = "";
 	std::vector <std::string> recent_files;
 	std::vector <std::string> cli_args;
-	bool use_debugger = false;
 
 	//Default keyboard bindings
 	//Arrow Z = A button, X = B button, START = Return, Select = Space
@@ -185,7 +184,6 @@ namespace config
 
 	void (*render_external_sw)(std::vector<u32>&);
 	void (*render_external_hw)(SDL_Surface*);
-	void (*debug_external)();
 
 	//Default Gameboy BG palettes
 	u32 DMG_BG_PAL[4] = { 0xFFFFFFFF, 0xFFC0C0C0, 0xFF606060, 0xFF000000 };
@@ -589,11 +587,8 @@ bool parse_cli_args()
 		//Parse the rest of the arguments if any		
 		for(int x = 1; x < config::cli_args.size(); x++)
 		{	
-			//Run GBE+ in debug mode
-			if((config::cli_args[x] == "-d") || (config::cli_args[x] == "--debug")) { config::use_debugger = true; }
-
 			//Load BIOS
-			else if((config::cli_args[x] == "-b") || (config::cli_args[x] == "--bios")) 
+			if((config::cli_args[x] == "-b") || (config::cli_args[x] == "--bios")) 
 			{
 				if((++x) == config::cli_args.size()) { std::cout<<"GBE::Error - No BIOS file in arguments\n"; }
 
@@ -687,7 +682,6 @@ bool parse_cli_args()
 
 				std::cout<<"GBE+ Command Line Options:\n";
 				std::cout<<"-b [FILE], --bios [FILE] \t\t Load and use BIOS file\n";
-				std::cout<<"-d, --debug \t\t\t\t Start the command-line debugger\n";
 				std::cout<<"--mbc1m \t\t\t\t Use MBC1M multicart mode if applicable\n";
 				std::cout<<"--mmm01 \t\t\t\t Use MMM01 multicart mode if applicable\n";
 				std::cout<<"--mbc1s \t\t\t\t Use MBC1S sonar cart\n";

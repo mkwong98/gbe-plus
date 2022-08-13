@@ -141,13 +141,6 @@ void DMG_MMU::reset()
 	sub_screen_update = 0;
 	sub_screen_lock = false;
 
-	//Advanced debugging
-	#ifdef GBE_DEBUG
-	debug_write = false;
-	debug_read = true;
-	debug_addr = 0;
-	#endif
-
 	//Load Pocket Sonar data now
 	if(cart.sonar) { mbc1s_load_sonar_data(config::external_image_file); }
 
@@ -271,12 +264,6 @@ u32 DMG_MMU::size()
 /****** Read byte from memory ******/
 u8 DMG_MMU::read_u8(u16 address) 
 {
-	//Advanced debugging
-	#ifdef GBE_DEBUG
-	debug_read = true;
-	debug_addr = address;
-	#endif
-
 	//Read from BIOS
 	if(in_bios)
 	{
@@ -415,12 +402,6 @@ u16 DMG_MMU::read_u16(u16 address)
 /****** Write Byte To Memory ******/
 void DMG_MMU::write_u8(u16 address, u8 value) 
 {
-	//Advanced debugging
-	#ifdef GBE_DEBUG
-	debug_write = true;
-	debug_addr = address;
-	#endif
-
 	if(cart.mbc_type != ROM_ONLY) 
 	{
 		mbc_write(address, value);

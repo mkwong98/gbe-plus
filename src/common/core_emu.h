@@ -39,12 +39,6 @@ class core_emu
 	virtual	void save_state(u8 slot) = 0;
 	virtual	void load_state(u8 slot) = 0;
 
-	//Core debugging
-	virtual	void debug_step() = 0;
-	virtual	void debug_display() const = 0;
-	virtual	void debug_process_command() = 0;
-	virtual std::string debug_get_mnemonic(u32 addr) = 0;
-
 	//CPU related functions
 	virtual u32 ex_get_reg(u8 reg_index) = 0;
 
@@ -71,29 +65,6 @@ class core_emu
 
 	bool running;
 	SDL_Event event;
-	
-	struct debugging
-	{
-		bool debug_mode;
-		bool display_cycles;
-		bool print_all;
-		bool print_pc;
-		std::vector <u32> breakpoints;
-		std::vector <u32> watchpoint_addr;
-		std::vector <u32> watchpoint_val;
-		std::vector <u32> watchpoint_old_val;
-		std::string last_command;
-		std::string last_mnemonic;
-		u32 last_pc;
-		u32 run_count;
-		u8 vb_count;
-
-		//Advanced debugging
-		#ifdef GBE_DEBUG
-		std::vector <u32> write_addr;
-		std::vector <u32> read_addr;
-		#endif
-	} db_unit;
 };
 
 #endif // CORE_EMU

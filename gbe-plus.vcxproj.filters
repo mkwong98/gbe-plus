@@ -51,9 +51,6 @@
     <ClCompile Include="src\dmg\custom_graphics.cpp">
       <Filter>Source Files\dmg</Filter>
     </ClCompile>
-    <ClCompile Include="src\dmg\debug.cpp">
-      <Filter>Source Files\dmg</Filter>
-    </ClCompile>
     <ClCompile Include="src\dmg\dmg07.cpp">
       <Filter>Source Files\dmg</Filter>
     </ClCompile>
@@ -133,9 +130,6 @@
       <Filter>Source Files\qt</Filter>
     </ClCompile>
     <ClCompile Include="src\qt\data_dialog.cpp">
-      <Filter>Source Files\qt</Filter>
-    </ClCompile>
-    <ClCompile Include="src\qt\debug_dmg.cpp">
       <Filter>Source Files\qt</Filter>
     </ClCompile>
     <ClCompile Include="src\qt\general_settings.cpp">
@@ -408,9 +402,6 @@
       <Filter>Header Files\qt</Filter>
     </CustomBuild>
     <CustomBuild Include="src\qt\data_dialog.h">
-      <Filter>Header Files\qt</Filter>
-    </CustomBuild>
-    <CustomBuild Include="src\qt\debug_dmg.h">
       <Filter>Header Files\qt</Filter>
     </CustomBuild>
     <CustomBuild Include="src\qt\general_settings.h">

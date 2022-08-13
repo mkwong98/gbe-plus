@@ -94,7 +94,6 @@ namespace config
 	extern u32 sio_device;
 	extern u32 ir_device;	
 	extern bool use_opengl;
-	extern bool use_debugger;
 	extern bool turbo;
 	extern u8 scaling_factor;
 	extern u8 old_scaling_factor;
@@ -177,9 +176,6 @@ namespace config
 	//This function is provided by frontends that will not rely on SDL+OGL
 	extern void (*render_external_hw)(SDL_Surface*);
 
-	//Function pointer for external debugging
-	//This function is provided by frontends that will not rely on the CLI
-	extern void (*debug_external)();
 }
 
 #endif // EMU_CONFIG

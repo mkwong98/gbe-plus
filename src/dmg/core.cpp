@@ -41,19 +41,6 @@ DMG_core::DMG_core()
 	//Link MMU and GamePad
 	core_cpu.mem->g_pad = &core_pad;
 
-	db_unit.debug_mode = false;
-	db_unit.display_cycles = false;
-	db_unit.print_all = false;
-	db_unit.print_pc = false;
-	db_unit.last_command = "n";
-	db_unit.last_mnemonic = "";
-	db_unit.last_pc = 0;
-	db_unit.vb_count = 0;
-
-	db_unit.breakpoints.clear();
-	db_unit.watchpoint_addr.clear();
-	db_unit.watchpoint_val.clear();
-
 	std::cout<<"GBE::Launching DMG-GBC core\n";
 
 	//OSD
@@ -93,7 +80,6 @@ void DMG_core::stop()
 {
 	running = false;
 	core_cpu.running = false;
-	db_unit.debug_mode = false;
 }
 
 /****** Shutdown core's components ******/
@@ -297,14 +283,11 @@ void DMG_core::run_core()
 				}
 			}
 
-			core_cpu.debug_cycles += core_cpu.cycles;
 			core_cpu.cycles = 0;
 
 			//Handle Interrupts
 			core_cpu.handle_interrupts();
 
-			if(db_unit.debug_mode) { debug_step(); }
-	
 			//Halt CPU if necessary
 			if(core_cpu.halt == true)
 			{
@@ -580,7 +563,6 @@ void DMG_core::step()
 			}
 		}
 
-		core_cpu.debug_cycles += core_cpu.cycles;
 		core_cpu.cycles = 0;
 
 		//Handle Interrupts
@@ -834,18 +816,6 @@ void DMG_core::handle_hotkey(SDL_Event& event)
 	else if((event.type == SDL_KEYDOWN) && (event.key.keysym.sym == SDLK_F6))
 	{
 		stop_netplay();
-	}
-
-	//Start CLI debugger on F7
-	else if((event.type == SDL_KEYDOWN) && (event.key.keysym.sym == SDLK_F7) && (!config::use_external_interfaces))
-	{
-		//Start a new CLI debugger session or interrupt an existing one in Continue Mode 
-		if((!db_unit.debug_mode) || ((db_unit.debug_mode) && (db_unit.last_command == "c")))
-		{
-			db_unit.debug_mode = true;
-			db_unit.last_command = "n";
-			db_unit.last_mnemonic = "";
-		}
 	}
 
 	//Screenshot on F9

@@ -9,7 +9,6 @@
 // The "Core" is an abstraction for all of emulated components
 // It controls the large-scale behavior of the CPU, LCD/GPU, MMU, and APU/DSP
 // Can start, stop, and reset emulator
-// Also contains a debugging unit
 
 
 #ifndef GB_CORE
@@ -38,12 +37,6 @@ class DMG_core : virtual public core_emu
 		void save_state(u8 slot);
 		void load_state(u8 slot);
 		void run_core();
-
-		//Core debugging
-		void debug_step();
-		void debug_display() const;
-		void debug_process_command();
-		std::string debug_get_mnemonic(u32 addr);
 
 		//CPU related functions
 		u32 ex_get_reg(u8 reg_index);

@@ -982,7 +982,7 @@ void gbe_cgfx::close_cgfx()
 {
 	reset_inputs();
 
-	if(!qt_gui::draw_surface->dmg_debugger->pause) { qt_gui::draw_surface->findChild<QAction*>("pause_action")->setEnabled(true); }
+	qt_gui::draw_surface->findChild<QAction*>("pause_action")->setEnabled(true);
 
 	pause = false;
 	config::pause_emu = false;

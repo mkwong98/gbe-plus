@@ -45,7 +45,6 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 	QAction* paths = new QAction("Paths", this);
 
 	QAction* custom_gfx = new QAction("Custom Graphics...", this);
-	QAction* debugging = new QAction("Debugger", this);
 
 	QAction* about = new QAction("About", this);
 
@@ -60,17 +59,14 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 	nplay_start->setShortcut(tr("F5"));
 	nplay_stop->setShortcut(tr("F6"));
 	special_comm->setShortcut(tr("F3"));
-	debugging->setShortcut(tr("F7"));
 
 	pause->setCheckable(true);
 	pause->setObjectName("pause_action");
 	fullscreen->setCheckable(true);
 	fullscreen->setObjectName("fullscreen_action");
 	custom_gfx->setObjectName("custom_gfx_action");
-	debugging->setObjectName("debugging_action");
 
 	custom_gfx->setEnabled(false);
-	debugging->setEnabled(false);
 
 	menu_bar = new QMenuBar(this);
 
@@ -127,7 +123,6 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 
 	advanced = new QMenu(tr("Advanced"), this);
 	advanced->addAction(custom_gfx);
-	advanced->addAction(debugging);
 	menu_bar->addMenu(advanced);
 
 	//Setup Help menu
@@ -159,7 +154,6 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 	connect(netplay, SIGNAL(triggered()), this, SLOT(show_netplay_settings()));
 	connect(paths, SIGNAL(triggered()), this, SLOT(show_paths_settings()));
 	connect(custom_gfx, SIGNAL(triggered()), this, SLOT(show_cgfx()));
-	connect(debugging, SIGNAL(triggered()), this, SLOT(show_debugger()));
 	connect(about, SIGNAL(triggered()), this, SLOT(show_about()));
 
 	sw_screen = new soft_screen();
@@ -196,9 +190,6 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 	//Parse command-line arguments
 	//These will override .ini options!
 	if(!parse_cli_args()) { exit(0); }
-
-	//Some command-line arguments are invalid for the Qt version
-	config::use_debugger = false;
 
 	//Setup Recent Files
 	list_mapper = new QSignalMapper(this);
@@ -282,10 +273,6 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 	cgfx = new gbe_cgfx();
 	cgfx->hide();
 	cgfx->advanced->setChecked(true);
-
-	//Set up DMG-GBC debugger
-	main_menu::dmg_debugger = new dmg_debug();
-	main_menu::dmg_debugger->hide();
 
 	//Setup About pop-up
 	about_box = new QWidget();
@@ -687,9 +674,6 @@ void main_menu::boot_game()
 	//Enable CGFX menu
 	findChild<QAction*>("custom_gfx_action")->setEnabled(true);
 
-	//Enable debugging menu
-	findChild<QAction*>("debugging_action")->setEnabled(true);
-
 	//Read specified ROM file
 	main_menu::gbe_plus->read_file(config::rom_file);
 	
@@ -705,9 +689,6 @@ void main_menu::boot_game()
 		if(!main_menu::gbe_plus->read_bios(config::bios_file)) { return; } 
 	}
 
-	//Reset GUI debugger
-	dmg_debugger->debug_reset = true;
-
 	//If the fullscreen command-line argument was passed, be sure to boot into fullscreen mode
 	if(config::flags & SDL_WINDOW_FULLSCREEN_DESKTOP)
 	{
@@ -718,9 +699,6 @@ void main_menu::boot_game()
 
 	//Engage the core
 	main_menu::gbe_plus->start();
-	main_menu::gbe_plus->db_unit.debug_mode = config::use_debugger;
-
-	if(main_menu::gbe_plus->db_unit.debug_mode) { SDL_CloseAudio(); }
 
 	//Actually run the core
 	main_menu::gbe_plus->run_core();
@@ -938,12 +916,10 @@ void main_menu::pause_emu()
 
 	SDL_PauseAudio(0);
 
-	if(dmg_debugger->pause) { return; }
-
 	//If CGFX is open, continue pause
 	if(cgfx->pause) { pause(); }
 
-	//Continue pause if GUI option is still selected - Check this when closing CGFX or debugger
+	//Continue pause if GUI option is still selected - Check this when closing CGFX
 	if(findChild<QAction*>("pause_action")->isChecked()) { pause(); }
 }
 
@@ -1165,30 +1141,7 @@ void main_menu::show_cgfx()
 	cgfx->parse_manifest_items();
 	cgfx->pause = true;
 	
-	if(!dmg_debugger->pause) { pause(); }
-}
-
-/****** Shows the debugger ******/
-void main_menu::show_debugger()
-{
-	if(main_menu::gbe_plus != NULL)
-	{
-		//Show DMG-GBC debugger
-		if((config::gb_type <= 2) && (!is_sgb_core)) 
-		{
-			findChild<QAction*>("pause_action")->setEnabled(false);
-
-			SDL_PauseAudio(1);
-			main_menu::dmg_debugger->old_pause = config::pause_emu;
-			main_menu::dmg_debugger->pause = true;
-			config::pause_emu = false;
-
-			config::debug_external = dmg_debug_step;
-			main_menu::dmg_debugger->auto_refresh();
-			main_menu::dmg_debugger->show();
-			main_menu::gbe_plus->db_unit.debug_mode = true;
-		}
-	}
+	pause();
 }
 
 /****** Shows the About box ******/
@@ -1363,4 +1316,3 @@ void main_menu::get_nds_ar_size(u32 &width, u32 &height, u32 &offset_x, u32 &off
 
 /****** Static definitions ******/
 core_emu* main_menu::gbe_plus = NULL;
-dmg_debug* main_menu::dmg_debugger = NULL;

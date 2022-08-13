@@ -45,7 +45,6 @@ void Z80::reset()
 	tima_counter = 0;
 	tima_speed = 0;
 	cycles = 0;
-	debug_cycles = 0;
 	running = false;
 	halt = false;
 	pause = false;
@@ -80,7 +79,6 @@ void Z80::reset_bios()
 	tima_counter = 0;
 	tima_speed = 0;
 	cycles = 0;
-	debug_cycles = 0;
 	running = false;
 	halt = false;
 	pause = false;
