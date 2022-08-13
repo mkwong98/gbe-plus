@@ -11,10 +11,16 @@
 #include "z80.h"
 
 /****** Z80 Constructor ******/
-Z80::Z80() 
+DMG_Z80::DMG_Z80() 
 {
 	if(config::use_bios) { reset_bios(); }
-	else { reset(); }
+	else { DMG_Z80::reset(); }
+}
+
+GBC_Z80::GBC_Z80()
+{
+	if (config::use_bios) { reset_bios(); }
+	else { GBC_Z80::reset(); }
 }
 
 /****** Z80 Deconstructor ******/
@@ -27,7 +33,6 @@ Z80::~Z80()
 void Z80::reset() 
 {
 	//Values represent HLE BIOS
-	reg.a = (config::gb_type == 2) ? 0x11 : 0x01;
 	reg.b = 0x00;
 	reg.c = 0x13;
 	reg.d = 0x00;
@@ -56,6 +61,18 @@ void Z80::reset()
 	mem = NULL;
 
 	std::cout<<"CPU::Initialized\n";
+}
+
+void DMG_Z80::reset()
+{
+	reg.a = 0x01;
+	Z80::reset();
+}
+
+void GBC_Z80::reset()
+{
+	reg.a = 0x11;
+	Z80::reset();
 }
 
 /****** Z80 Reset - For BIOS ******/
@@ -830,33 +847,8 @@ void Z80::exec_op(u8 opcode)
 			break;
 
 		//STOP
-		case 0x10 :
-			//GBC - Normal to double speed mode
-			if((config::gb_type == 2) && (mem->memory_map[REG_KEY1] & 0x1) && ((mem->memory_map[REG_KEY1] & 0x80) == 0))
-			{
-				double_speed = true;
-				mem->memory_map[REG_KEY1] = 0x80;
-
-				//Set SIO clock - 16384Hz - Bit 1 cleared, Double Speed
-				if((mem->memory_map[REG_SC] & 0x2) == 0) { controllers.serial_io.sio_stat.shift_clock = 256; }
-
-				//Set SIO clock - 524288Hz - Bit 1 set, Double Speed
-				else { controllers.serial_io.sio_stat.shift_clock = 8; }
-			}
-
-			//GBC - Double to normal speed mode
-			if((config::gb_type == 2) && (mem->memory_map[REG_KEY1] & 0x1) && (mem->memory_map[REG_KEY1] & 0x80))
-			{
-				double_speed = false;
-				mem->memory_map[REG_KEY1] = 0;
-
-				//Set SIO clock - 8192Hz - Bit 1 cleared, Normal Speed
-				if((mem->memory_map[REG_SC] & 0x2) == 0) { controllers.serial_io.sio_stat.shift_clock = 512; }
-
-				//Set SIO clock - 262144Hz - Bit 1 set, Normal Speed
-				else { controllers.serial_io.sio_stat.shift_clock = 16; }
-			}
-			break;	
+		case 0x10:
+			break;
 
 		//LD DE, nn
 		case 0x11 :
@@ -2377,6 +2369,43 @@ void Z80::exec_op(u8 opcode)
 		default :
 			std::cout<<"CPU::Error - Unknown Opcode : 0x" << std::hex << (int) opcode << "\n";
 			if(!config::ignore_illegal_opcodes) { running = false; }
+	}
+}
+
+void GBC_Z80::exec_op(u8 opcode)
+{
+	switch (opcode)
+	{
+	//STOP
+	case 0x10:
+		//GBC - Normal to double speed mode
+		if ((mem->memory_map[REG_KEY1] & 0x1) && ((mem->memory_map[REG_KEY1] & 0x80) == 0))
+		{
+			double_speed = true;
+			mem->memory_map[REG_KEY1] = 0x80;
+
+			//Set SIO clock - 16384Hz - Bit 1 cleared, Double Speed
+			if ((mem->memory_map[REG_SC] & 0x2) == 0) { controllers.serial_io.sio_stat.shift_clock = 256; }
+
+			//Set SIO clock - 524288Hz - Bit 1 set, Double Speed
+			else { controllers.serial_io.sio_stat.shift_clock = 8; }
+		}
+
+		//GBC - Double to normal speed mode
+		if ((mem->memory_map[REG_KEY1] & 0x1) && (mem->memory_map[REG_KEY1] & 0x80))
+		{
+			double_speed = false;
+			mem->memory_map[REG_KEY1] = 0;
+
+			//Set SIO clock - 8192Hz - Bit 1 cleared, Normal Speed
+			if ((mem->memory_map[REG_SC] & 0x2) == 0) { controllers.serial_io.sio_stat.shift_clock = 512; }
+
+			//Set SIO clock - 262144Hz - Bit 1 set, Normal Speed
+			else { controllers.serial_io.sio_stat.shift_clock = 16; }
+		}
+		break;
+	default:
+		Z80::exec_op(opcode);
 	}
 }
 

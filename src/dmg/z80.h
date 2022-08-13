@@ -110,11 +110,10 @@ class Z80
 	} controllers;
 
 	//Core Functions
-	Z80();
 	~Z80();
-	void reset();
+	virtual void reset();
 	void reset_bios();
-	void exec_op(u8 opcode);
+	virtual void exec_op(u8 opcode);
 	void exec_op(u16 opcode);
 
 	//Serialize data for save state loading/saving
@@ -162,11 +161,16 @@ class Z80
 
 class DMG_Z80 : public Z80
 {
-
+public:
+	DMG_Z80();
+	void reset();
 };
 
 class GBC_Z80 : public Z80
 {
-
+public:
+	GBC_Z80();
+	void reset();
+	void exec_op(u8 opcode);
 };
 #endif // GB_CPU

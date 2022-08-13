@@ -22,7 +22,7 @@
 /****** Core Constructor ******/
 DMG_core::DMG_core()
 {
-	core_cpu = new Z80();
+	core_cpu = new DMG_Z80();
 	init_cpu();
 	std::cout << "GBE::Launching DMG core\n";
 
@@ -33,7 +33,7 @@ DMG_core::DMG_core()
 
 GBC_core::GBC_core()
 {
-	core_cpu = new Z80();
+	core_cpu = new GBC_Z80();
 	init_cpu();
 	std::cout << "GBE::Launching GBC core\n";
 
