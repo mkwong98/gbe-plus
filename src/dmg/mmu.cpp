@@ -310,12 +310,6 @@ u8 DMG_MMU::read_u8(u16 address)
 {
 	if (!in_bios)
 	{
-		//Read from VRAM
-		if ((address >= 0x8000) && (address <= 0x9FFF))
-		{
-			return memory_map[address];
-		}
-
 		//Read from RP
 		if (address == REG_RP)
 		{
@@ -1365,8 +1359,6 @@ void GBC_MMU::set_sio_shift_clock(u8 value)
 
 void DMG_MMU::write_u8(u16 address, u8 value)
 {
-	GB_MMU::write_u8(address, value);
-
 	//Write to VRAM
 	if ((address >= 0x8000) && (address <= 0x9FFF))
 	{
@@ -1421,6 +1413,11 @@ void DMG_MMU::write_u8(u16 address, u8 value)
 		memory_map[address] = 0xFF;
 	}
 
+	else
+	{
+		GB_MMU::write_u8(address, value);
+	}
+
 	//CGFX processing - Check for BG updates
 	if ((cgfx::load_cgfx) && (address >= 0x8000) && (address <= 0x9FFF))
 	{
@@ -1440,8 +1437,6 @@ void DMG_MMU::write_u8(u16 address, u8 value)
 
 void GBC_MMU::write_u8(u16 address, u8 value)
 {
-	GB_MMU::write_u8(address, value);
-
 	//Write to VRAM, GBC uses banking
 	if ((address >= 0x8000) && (address <= 0x9FFF))
 	{
@@ -1531,6 +1526,10 @@ void GBC_MMU::write_u8(u16 address, u8 value)
 		}
 	}
 
+	else
+	{
+		GB_MMU::write_u8(address, value);
+	}
 	//CGFX processing - Check for BG updates
 	if ((cgfx::load_cgfx) && (address >= 0x8000) && (address <= 0x9FFF))
 	{
