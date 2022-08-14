@@ -731,7 +731,7 @@ bool DMG_SIO::receive_byte()
 				}
 
 				//Handle IR signals for HuC-1
-				if(mem->cart.mbc_type == DMG_MMU::HUC1)
+				if(mem->cart.mbc_type == GB_MMU::HUC1)
 				{
 					//Set to IR cart register to 0xC1 if receiving signal
 					if(temp_buffer[0] == 1) { mem->ir_signal = 0x01; }

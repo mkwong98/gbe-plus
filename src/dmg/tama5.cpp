@@ -15,7 +15,7 @@
 #include "common/util.h"
 
 /****** Performs write operations specific to the TAMA5 ******/
-void DMG_MMU::tama5_write(u16 address, u8 value)
+void GB_MMU::tama5_write(u16 address, u8 value)
 {
 	//Access TAMA5 registers
 	if((address >= 0xA000) && (address <= 0xBFFF) && (cart.ram))
@@ -113,7 +113,7 @@ void DMG_MMU::tama5_write(u16 address, u8 value)
 
 
 /****** Performs read operations specific to the TAMA5 ******/
-u8 DMG_MMU::tama5_read(u16 address)
+u8 GB_MMU::tama5_read(u16 address)
 {
 	//Read using ROM Banking - Bank 0
 	if(address <= 0x3FFF) { return memory_map[address]; }
@@ -144,7 +144,7 @@ u8 DMG_MMU::tama5_read(u16 address)
 }
 
 /****** Grab current system time for Real-Time Clock ******/
-void DMG_MMU::grab_tama5_time(u8 index)
+void GB_MMU::grab_tama5_time(u8 index)
 {
 	index &= 0xF;
 

@@ -23,6 +23,7 @@
 DMG_core::DMG_core()
 {
 	core_cpu = new DMG_Z80();
+	core_mmu = new DMG_MMU();
 	init_cpu();
 	std::cout << "GBE::Launching DMG core\n";
 
@@ -34,6 +35,7 @@ DMG_core::DMG_core()
 GBC_core::GBC_core()
 {
 	core_cpu = new GBC_Z80();
+	core_mmu = new GBC_MMU();
 	init_cpu();
 	std::cout << "GBE::Launching GBC core\n";
 
@@ -45,30 +47,32 @@ GBC_core::GBC_core()
 DMG_core::~DMG_core()
 {
 	delete core_cpu;
+	delete core_mmu;
 }
 
 GBC_core::~GBC_core()
 {
 	delete core_cpu;
+	delete core_mmu;
 }
 
 void GB_core::init_cpu()
 {
 	//Link CPU and MMU
-	core_cpu->mem = &core_mmu;
+	core_cpu->mem = core_mmu;
 
 	//Link LCD and MMU
-	core_cpu->controllers.video.mem = &core_mmu;
-	core_mmu.set_lcd_data(&core_cpu->controllers.video.lcd_stat);
-	core_mmu.set_cgfx_data(&core_cpu->controllers.video.cgfx_stat);
+	core_cpu->controllers.video.mem = core_mmu;
+	core_mmu->set_lcd_data(&core_cpu->controllers.video.lcd_stat);
+	core_mmu->set_cgfx_data(&core_cpu->controllers.video.cgfx_stat);
 
 	//Link APU and MMU
-	core_cpu->controllers.audio.mem = &core_mmu;
-	core_mmu.set_apu_data(&core_cpu->controllers.audio.apu_stat);
+	core_cpu->controllers.audio.mem = core_mmu;
+	core_mmu->set_apu_data(&core_cpu->controllers.audio.apu_stat);
 
 	//Link SIO and MMU
-	core_cpu->controllers.serial_io.mem = &core_mmu;
-	core_mmu.set_sio_data(&core_cpu->controllers.serial_io.sio_stat);
+	core_cpu->controllers.serial_io.mem = core_mmu;
+	core_mmu->set_sio_data(&core_cpu->controllers.serial_io.sio_stat);
 
 	//Link MMU and GamePad
 	core_cpu->mem->g_pad = &core_pad;
@@ -113,7 +117,7 @@ void GB_core::stop()
 /****** Shutdown core's components ******/
 void GB_core::shutdown()
 {
-	core_mmu.DMG_MMU::~DMG_MMU();
+	core_mmu->GB_MMU::~GB_MMU();
 	core_cpu->Z80::~Z80();
 }
 
@@ -126,25 +130,25 @@ void GB_core::reset()
 	core_cpu->controllers.video.reset();
 	core_cpu->controllers.audio.reset();
 	core_cpu->controllers.serial_io.reset();
-	core_mmu.reset();
+	core_mmu->reset();
 
 	//Link CPU and MMU
-	core_cpu->mem = &core_mmu;
+	core_cpu->mem = core_mmu;
 
 	//Link LCD and MMU
-	core_cpu->controllers.video.mem = &core_mmu;
+	core_cpu->controllers.video.mem = core_mmu;
 
 	//Link APU and MMU
-	core_cpu->controllers.audio.mem = &core_mmu;
+	core_cpu->controllers.audio.mem = core_mmu;
 
 	//Link SIO and MMU
-	core_cpu->controllers.serial_io.mem = &core_mmu;
+	core_cpu->controllers.serial_io.mem = core_mmu;
 
 	//Link MMU and GamePad
 	core_cpu->mem->g_pad = &core_pad;
 
 	//Re-read specified ROM file
-	if(!core_mmu.read_file(config::rom_file)) { can_reset = false; }
+	if(!core_mmu->read_file(config::rom_file)) { can_reset = false; }
 
 	//Re-read BIOS file
 	if((config::use_bios) && (!read_bios(config::bios_file))) { can_reset = false; }
@@ -179,8 +183,8 @@ void GB_core::load_state(u8 slot)
 	offset += core_cpu->size();	
 
 	//Offset 43, size 213047
-	if(!core_mmu.mmu_read(offset, state_file)) { return; }
-	offset += core_mmu.size();
+	if(!core_mmu->mmu_read(offset, state_file)) { return; }
+	offset += core_mmu->size();
 
 	//Offset 213090, size 320
 	if(!core_cpu->controllers.audio.apu_read(offset, state_file)) { return; }
@@ -208,7 +212,7 @@ void GB_core::save_state(u8 slot)
 	state_file += id;
 
 	if(!core_cpu->cpu_write(state_file)) { return; }
-	if(!core_mmu.mmu_write(state_file)) { return; }
+	if(!core_mmu->mmu_write(state_file)) { return; }
 	if(!core_cpu->controllers.audio.apu_write(state_file)) { return; }
 	if(!core_cpu->controllers.video.lcd_write(state_file)) { return; }
 
@@ -242,7 +246,7 @@ void GB_core::run_core()
 					handle_hotkey(event);
 
 					//Trigger Joypad Interrupt if necessary
-					if(core_pad.joypad_irq) { core_mmu.memory_map[IF_FLAG] |= 0x10; }
+					if(core_pad.joypad_irq) { core_mmu->memory_map[IF_FLAG] |= 0x10; }
 				}
 
 				//Hotplug joypad
@@ -253,7 +257,7 @@ void GB_core::run_core()
 			if((core_pad.con_update) && (config::sio_device == 14)) { core_cpu->controllers.serial_io.singer_izek_update(); }
 
 			//Perform reset for GB Memory Cartridge
-			if((config::cart_type == DMG_GBMEM) && (core_mmu.cart.flash_stat == 0xF0)) { reset(); }
+			if((config::cart_type == DMG_GBMEM) && (core_mmu->cart.flash_stat == 0xF0)) { reset(); }
 		}
 
 		//Run the CPU
@@ -291,20 +295,20 @@ void GB_core::run_core()
 				}
 
 				//Send IR signal for GBC games
-				if(core_mmu.ir_send) { core_cpu->controllers.serial_io.send_ir_signal(); }
+				if(core_mmu->ir_send) { core_cpu->controllers.serial_io.send_ir_signal(); }
 
 				//Receive bytes normally
 				core_cpu->controllers.serial_io.receive_byte();
 
 				//Fade IR signal after a certain amount of time
-				if(core_mmu.ir_counter > 0)
+				if(core_mmu->ir_counter > 0)
 				{
-					core_mmu.ir_counter -= core_cpu->cycles;
+					core_mmu->ir_counter -= core_cpu->cycles;
 
-					if(core_mmu.ir_counter <= 0)
+					if(core_mmu->ir_counter <= 0)
 					{
-						core_mmu.ir_counter = 0;
-						core_mmu.memory_map[REG_RP] &= ~0x2;
+						core_mmu->ir_counter = 0;
+						core_mmu->memory_map[REG_RP] &= ~0x2;
 					}
 				}
 			}
@@ -328,7 +332,7 @@ void GB_core::run_core()
 					core_cpu->skip_instruction = false;
 
 					//Execute next opcode, but do not increment PC
-					core_cpu->opcode = core_mmu.read_u8(core_cpu->reg.pc);
+					core_cpu->opcode = core_mmu->read_u8(core_cpu->reg.pc);
 					core_cpu->exec_op(core_cpu->opcode);
 				}
 			}
@@ -336,7 +340,7 @@ void GB_core::run_core()
 			//Process Opcodes
 			else 
 			{
-				core_cpu->opcode = core_mmu.read_u8(core_cpu->reg.pc++);
+				core_cpu->opcode = core_mmu->read_u8(core_cpu->reg.pc++);
 				core_cpu->exec_op(core_cpu->opcode);
 			}
 
@@ -350,21 +354,21 @@ void GB_core::run_core()
 			if(core_cpu->div_counter >= 256) 
 			{
 				core_cpu->div_counter -= 256;
-				core_mmu.memory_map[REG_DIV]++;
+				core_mmu->memory_map[REG_DIV]++;
 			}
 
 			//Update TIMA timer
-			if(core_mmu.memory_map[REG_TAC] & 0x4) 
+			if(core_mmu->memory_map[REG_TAC] & 0x4) 
 			{
-				if(core_mmu.div_reset)
+				if(core_mmu->div_reset)
 				{
-					core_mmu.div_reset = false;
+					core_mmu->div_reset = false;
 					core_cpu->tima_counter = 0;
 				}
 
 				core_cpu->tima_counter += core_cpu->cycles;
 
-				switch(core_mmu.memory_map[REG_TAC] & 0x3)
+				switch(core_mmu->memory_map[REG_TAC] & 0x3)
 				{
 					case 0x00: core_cpu->tima_speed = 1024; break;
 					case 0x01: core_cpu->tima_speed = 16; break;
@@ -374,13 +378,13 @@ void GB_core::run_core()
 	
 				if(core_cpu->tima_counter >= core_cpu->tima_speed)
 				{
-					core_mmu.memory_map[REG_TIMA]++;
+					core_mmu->memory_map[REG_TIMA]++;
 					core_cpu->tima_counter -= core_cpu->tima_speed;
 
-					if(core_mmu.memory_map[REG_TIMA] == 0)
+					if(core_mmu->memory_map[REG_TIMA] == 0)
 					{
-						core_mmu.memory_map[IF_FLAG] |= 0x04;
-						core_mmu.memory_map[REG_TIMA] = core_mmu.memory_map[REG_TMA];
+						core_mmu->memory_map[IF_FLAG] |= 0x04;
+						core_mmu->memory_map[REG_TIMA] = core_mmu->memory_map[REG_TMA];
 					}	
 
 				}
@@ -391,7 +395,7 @@ void GB_core::run_core()
 			{
 				core_cpu->controllers.serial_io.sio_stat.shift_counter += (core_cpu->double_speed) ? (core_cpu->cycles >> 1) : core_cpu->cycles;
 
-				if((core_cpu->controllers.serial_io.barcode_boy.send_data) && ((core_mmu.memory_map[REG_SC] & 0x80) == 0))
+				if((core_cpu->controllers.serial_io.barcode_boy.send_data) && ((core_mmu->memory_map[REG_SC] & 0x80) == 0))
 				{
 					core_cpu->controllers.serial_io.sio_stat.shifts_left = 8;
 					core_cpu->controllers.serial_io.sio_stat.shift_counter = 0;
@@ -401,7 +405,7 @@ void GB_core::run_core()
 				if(core_cpu->controllers.serial_io.sio_stat.shift_counter >= core_cpu->controllers.serial_io.sio_stat.shift_clock)
 				{
 					//Shift bit out from SB, transfer it
-					core_mmu.memory_map[REG_SB] <<= 1;
+					core_mmu->memory_map[REG_SB] <<= 1;
 
 					core_cpu->controllers.serial_io.sio_stat.shift_counter -= core_cpu->controllers.serial_io.sio_stat.shift_clock;
 					core_cpu->controllers.serial_io.sio_stat.shifts_left--;
@@ -410,7 +414,7 @@ void GB_core::run_core()
 					if(core_cpu->controllers.serial_io.sio_stat.shifts_left == 0)
 					{
 						//Reset Bit 7 in SC
-						core_mmu.memory_map[REG_SC] &= ~0x80;
+						core_mmu->memory_map[REG_SC] &= ~0x80;
 
 						core_cpu->controllers.serial_io.sio_stat.active_transfer = false;
 
@@ -423,8 +427,8 @@ void GB_core::run_core()
 								if((core_cpu->controllers.serial_io.sio_stat.internal_clock)
 								&& (!config::use_netplay || !core_cpu->controllers.serial_io.sio_stat.connected))
 								{
-									core_mmu.memory_map[REG_SB] = 0xFF;
-									core_mmu.memory_map[IF_FLAG] |= 0x08;
+									core_mmu->memory_map[REG_SB] = 0xFF;
+									core_mmu->memory_map[IF_FLAG] |= 0x08;
 								}
 
 								//Send byte to another instance of GBE+ via netplay
@@ -453,8 +457,8 @@ void GB_core::run_core()
 
 								if(core_cpu->controllers.serial_io.barcode_boy.send_data)
 								{
-									core_mmu.memory_map[REG_SB] = core_cpu->controllers.serial_io.barcode_boy.byte;
-									core_mmu.memory_map[IF_FLAG] |= 0x08;
+									core_mmu->memory_map[REG_SB] = core_cpu->controllers.serial_io.barcode_boy.byte;
+									core_mmu->memory_map[IF_FLAG] |= 0x08;
 								}
 									
 								break;
@@ -470,16 +474,16 @@ void GB_core::run_core()
 								{
 									core_cpu->controllers.serial_io.power_antenna_on = true;
 									core_cpu->controllers.video.power_antenna_osd = true;
-									core_mmu.memory_map[REG_SB] = 0xF2;
-									core_mmu.memory_map[IF_FLAG] |= 0x08;
+									core_mmu->memory_map[REG_SB] = 0xF2;
+									core_mmu->memory_map[IF_FLAG] |= 0x08;
 								}
 								
 								else if(core_cpu->controllers.serial_io.sio_stat.transfer_byte == 0)
 								{
 									core_cpu->controllers.serial_io.power_antenna_on = false;
 									core_cpu->controllers.video.power_antenna_osd = false;
-									core_mmu.memory_map[REG_SB] = 0xF3;
-									core_mmu.memory_map[IF_FLAG] |= 0x08;
+									core_mmu->memory_map[REG_SB] = 0xF3;
+									core_mmu->memory_map[IF_FLAG] |= 0x08;
 								}
 
 								break;
@@ -578,20 +582,20 @@ void GB_core::step()
 			}
 
 			//Send IR signal for GBC games
-			if(core_mmu.ir_send) { core_cpu->controllers.serial_io.send_ir_signal(); }
+			if(core_mmu->ir_send) { core_cpu->controllers.serial_io.send_ir_signal(); }
 
 			//Receive bytes normally
 			core_cpu->controllers.serial_io.receive_byte();
 
 			//Fade IR signal after a certain amount of time
-			if(core_mmu.ir_counter > 0)
+			if(core_mmu->ir_counter > 0)
 			{
-				core_mmu.ir_counter -= core_cpu->cycles;
+				core_mmu->ir_counter -= core_cpu->cycles;
 
-				if(core_mmu.ir_counter <= 0)
+				if(core_mmu->ir_counter <= 0)
 				{
-					core_mmu.ir_counter = 0;
-					core_mmu.memory_map[REG_RP] &= ~0x2;
+					core_mmu->ir_counter = 0;
+					core_mmu->memory_map[REG_RP] &= ~0x2;
 				}
 			}
 		}
@@ -615,7 +619,7 @@ void GB_core::step()
 				core_cpu->skip_instruction = false;
 
 				//Execute next opcode, but do not increment PC
-				core_cpu->opcode = core_mmu.read_u8(core_cpu->reg.pc);
+				core_cpu->opcode = core_mmu->read_u8(core_cpu->reg.pc);
 				core_cpu->exec_op(core_cpu->opcode);
 			}
 		}
@@ -623,7 +627,7 @@ void GB_core::step()
 		//Process Opcodes
 		else 
 		{
-			core_cpu->opcode = core_mmu.read_u8(core_cpu->reg.pc++);
+			core_cpu->opcode = core_mmu->read_u8(core_cpu->reg.pc++);
 			core_cpu->exec_op(core_cpu->opcode);
 		}
 
@@ -637,15 +641,15 @@ void GB_core::step()
 		if(core_cpu->div_counter >= 256) 
 		{
 			core_cpu->div_counter -= 256;
-			core_mmu.memory_map[REG_DIV]++;
+			core_mmu->memory_map[REG_DIV]++;
 		}
 
 		//Update TIMA timer
-		if(core_mmu.memory_map[REG_TAC] & 0x4) 
+		if(core_mmu->memory_map[REG_TAC] & 0x4) 
 		{	
 			core_cpu->tima_counter += core_cpu->cycles;
 
-			switch(core_mmu.memory_map[REG_TAC] & 0x3)
+			switch(core_mmu->memory_map[REG_TAC] & 0x3)
 			{
 				case 0x00: core_cpu->tima_speed = 1024; break;
 				case 0x01: core_cpu->tima_speed = 16; break;
@@ -655,13 +659,13 @@ void GB_core::step()
 	
 			if(core_cpu->tima_counter >= core_cpu->tima_speed)
 			{
-				core_mmu.memory_map[REG_TIMA]++;
+				core_mmu->memory_map[REG_TIMA]++;
 				core_cpu->tima_counter -= core_cpu->tima_speed;
 
-				if(core_mmu.memory_map[REG_TIMA] == 0)
+				if(core_mmu->memory_map[REG_TIMA] == 0)
 				{
-					core_mmu.memory_map[IF_FLAG] |= 0x04;
-					core_mmu.memory_map[REG_TIMA] = core_mmu.memory_map[REG_TMA];
+					core_mmu->memory_map[IF_FLAG] |= 0x04;
+					core_mmu->memory_map[REG_TIMA] = core_mmu->memory_map[REG_TMA];
 				}	
 
 			}
@@ -672,7 +676,7 @@ void GB_core::step()
 		{
 			core_cpu->controllers.serial_io.sio_stat.shift_counter += (core_cpu->double_speed) ? (core_cpu->cycles >> 1) : core_cpu->cycles;;
 
-			if((core_cpu->controllers.serial_io.barcode_boy.send_data) && ((core_mmu.memory_map[REG_SC] & 0x80) == 0))
+			if((core_cpu->controllers.serial_io.barcode_boy.send_data) && ((core_mmu->memory_map[REG_SC] & 0x80) == 0))
 			{
 				core_cpu->controllers.serial_io.sio_stat.shifts_left = 8;
 				core_cpu->controllers.serial_io.sio_stat.shift_counter = 0;
@@ -682,7 +686,7 @@ void GB_core::step()
 			if(core_cpu->controllers.serial_io.sio_stat.shift_counter >= core_cpu->controllers.serial_io.sio_stat.shift_clock)
 			{
 				//Shift bit out from SB, transfer it
-				core_mmu.memory_map[REG_SB] <<= 1;
+				core_mmu->memory_map[REG_SB] <<= 1;
 
 				core_cpu->controllers.serial_io.sio_stat.shift_counter -= core_cpu->controllers.serial_io.sio_stat.shift_clock;
 				core_cpu->controllers.serial_io.sio_stat.shifts_left--;
@@ -691,7 +695,7 @@ void GB_core::step()
 				if(core_cpu->controllers.serial_io.sio_stat.shifts_left == 0)
 				{
 					//Reset Bit 7 in SC
-					core_mmu.memory_map[REG_SC] &= ~0x80;
+					core_mmu->memory_map[REG_SC] &= ~0x80;
 
 					core_cpu->controllers.serial_io.sio_stat.active_transfer = false;
 
@@ -704,8 +708,8 @@ void GB_core::step()
 							if((core_cpu->controllers.serial_io.sio_stat.internal_clock)
 							&& (!config::use_netplay || !core_cpu->controllers.serial_io.sio_stat.connected))
 							{
-								core_mmu.memory_map[REG_SB] = 0xFF;
-								core_mmu.memory_map[IF_FLAG] |= 0x08;
+								core_mmu->memory_map[REG_SB] = 0xFF;
+								core_mmu->memory_map[IF_FLAG] |= 0x08;
 							}
 
 							//Send byte to another instance of GBE+ via netplay
@@ -734,8 +738,8 @@ void GB_core::step()
 
 							if(core_cpu->controllers.serial_io.barcode_boy.send_data)
 							{
-								core_mmu.memory_map[REG_SB] = core_cpu->controllers.serial_io.barcode_boy.byte;
-								core_mmu.memory_map[IF_FLAG] |= 0x08;
+								core_mmu->memory_map[REG_SB] = core_cpu->controllers.serial_io.barcode_boy.byte;
+								core_mmu->memory_map[IF_FLAG] |= 0x08;
 							}
 								
 							break;
@@ -751,16 +755,16 @@ void GB_core::step()
 							{
 								core_cpu->controllers.serial_io.power_antenna_on = true;
 								core_cpu->controllers.video.power_antenna_osd = true;
-								core_mmu.memory_map[REG_SB] = 0xF2;
-								core_mmu.memory_map[IF_FLAG] |= 0x08;
+								core_mmu->memory_map[REG_SB] = 0xF2;
+								core_mmu->memory_map[IF_FLAG] |= 0x08;
 							}
 								
 							else if(core_cpu->controllers.serial_io.sio_stat.transfer_byte == 0)
 							{
 								core_cpu->controllers.serial_io.power_antenna_on = false;
 								core_cpu->controllers.video.power_antenna_osd = false;
-								core_mmu.memory_map[REG_SB] = 0xF3;
-								core_mmu.memory_map[IF_FLAG] |= 0x08;
+								core_mmu->memory_map[REG_SB] = 0xF3;
+								core_mmu->memory_map[IF_FLAG] |= 0x08;
 							}
 
 						//Process Singer IZEK communications
@@ -961,11 +965,11 @@ void GB_core::handle_hotkey(SDL_Event& event)
 	else if((event.type == SDL_KEYDOWN) && (event.key.keysym.sym == SDLK_F8))
 	{
 		//If running GB Memory Cartridge, make sure this is a true reset, i.e. boot to the menu program
-		if(core_mmu.cart.flash_stat == 0x40)
+		if(core_mmu->cart.flash_stat == 0x40)
 		{
-			core_mmu.cart.flash_stat = 0;
-			core_mmu.cart.flash_io_bank = 0;
-			config::gb_type = core_mmu.cart.flash_cnt;
+			core_mmu->cart.flash_stat = 0;
+			core_mmu->cart.flash_io_bank = 0;
+			config::gb_type = core_mmu->cart.flash_cnt;
 		}
 
 		reset();
@@ -975,30 +979,30 @@ void GB_core::handle_hotkey(SDL_Event& event)
 	else if((event.type == SDL_KEYDOWN) && (event.key.keysym.sym == config::hotkey_camera))
 	{
 		//Set data into VRAM
-		if((core_mmu.cart.mbc_type == DMG_MMU::GB_CAMERA) && (!core_mmu.cart.cam_lock))
+		if((core_mmu->cart.mbc_type == GB_MMU::GB_CAMERA) && (!core_mmu->cart.cam_lock))
 		{
-			if(core_mmu.cam_load_snapshot(config::external_camera_file)) { std::cout<<"GBE::Loaded external camera file\n"; }
-			core_mmu.cart.cam_lock = true;
+			if(core_mmu->cam_load_snapshot(config::external_camera_file)) { std::cout<<"GBE::Loaded external camera file\n"; }
+			core_mmu->cart.cam_lock = true;
 		}
 
 		//Clear data from VRAM
-		else if((core_mmu.cart.mbc_type == DMG_MMU::GB_CAMERA) && (core_mmu.cart.cam_lock))
+		else if((core_mmu->cart.mbc_type == GB_MMU::GB_CAMERA) && (core_mmu->cart.cam_lock))
 		{
 			//Clear VRAM - 0x9000 to 0x9800
-			for(u32 x = 0x9000; x < 0x9800; x++) { core_mmu.write_u8(x, 0x0); }
+			for(u32 x = 0x9000; x < 0x9800; x++) { core_mmu->write_u8(x, 0x0); }
 
 			//Clear VRAM - 0x8800 to 0x8900
-			for(u32 x = 0x8800; x < 0x8900; x++) { core_mmu.write_u8(x, 0x0); }
+			for(u32 x = 0x8800; x < 0x8900; x++) { core_mmu->write_u8(x, 0x0); }
 
 			//Clear VRAM - 0x8000 to 0x8500
-			for(u32 x = 0x8000; x < 0x8500; x++) { core_mmu.write_u8(x, 0x0); }
+			for(u32 x = 0x8000; x < 0x8500; x++) { core_mmu->write_u8(x, 0x0); }
 
 			//Clear SRAM
-			for(u32 x = 0; x < core_mmu.cart.cam_buffer.size(); x++) { core_mmu.random_access_bank[0][0x100 + x] = 0x0; }
+			for(u32 x = 0; x < core_mmu->cart.cam_buffer.size(); x++) { core_mmu->random_access_bank[0][0x100 + x] = 0x0; }
 			
 			std::cout<<"GBE::Erased external camera file from VRAM\n";
 
-			core_mmu.cart.cam_lock = false;
+			core_mmu->cart.cam_lock = false;
 		}
 	}
 
@@ -1037,19 +1041,19 @@ void GB_core::handle_hotkey(SDL_Event& event)
 			//Full Changer - Draw Cosmic Character
 			case GBC_FULL_CHANGER:
 				core_cpu->controllers.serial_io.full_changer.delay_counter = (core_cpu->controllers.serial_io.full_changer.current_character * 72);
-				core_mmu.ir_trigger = 1;
+				core_mmu->ir_trigger = 1;
 				break;
 
 			//Pokemon Pikachu 2 - Send Watts
 			//Pocket Sakura - Send Points
 			case GBC_POKEMON_PIKACHU_2:
 			case GBC_POCKET_SAKURA:
-				core_mmu.ir_trigger = 1;
+				core_mmu->ir_trigger = 1;
 				break;
 
 			//TV Remote - Send signal
 			case GBC_TV_REMOTE:
-				core_mmu.ir_trigger = 1;
+				core_mmu->ir_trigger = 1;
 				break;
 		}
 	}
@@ -1068,30 +1072,30 @@ void GB_core::handle_hotkey(int input, bool pressed)
 	else if((input == config::hotkey_camera) && (pressed))
 	{
 		//Set data into VRAM
-		if((core_mmu.cart.mbc_type == DMG_MMU::GB_CAMERA) && (!core_mmu.cart.cam_lock))
+		if((core_mmu->cart.mbc_type == GB_MMU::GB_CAMERA) && (!core_mmu->cart.cam_lock))
 		{
-			if(core_mmu.cam_load_snapshot(config::external_camera_file)) { std::cout<<"GBE::Loaded external camera file\n"; }
-			core_mmu.cart.cam_lock = true;
+			if(core_mmu->cam_load_snapshot(config::external_camera_file)) { std::cout<<"GBE::Loaded external camera file\n"; }
+			core_mmu->cart.cam_lock = true;
 		}
 
 		//Clear data from VRAM
-		else if((core_mmu.cart.mbc_type == DMG_MMU::GB_CAMERA) && (core_mmu.cart.cam_lock))
+		else if((core_mmu->cart.mbc_type == GB_MMU::GB_CAMERA) && (core_mmu->cart.cam_lock))
 		{
 			//Clear VRAM - 0x9000 to 0x9800
-			for(u32 x = 0x9000; x < 0x9800; x++) { core_mmu.write_u8(x, 0x0); }
+			for(u32 x = 0x9000; x < 0x9800; x++) { core_mmu->write_u8(x, 0x0); }
 
 			//Clear VRAM - 0x8800 to 0x8900
-			for(u32 x = 0x8800; x < 0x8900; x++) { core_mmu.write_u8(x, 0x0); }
+			for(u32 x = 0x8800; x < 0x8900; x++) { core_mmu->write_u8(x, 0x0); }
 
 			//Clear VRAM - 0x8000 to 0x8500
-			for(u32 x = 0x8000; x < 0x8500; x++) { core_mmu.write_u8(x, 0x0); }
+			for(u32 x = 0x8000; x < 0x8500; x++) { core_mmu->write_u8(x, 0x0); }
 
 			//Clear SRAM
-			for(u32 x = 0; x < core_mmu.cart.cam_buffer.size(); x++) { core_mmu.random_access_bank[0][0x100 + x] = 0x0; }
+			for(u32 x = 0; x < core_mmu->cart.cam_buffer.size(); x++) { core_mmu->random_access_bank[0][0x100 + x] = 0x0; }
 			
 			std::cout<<"GBE::Erased external camera file from VRAM\n";
 
-			core_mmu.cart.cam_lock = false;
+			core_mmu->cart.cam_lock = false;
 		}
 	}
 
@@ -1130,19 +1134,19 @@ void GB_core::handle_hotkey(int input, bool pressed)
 			//Full Changer draw Cosmic Character
 			case GBC_FULL_CHANGER:
 				core_cpu->controllers.serial_io.full_changer.delay_counter = (core_cpu->controllers.serial_io.full_changer.current_character * 72);
-				core_mmu.ir_trigger = 1;
+				core_mmu->ir_trigger = 1;
 				break;
 
 			//Pokemon Pikachu 2 - Send Watts
 			//Pocket Sakura - Send Points
 			case GBC_POKEMON_PIKACHU_2:
 			case GBC_POCKET_SAKURA:
-				core_mmu.ir_trigger = 1;
+				core_mmu->ir_trigger = 1;
 				break;
 
 			//TV Remote - Send signal
 			case GBC_TV_REMOTE:
-				core_mmu.ir_trigger = 1;
+				core_mmu->ir_trigger = 1;
 				break;
 		}
 	}
@@ -1152,10 +1156,10 @@ void GB_core::handle_hotkey(int input, bool pressed)
 	else if((input == SDLK_F8) && (pressed) && (config::cart_type == DMG_GBMEM) && (config::use_external_interfaces))
 	{
 		//If running GB Memory Cartridge, make sure this is a true reset, i.e. boot to the menu program
-		if(core_mmu.cart.flash_stat == 0x40)
+		if(core_mmu->cart.flash_stat == 0x40)
 		{
-			core_mmu.cart.flash_stat = 0;
-			config::gb_type = core_mmu.cart.flash_cnt;
+			core_mmu->cart.flash_stat = 0;
+			config::gb_type = core_mmu->cart.flash_cnt;
 		}
 
 		reset();
@@ -1196,19 +1200,19 @@ u32 GB_core::ex_get_reg(u8 reg_index)
 }
 
 /****** Read binary file to memory ******/
-bool GB_core::read_file(std::string filename) { return core_mmu.read_file(filename); }
+bool GB_core::read_file(std::string filename) { return core_mmu->read_file(filename); }
 
 /****** Read BIOS file into memory ******/
-bool GB_core::read_bios(std::string filename) { return core_mmu.read_bios(config::bios_file); }
+bool GB_core::read_bios(std::string filename) { return core_mmu->read_bios(config::bios_file); }
 
 /****** Read firmware file into memory (not applicable) ******/
 bool GB_core::read_firmware(std::string filename) { return true; }
 
 /****** Returns a byte from core memory ******/
-u8 GB_core::ex_read_u8(u16 address) { return core_mmu.read_u8(address); }
+u8 GB_core::ex_read_u8(u16 address) { return core_mmu->read_u8(address); }
 
 /****** Writes a byte to core memory ******/
-void GB_core::ex_write_u8(u16 address, u8 value) { core_mmu.write_u8(address, value); }
+void GB_core::ex_write_u8(u16 address, u8 value) { core_mmu->write_u8(address, value); }
 
 /****** Dumps selected OBJ to a file ******/
 void DMG_core::dump_obj(int obj_index)

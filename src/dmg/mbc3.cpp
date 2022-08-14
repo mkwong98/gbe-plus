@@ -15,7 +15,7 @@
 #include "mmu.h"
 
 /****** Grab current system time for Real-Time Clock ******/
-void DMG_MMU::grab_time()
+void GB_MMU::grab_time()
 {
 	//Grab local time
 	time_t system_time = time(0);
@@ -174,7 +174,7 @@ void DMG_MMU::grab_time()
 }
 
 /****** Performs write operations specific to the MBC3 ******/
-void DMG_MMU::mbc3_write(u16 address, u8 value)
+void GB_MMU::mbc3_write(u16 address, u8 value)
 {
 	//Write to External RAM or RTC register
 	if((address >= 0xA000) && (address <= 0xBFFF))
@@ -228,7 +228,7 @@ void DMG_MMU::mbc3_write(u16 address, u8 value)
 }
 
 /****** Performs write operations specific to the MBC3 ******/
-u8 DMG_MMU::mbc3_read(u16 address)
+u8 GB_MMU::mbc3_read(u16 address)
 {
 	//Read using ROM Banking
 	if((address >= 0x4000) && (address <= 0x7FFF))

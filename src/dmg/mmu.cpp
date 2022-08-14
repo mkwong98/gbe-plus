@@ -15,13 +15,13 @@
 #include "common/util.h"
 
 /****** MMU Constructor ******/
-DMG_MMU::DMG_MMU() 
+GB_MMU::GB_MMU() 
 {
 	reset();
 }
 
 /****** MMU Deconstructor ******/
-DMG_MMU::~DMG_MMU() 
+GB_MMU::~GB_MMU() 
 {
 	//Always clean up external camera pic from SRAM before saving
 	if(cart.mbc_type == GB_CAMERA)
@@ -35,7 +35,7 @@ DMG_MMU::~DMG_MMU()
 }
 
 /****** MMU Reset ******/
-void DMG_MMU::reset()
+void GB_MMU::reset()
 {
 	//Remap ROM when resetting GB Memory Cartridge
 	if((config::cart_type == DMG_GBMEM) && (cart.flash_stat == 0xF0)) { gb_mem_remap(); }
@@ -148,7 +148,7 @@ void DMG_MMU::reset()
 }
 
 /****** Read MMU data from save state ******/
-bool DMG_MMU::mmu_read(u32 offset, std::string filename)
+bool GB_MMU::mmu_read(u32 offset, std::string filename)
 {
 	std::ifstream file(filename.c_str(), std::ios::binary);
 	
@@ -208,7 +208,7 @@ bool DMG_MMU::mmu_read(u32 offset, std::string filename)
 }
 
 /****** Write MMU data to save state ******/
-bool DMG_MMU::mmu_write(std::string filename)
+bool GB_MMU::mmu_write(std::string filename)
 {
 	std::ofstream file(filename.c_str(), std::ios::binary | std::ios::app);
 	
@@ -239,7 +239,7 @@ bool DMG_MMU::mmu_write(std::string filename)
 }
 
 /****** Gets the size of MMU data for serialization ******/
-u32 DMG_MMU::size()
+u32 GB_MMU::size()
 {
 	u32 mmu_size = 0;
 	
@@ -262,7 +262,69 @@ u32 DMG_MMU::size()
 }
 	
 /****** Read byte from memory ******/
-u8 DMG_MMU::read_u8(u16 address) 
+u8 DMG_MMU::read_u8(u16 address)
+{
+	if (!in_bios)
+	{
+		//Read from VRAM
+		if ((address >= 0x8000) && (address <= 0x9FFF))
+		{
+			return video_ram[0][address - 0x8000];
+		}
+
+		//Read from RP
+		if (address == REG_RP)
+		{
+			//GBC only
+			return 0x0;
+		}
+	}
+	return GB_MMU::read_u8_sub(address);
+}
+
+u8 GBC_MMU::read_u8(u16 address)
+{
+	if (!in_bios)
+	{
+		//Read from VRAM, GBC uses banking
+		if ((address >= 0x8000) && (address <= 0x9FFF))
+		{
+			return video_ram[vram_bank][address - 0x8000];
+		}
+
+		//In GBC mode, read from Working RAM using Banking
+		if ((address >= 0xC000) && (address <= 0xDFFF))
+		{
+			//Read from Bank 0 always when address is within 0xC000 - 0xCFFF
+			if ((address >= 0xC000) && (address <= 0xCFFF)) { return working_ram_bank[0][address - 0xC000]; }
+
+			//Read from selected Bank when address is within 0xD000 - 0xDFFF
+			else { return working_ram_bank[wram_bank][address - 0xD000]; }
+		}
+
+		//Read from RP
+		if (address == REG_RP)
+		{
+			//Initiate manual IR transmission (Full Changer, Pokemon Pikachu 2, Pocket Sakura, TV Remote)
+			if (!ir_signal && (ir_trigger == 1))
+			{
+				ir_trigger++;
+				sio_stat->shift_counter = 0;
+				sio_stat->shift_clock = 0;
+				sio_stat->shifts_left = 1;
+			}
+
+			//If Bits 6 and 7 are not set, treat Bit 1 as HIGH
+			if ((memory_map[address] & 0xC0) == 0) { return memory_map[address] | 0x2; }
+
+			//Otherwise, read RP normally
+			else { return memory_map[address]; }
+		}
+	}
+	return GB_MMU::read_u8_sub(address);
+}
+
+u8 GB_MMU::read_u8_sub(u16 address)
 {
 	//Read from BIOS
 	if(in_bios)
@@ -276,9 +338,6 @@ u8 DMG_MMU::read_u8(u16 address)
 		{ 
 			in_bios = false; 
 			std::cout<<"MMU::Exiting BIOS \n";
-
-			//For DMG on GBC games, we switch back to DMG Mode (we just take the colors the BIOS gives us)
-			if((bios_size == 0x900) && (memory_map[ROM_COLOR] != 0x80) && (memory_map[ROM_COLOR] != 0xC0)) { config::gb_type = 1; }
 		}
 
 		else if(address < bios_size) { return bios[address]; }
@@ -295,26 +354,6 @@ u8 DMG_MMU::read_u8(u16 address)
 
 	//MBC7 always has RAM enabled for reading
 	else if((address >= 0xA000) && (address <= 0xBFFF) && (cart.mbc_type == MBC7)) { return mbc7_read(address); }
-
-	//Read from VRAM, GBC uses banking
-	if((address >= 0x8000) && (address <= 0x9FFF))
-	{
-		//GBC read from VRAM Bank 1
-		if((vram_bank == 1) && (config::gb_type == 2)) { return video_ram[1][address - 0x8000]; }
-		
-		//GBC read from VRAM Bank 0 - DMG read normally, also from Bank 0, though it doesn't use banking technically
-		else { return video_ram[0][address - 0x8000]; }
-	}
-
-	//In GBC mode, read from Working RAM using Banking
-	if((address >= 0xC000) && (address <= 0xDFFF) && (config::gb_type == 2)) 
-	{
-		//Read from Bank 0 always when address is within 0xC000 - 0xCFFF
-		if((address >= 0xC000) && (address <= 0xCFFF)) { return working_ram_bank[0][address - 0xC000]; }
-			
-		//Read from selected Bank when address is within 0xD000 - 0xDFFF
-		else if((address >= 0xD000) && (address <= 0xDFFF)) { return working_ram_bank[wram_bank][address - 0xD000]; }
-	}
 
 	//Read background color palette data
 	if(address == REG_BCPD)
@@ -356,37 +395,19 @@ u8 DMG_MMU::read_u8(u16 address)
 		}
 	}
 
-	//Read from RP
-	else if(address == REG_RP)
-	{
-		//GBC only
-		if(config::gb_type < 2) { return 0x0; }
-
-		//Initiate manual IR transmission (Full Changer, Pokemon Pikachu 2, Pocket Sakura, TV Remote)
-		if(!ir_signal && (ir_trigger == 1))
-		{
-			ir_trigger++;
-			sio_stat->shift_counter = 0;
-			sio_stat->shift_clock = 0;
-			sio_stat->shifts_left = 1;
-		}
-
-		//If Bits 6 and 7 are not set, treat Bit 1 as HIGH
-		if((memory_map[address] & 0xC0) == 0) { return memory_map[address] | 0x2; }
-
-		//Otherwise, read RP normally
-		else { return memory_map[address]; }
-	}
-
 	//Read from P1
-	else if(address == 0xFF00) { return g_pad->read(); }
+	if(address == 0xFF00) { return g_pad->read(); }
 
 	//Read normally
 	return memory_map[address]; 
 }
 
+
+
+
+
 /****** Read signed byte from memory ******/
-s8 DMG_MMU::read_s8(u16 address) 
+s8 GB_MMU::read_s8(u16 address) 
 {
 	u8 temp = read_u8(address);
 	s8 s_temp = (s8)temp;
@@ -394,13 +415,13 @@ s8 DMG_MMU::read_s8(u16 address)
 }
 
 /****** Read word from memory ******/
-u16 DMG_MMU::read_u16(u16 address) 
+u16 GB_MMU::read_u16(u16 address) 
 {
 	return (read_u8(address+1) << 8) | read_u8(address);
 }
 
 /****** Write Byte To Memory ******/
-void DMG_MMU::write_u8(u16 address, u8 value) 
+void GB_MMU::write_u8(u16 address, u8 value) 
 {
 	if(cart.mbc_type != ROM_ONLY) 
 	{
@@ -408,26 +429,8 @@ void DMG_MMU::write_u8(u16 address, u8 value)
 		if((address >= 0xA000) && (address <= 0xBFFF)) { return; }
 	}
 
-	//Write to VRAM, GBC uses banking
-	if((address >= 0x8000) && (address <= 0x9FFF))
-	{
-		//GBC write to VRAM Bank 1
-		if((vram_bank == 1) && (config::gb_type == 2)) 
-		{
-			previous_value = video_ram[1][address - 0x8000];
-			video_ram[1][address - 0x8000] = value;
-		}
-		
-		//GBC write to VRAM Bank 0 - DMG read normally, also from Bank 0, though it doesn't use banking technically
-		else 
-		{
-			previous_value = video_ram[0][address - 0x8000];
-			video_ram[0][address - 0x8000] = value;
-		}
-	}
-
 	//DIV - Reset register to zero
-	else if(address == REG_DIV)
+	if(address == REG_DIV)
 	{
 		memory_map[address] = 0;
 		div_reset = true;
@@ -1121,19 +1124,6 @@ void DMG_MMU::write_u8(u16 address, u8 value)
 		}
 	}
 
-	//STAT
-	else if(address == REG_STAT)
-	{
-		//Trigger STAT IRQ when writing to STAT register
-		//This only happens on DMG models (and SGBs???) during HBLANK or VBLANK periods
-		if((lcd_stat->lcd_mode < 2) && (lcd_stat->lcd_enable) && (config::gb_type < 2)) { memory_map[IF_FLAG] |= 0x2; }
-
-		u8 read_only_bits = (memory_map[REG_STAT] & 0x7);
-
-		memory_map[address] = (value & ~0x7);
-		memory_map[address] |= read_only_bits;
-	}
-
 	//Scroll Y
 	else if(address == REG_SY)
 	{
@@ -1189,27 +1179,6 @@ void DMG_MMU::write_u8(u16 address, u8 value)
 		while (dma_dest < 0xFEA0) { write_u8(dma_dest++, read_u8(dma_orig++)); }
 	}
 
-	//Internal RAM - Write to ECHO RAM as well
-	else if((address >= 0xC000) && (address <= 0xDFFF)) 
-	{
-		//DMG mode - Normal writes
-		if(config::gb_type != 2)
-		{
-			memory_map[address] = value;
-			if(address + 0x2000 < 0xFDFF) { memory_map[address + 0x2000] = value; }
-		}
-
-		//GBC mode - Use banks
-		else if(config::gb_type == 2)
-		{
-			//Write to Bank 0 always when address is within 0xC000 - 0xCFFF
-			if((address >= 0xC000) && (address <= 0xCFFF)) { working_ram_bank[0][address - 0xC000] = value; }
-			
-			//Write to selected Bank when address is within 0xD000 - 0xDFFF
-			else if((address >= 0xD000) && (address <= 0xDFFF)) { working_ram_bank[wram_bank][address - 0xD000] = value; }
-		}
-	}
-
 	//ECHO RAM - Write to Internal RAM as well
 	else if((address >= 0xE000) && (address <= 0xFDFF))
 	{
@@ -1256,43 +1225,6 @@ void DMG_MMU::write_u8(u16 address, u8 value)
 		if((lcd_stat->hdma_in_progress) && (lcd_stat->lcd_mode == 0)) { hdma(); }
 	}
 
-	//VBK - Update VRAM bank
-	else if(address == REG_VBK) 
-	{ 
-		vram_bank = value & 0x1; 
-		memory_map[address] = (config::gb_type < 2) ? 0xFF : (value & 0x1); 
-	}
-
-	//KEY1 - Double-Normal speed switch
-	else if(address == REG_KEY1)
-	{
-		value &= 0x1;
-		if(value == 1) { memory_map[address] |= 0x1; }
-		else { memory_map[address] &= ~0x1; }
-	}
-
-	//BCPD - Update background color palettes
-	else if(address == REG_BCPD)
-	{
-		memory_map[address] = (config::gb_type < 2) ? 0xFF : value; 
-		lcd_stat->update_bg_colors = true;
-	}
-
-	//OCPD - Update sprite color palettes
-	else if(address == REG_OCPD)
-	{
-		memory_map[address] = (config::gb_type < 2) ? 0xFF : value; 
-		lcd_stat->update_obj_colors = true;
-	}
-
-	//SVBK - Update Working RAM bank
-	else if(address == REG_SVBK) 
-	{
-		wram_bank = (value & 0x7);
-		if(wram_bank == 0) { wram_bank = 1; }
-		memory_map[address] = (config::gb_type < 2) ? 0xFF : (value & 0x7);
-	}
-
 	//SB - Serial transfer data
 	else if(address == REG_SB)
 	{
@@ -1305,24 +1237,7 @@ void DMG_MMU::write_u8(u16 address, u8 value)
 		value &= 0x83;
 		sio_stat->internal_clock = (value & 0x1) ? true : false;
 
-		//DMG uses 8192Hz clock only (512 cycles)
-		if(config::gb_type != 2) { sio_stat->shift_clock = 512; }
-
-		//GBC has 4 selectable speeds
-		else
-		{
-			//8192Hz - Bit 1 cleared, Normal Speed
-			if(((value & 0x2) == 0) && ((memory_map[REG_KEY1] & 0x80) == 0)) { sio_stat->shift_clock = 512; }
-
-			//16384Hz - Bit 1 cleared, Double Speed
-			else if(((value & 0x2) == 0) && (memory_map[REG_KEY1] & 0x80)) { sio_stat->shift_clock = 256; }
-
-			//262144Hz - Bit 1 set, Normal Speed
-			else if((value & 0x2) && ((memory_map[REG_KEY1] & 0x80) == 0)) { sio_stat->shift_clock = 16; }
-
-			//524288Hz - Bit 1 set, Double Speed
-			else { sio_stat->shift_clock = 8; }
-		}
+		set_sio_shift_clock(value);
 
 		//Start serial transfer
 		if(value & 0x80)
@@ -1375,34 +1290,6 @@ void DMG_MMU::write_u8(u16 address, u8 value)
 		memory_map[address] = value | 0x7C;
 	}
 
-	//RP - IR port
-	else if(address == REG_RP)
-	{
-		//This register does nothing on the DMG, GBC only
-		if(config::gb_type == 2)
-		{
-			//Bit 1 is read-only, preserve this bit when writing to RP
-			u8 old_ir_signal = (memory_map[address] & 0x2) ? 0x2 : 0;
-			u8 old_ir_stat = memory_map[address] & 0x1;
-
-			value &= 0xC1;
-			value |= old_ir_signal;
-			value |= 0x3C;
-			memory_map[address] = value;
-
-			ir_signal = (value & 0x1);
-			
-			//Send IR signal to another GBC
-			if(ir_signal != old_ir_stat) { ir_send = true; }
-
-			//Emulate constant IR light source - Static Mode
-			if((sio_stat->ir_type == 5) && (value & 0xC0) && (config::ir_db_index == 0))
-			{
-				memory_map[address] &= ~0x2;
-			} 
-		}
-	}
-
 	else if(address == IF_FLAG)
 	{
 		value |= 0xE0;
@@ -1410,36 +1297,223 @@ void DMG_MMU::write_u8(u16 address, u8 value)
 	}
 
 	else if(address > 0x7FFF) { memory_map[address] = value; }
+}
+
+void DMG_MMU::set_sio_shift_clock(u8 value)
+{
+	//DMG uses 8192Hz clock only (512 cycles)
+	sio_stat->shift_clock = 512;
+}
+
+void GBC_MMU::set_sio_shift_clock(u8 value)
+{
+	//GBC has 4 selectable speeds
+	//8192Hz - Bit 1 cleared, Normal Speed
+	if (((value & 0x2) == 0) && ((memory_map[REG_KEY1] & 0x80) == 0)) { sio_stat->shift_clock = 512; }
+
+	//16384Hz - Bit 1 cleared, Double Speed
+	else if (((value & 0x2) == 0) && (memory_map[REG_KEY1] & 0x80)) { sio_stat->shift_clock = 256; }
+
+	//262144Hz - Bit 1 set, Normal Speed
+	else if ((value & 0x2) && ((memory_map[REG_KEY1] & 0x80) == 0)) { sio_stat->shift_clock = 16; }
+
+	//524288Hz - Bit 1 set, Double Speed
+	else { sio_stat->shift_clock = 8; }
+}
+
+
+void DMG_MMU::write_u8(u16 address, u8 value)
+{
+	GB_MMU::write_u8(address, value);
+
+	//Write to VRAM
+	if ((address >= 0x8000) && (address <= 0x9FFF))
+	{
+		previous_value = video_ram[0][address - 0x8000];
+		video_ram[0][address - 0x8000] = value;
+	}
+
+	//STAT
+	else if (address == REG_STAT)
+	{
+		//Trigger STAT IRQ when writing to STAT register
+		//This only happens on DMG models (and SGBs???) during HBLANK or VBLANK periods
+		if ((lcd_stat->lcd_mode < 2) && (lcd_stat->lcd_enable)) { memory_map[IF_FLAG] |= 0x2; }
+
+		u8 read_only_bits = (memory_map[REG_STAT] & 0x7);
+
+		memory_map[address] = (value & ~0x7);
+		memory_map[address] |= read_only_bits;
+	}
+
+	//Internal RAM - Write to ECHO RAM as well
+	else if ((address >= 0xC000) && (address <= 0xDFFF))
+	{
+		//DMG mode - Normal writes
+		memory_map[address] = value;
+		if (address + 0x2000 < 0xFDFF) { memory_map[address + 0x2000] = value; }
+	}
+
+	//VBK - Update VRAM bank
+	else if (address == REG_VBK)
+	{
+		vram_bank = value & 0x1;
+		memory_map[address] = 0xFF;
+	}
+
+	//BCPD - Update background color palettes
+	else if (address == REG_BCPD)
+	{
+		memory_map[address] = 0xFF;
+		lcd_stat->update_bg_colors = true;
+	}
+
+	//OCPD - Update sprite color palettes
+	else if (address == REG_OCPD)
+	{
+		memory_map[address] = 0xFF;
+		lcd_stat->update_obj_colors = true;
+	}
+
+	//SVBK - Update Working RAM bank
+	else if (address == REG_SVBK)
+	{
+		wram_bank = (value & 0x7);
+		if (wram_bank == 0) { wram_bank = 1; }
+		memory_map[address] = 0xFF;
+	}
 
 	//CGFX processing - Check for BG updates
-	if((cgfx::load_cgfx) && (address >= 0x8000) && (address <= 0x9FFF))
+	if ((cgfx::load_cgfx) && (address >= 0x8000) && (address <= 0x9FFF))
 	{
 		//If the last VRAM value is the same, do not update
 		//Some games GBC games will spam VRAM addresses with the same data
-		if(previous_value == value) { return; }
+		if (previous_value == value) { return; }
 
 		//DMG BG Tile data update
-		if((config::gb_type == 1) && (address <= 0x97FF))
+		if (address <= 0x97FF)
 		{
 			cgfx_stat->update_bg = true;
 
 			cgfx_stat->bg_update_list[(address & ~0x8000) >> 4] = true;
 		}
+	}
+}
+
+void GBC_MMU::write_u8(u16 address, u8 value)
+{
+	GB_MMU::write_u8(address, value);
+
+	//Write to VRAM, GBC uses banking
+	if ((address >= 0x8000) && (address <= 0x9FFF))
+	{
+		previous_value = video_ram[vram_bank][address - 0x8000];
+		video_ram[vram_bank][address - 0x8000] = value;
+	}
+
+	//STAT
+	else if (address == REG_STAT)
+	{
+		u8 read_only_bits = (memory_map[REG_STAT] & 0x7);
+
+		memory_map[address] = (value & ~0x7);
+		memory_map[address] |= read_only_bits;
+	}
+
+	//Internal RAM - Write to ECHO RAM as well
+	else if ((address >= 0xC000) && (address <= 0xDFFF))
+	{
+		//GBC mode - Use banks
+		//Write to Bank 0 always when address is within 0xC000 - 0xCFFF
+		if ((address >= 0xC000) && (address <= 0xCFFF)) { working_ram_bank[0][address - 0xC000] = value; }
+
+		//Write to selected Bank when address is within 0xD000 - 0xDFFF
+		else if ((address >= 0xD000) && (address <= 0xDFFF)) { working_ram_bank[wram_bank][address - 0xD000] = value; }
+	}
+
+	//VBK - Update VRAM bank
+	else if (address == REG_VBK)
+	{
+		vram_bank = value & 0x1;
+		memory_map[address] = value & 0x1;
+	}
+
+	//KEY1 - Double-Normal speed switch
+	else if (address == REG_KEY1)
+	{
+		value &= 0x1;
+		if (value == 1) { memory_map[address] |= 0x1; }
+		else { memory_map[address] &= ~0x1; }
+	}
+
+	//BCPD - Update background color palettes
+	else if (address == REG_BCPD)
+	{
+		memory_map[address] = value;
+		lcd_stat->update_bg_colors = true;
+	}
+
+	//OCPD - Update sprite color palettes
+	else if (address == REG_OCPD)
+	{
+		memory_map[address] = value;
+		lcd_stat->update_obj_colors = true;
+	}
+
+	//SVBK - Update Working RAM bank
+	else if (address == REG_SVBK)
+	{
+		wram_bank = (value & 0x7);
+		if (wram_bank == 0) { wram_bank = 1; }
+		memory_map[address] = value & 0x7;
+	}
+	
+	//RP - IR port
+	else if (address == REG_RP)
+	{
+		//This register does nothing on the GBC only
+		//Bit 1 is read-only, preserve this bit when writing to RP
+		u8 old_ir_signal = (memory_map[address] & 0x2) ? 0x2 : 0;
+		u8 old_ir_stat = memory_map[address] & 0x1;
+
+		value &= 0xC1;
+		value |= old_ir_signal;
+		value |= 0x3C;
+		memory_map[address] = value;
+
+		ir_signal = (value & 0x1);
+
+		//Send IR signal to another GBC
+		if (ir_signal != old_ir_stat) { ir_send = true; }
+
+		//Emulate constant IR light source - Static Mode
+		if ((sio_stat->ir_type == 5) && (value & 0xC0) && (config::ir_db_index == 0))
+		{
+			memory_map[address] &= ~0x2;
+		}
+	}
+
+	//CGFX processing - Check for BG updates
+	if ((cgfx::load_cgfx) && (address >= 0x8000) && (address <= 0x9FFF))
+	{
+		//If the last VRAM value is the same, do not update
+		//Some games GBC games will spam VRAM addresses with the same data
+		if (previous_value == value) { return; }
 
 		//GBC BG Tile Data update
-		else if((config::gb_type == 2) && (address <= 0x97FF))
+		if (address <= 0x97FF)
 		{
 			cgfx_stat->update_bg = true;
 
 			u8 tile_number = (address - lcd_stat->bg_tile_addr) >> 4;
-				
+
 			//Convert tile number to signed if necessary
-			if(lcd_stat->bg_tile_addr == 0x8800) { tile_number = lcd_stat->signed_tile_lut[tile_number]; }
+			if (lcd_stat->bg_tile_addr == 0x8800) { tile_number = lcd_stat->signed_tile_lut[tile_number]; }
 			cgfx_stat->bg_tile_update_list[tile_number] = true;
 		}
 
 		//GBC BG Map Data update
-		else if((config::gb_type == 2) && (address >= 0x9800))
+		else if (address >= 0x9800)
 		{
 			cgfx_stat->update_map = true;
 
@@ -1449,15 +1523,16 @@ void DMG_MMU::write_u8(u16 address, u8 value)
 	}
 }
 
+
 /****** Write word to memory ******/
-void DMG_MMU::write_u16(u16 address, u16 value)
+void GB_MMU::write_u16(u16 address, u16 value)
 {
 	write_u8(address, (value & 0xFF));
 	write_u8((address+1), (value >> 8));
 }
 
 /****** Determines which if any MBC to read from ******/
-u8 DMG_MMU::mbc_read(u16 address)
+u8 GB_MMU::mbc_read(u16 address)
 {
 	switch(cart.mbc_type)
 	{
@@ -1512,7 +1587,7 @@ u8 DMG_MMU::mbc_read(u16 address)
 }
 
 /****** Determines which if any MBC to write to ******/
-void DMG_MMU::mbc_write(u16 address, u8 value)
+void GB_MMU::mbc_write(u16 address, u8 value)
 {
 	switch(cart.mbc_type)
 	{
@@ -1564,7 +1639,7 @@ void DMG_MMU::mbc_write(u16 address, u8 value)
 }
 
 /****** GBC General Purpose DMA ******/
-void DMG_MMU::gdma()
+void GB_MMU::gdma()
 {
 	u16 start_addr = (memory_map[REG_HDMA1] << 8) | memory_map[REG_HDMA2];
 	u16 dest_addr = (memory_map[REG_HDMA3] << 8) | memory_map[REG_HDMA4];
@@ -1596,7 +1671,7 @@ void DMG_MMU::gdma()
 }
 
 /****** GBC Horizontal DMA ******/
-void DMG_MMU::hdma()
+void GB_MMU::hdma()
 {
 	if(lcd_stat->hdma_line) { return; }
 
@@ -1636,7 +1711,7 @@ void DMG_MMU::hdma()
 }
 
 /****** Read binary file to memory ******/
-bool DMG_MMU::read_file(std::string filename)
+bool GB_MMU::read_file(std::string filename)
 {
 	//No cart inserted
 	if(config::no_cart)
@@ -2049,24 +2124,6 @@ bool DMG_MMU::read_file(std::string filename)
 	//Apply Game Genie codes to ROM data
 	if(config::use_cheats) { set_gg_cheats(); }
 
-	//Determine if cart is DMG or GBC and which system GBE will try to emulate
-	//Only necessary for Auto system detection.
-	//For now, even if forcing GBC, when encountering DMG carts, revert to DMG mode, dunno how the palettes work yet
-	//When using the DMG bootrom or GBC BIOS, those files determine emulated system type later
-	if((config::gb_type == 0) || (config::gb_type == 2))
-	{
-		//Always use GBC mode when booting from the GBC bootrom
-		if((config::gb_type == 2) && (config::use_bios)) { config::gb_type = 2; }
-
-		else if(memory_map[ROM_COLOR] == 0) { config::gb_type = 1; }
-		else if(memory_map[ROM_COLOR] == 0x80) { config::gb_type = 2; }
-		else if(memory_map[ROM_COLOR] == 0xC0) { config::gb_type = 2; }
-
-		//If another value is present, this is a DMG game
-		//The value is likely part of the ASCII title
-		else { config::gb_type = 1; }
-	}
-
 	//Manually HLE MMIO
 	if(!in_bios) 
 	{
@@ -2100,32 +2157,33 @@ bool DMG_MMU::read_file(std::string filename)
 	}
 
 	//Manually set some I/O registers
-	//Some I/O registers are 0xFF on DMG units, 0x0 on GBC/GBA units
-	if(config::gb_type < 2)
-	{
-		write_u8(REG_OBP0, 0xFF);
-		write_u8(REG_OBP1, 0xFF);
-		write_u8(REG_VBK, 0xFF);
-		write_u8(REG_RP, 0xFF);
-		write_u8(REG_BCPD, 0xFF);
-		write_u8(REG_OCPD, 0xFF);
-		write_u8(REG_SVBK, 0xFF);
-	}
-
-	//Manually set some GBC I/O registers
-	else if(config::gb_type == 2)
-	{
-		memory_map[REG_RP] = 0x3E;
-	}
+	//Some I/O registers are 0xFF on DMG units, 0x0 on GBC units
+	init_io_reg();
 
 	//Load backup save data if applicable
-        load_backup(config::save_file);
+    load_backup(config::save_file);
 
 	return true;
 }
 
+void DMG_MMU::init_io_reg()
+{
+	write_u8(REG_OBP0, 0xFF);
+	write_u8(REG_OBP1, 0xFF);
+	write_u8(REG_VBK, 0xFF);
+	write_u8(REG_RP, 0xFF);
+	write_u8(REG_BCPD, 0xFF);
+	write_u8(REG_OCPD, 0xFF);
+	write_u8(REG_SVBK, 0xFF);
+}
+
+void GBC_MMU::init_io_reg()
+{
+	memory_map[REG_RP] = 0x3E;
+}
+
 /****** Read GB BIOS ******/
-bool DMG_MMU::read_bios(std::string filename)
+bool GB_MMU::read_bios(std::string filename)
 {
 	std::ifstream file(filename.c_str(), std::ios::binary);
 
@@ -2152,10 +2210,6 @@ bool DMG_MMU::read_bios(std::string filename)
 		file.read((char*)ex_bios, bios_size);
 		file.close();
 
-		//When using the BIOS, set the emulated system type - DMG or GBC respectively
-		if(bios_size == 0x100) { config::gb_type = 1; }
-		else if(bios_size == 0x900) { config::gb_type = 2; }
-
 		std::cout<<"MMU::BIOS file " << filename << " loaded successfully. \n";
 
 		return true;
@@ -2169,7 +2223,7 @@ bool DMG_MMU::read_bios(std::string filename)
 }
 
 /****** Load backup save data ******/
-bool DMG_MMU::load_backup(std::string filename)
+bool GB_MMU::load_backup(std::string filename)
 {
 	//Use config save path if applicable
 	if(!config::save_path.empty())
@@ -2310,7 +2364,7 @@ bool DMG_MMU::load_backup(std::string filename)
 }
 
 /****** Save backup save data ******/
-bool DMG_MMU::save_backup(std::string filename)
+bool GB_MMU::save_backup(std::string filename)
 {
 	//Use config save path if applicable
 	if(!config::save_path.empty())
@@ -2408,7 +2462,7 @@ bool DMG_MMU::save_backup(std::string filename)
 }
 
 /****** Remaps GB Memory Cartridge and loads ROM stored in flash ******/
-void DMG_MMU::gb_mem_remap()
+void GB_MMU::gb_mem_remap()
 {
 	//Search entries for index
 	u32 addr = 0;
@@ -2478,7 +2532,7 @@ void DMG_MMU::gb_mem_remap()
 }
 
 /****** Reads 128-byte map file used for GB Memory Cartridge ******/
-bool DMG_MMU::gb_mem_read_map(std::string filename)
+bool GB_MMU::gb_mem_read_map(std::string filename)
 {
 	std::ifstream map_file(filename.c_str(), std::ios::binary);
 
@@ -2509,7 +2563,7 @@ bool DMG_MMU::gb_mem_read_map(std::string filename)
 }
 
 /****** Reads existing save data and updates it correctly for games stored on the GB Memory Cartridge ******/
-void DMG_MMU::gb_mem_format_save(std::string filename)
+void GB_MMU::gb_mem_format_save(std::string filename)
 {
 	u8 map_index = (cart.flash_io_bank * 3);
 	u8 sram_index = cart.gb_mem_map[map_index + 2] & 0xF;
@@ -2556,7 +2610,7 @@ void DMG_MMU::gb_mem_format_save(std::string filename)
 }
 
 /****** Writes values to RAM as specified by the Gameshark code - Called by LCD during VBlank ******/
-void DMG_MMU::set_gs_cheats()
+void GB_MMU::set_gs_cheats()
 {
 	//Cycle through all listed cheats, parse the 32-bit cheat format
 	for(int x = 0; x < config::gs_cheats.size(); x++)
@@ -2588,7 +2642,7 @@ void DMG_MMU::set_gs_cheats()
 }
 
 /****** Overwrites values to ROM as specified by the Game Genie code - Called by MMU after loading ROM ******/
-void DMG_MMU::set_gg_cheats()
+void GB_MMU::set_gg_cheats()
 {
 	//Cycle through all listed cheats, parse 40-bit cheat format
 	for(int x = 0; x < config::gg_cheats.size(); x++)
@@ -2643,7 +2697,7 @@ void DMG_MMU::set_gg_cheats()
 }
 
 /****** Applies an IPS patch to a ROM loaded in memory ******/
-bool DMG_MMU::patch_ips(std::string filename)
+bool GB_MMU::patch_ips(std::string filename)
 {
 	std::ifstream patch_file(filename.c_str(), std::ios::binary);
 
@@ -2777,7 +2831,7 @@ bool DMG_MMU::patch_ips(std::string filename)
 }
 
 /****** Applies an UPS patch to a ROM loaded in memory ******/
-bool DMG_MMU::patch_ups(std::string filename)
+bool GB_MMU::patch_ups(std::string filename)
 {
 	std::ifstream patch_file(filename.c_str(), std::ios::binary);
 
@@ -2907,13 +2961,13 @@ bool DMG_MMU::patch_ups(std::string filename)
 }
 
 /****** Points the MMU to an lcd_data structure (FROM THE LCD ITSELF) ******/
-void DMG_MMU::set_lcd_data(dmg_lcd_data* ex_lcd_stat) { lcd_stat = ex_lcd_stat; }
+void GB_MMU::set_lcd_data(dmg_lcd_data* ex_lcd_stat) { lcd_stat = ex_lcd_stat; }
 
 /****** Points the MMU to an cgfx_data structure (FROM THE LCD ITSELF) ******/
-void DMG_MMU::set_cgfx_data(dmg_cgfx_data* ex_cgfx_stat) { cgfx_stat = ex_cgfx_stat; }
+void GB_MMU::set_cgfx_data(dmg_cgfx_data* ex_cgfx_stat) { cgfx_stat = ex_cgfx_stat; }
 
 /****** Points the MMU to an apu_data structure (FROM THE APU ITSELF) ******/
-void DMG_MMU::set_apu_data(dmg_apu_data* ex_apu_stat) { apu_stat = ex_apu_stat; }
+void GB_MMU::set_apu_data(dmg_apu_data* ex_apu_stat) { apu_stat = ex_apu_stat; }
 
 /****** Points the MMU to an sio_data structure (FROM SIO ITSELF) ******/
-void DMG_MMU::set_sio_data(dmg_sio_data* ex_sio_stat) { sio_stat = ex_sio_stat; }
+void GB_MMU::set_sio_data(dmg_sio_data* ex_sio_stat) { sio_stat = ex_sio_stat; }

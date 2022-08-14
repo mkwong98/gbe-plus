@@ -647,15 +647,6 @@ bool parse_cli_args()
 			//Scale screen by 6x
 			else if(config::cli_args[x] == "--6x") { config::scaling_factor = config::old_scaling_factor = 6; }
 
-			//Set system type - Auto
-			else if(config::cli_args[x] == "--sys-auto") { config::gb_type = 0; }
-
-			//Set system type - DMG
-			else if(config::cli_args[x] == "--sys-dmg") { config::gb_type = 1; }
-
-			//Set system type - GBC
-			else if(config::cli_args[x] == "--sys-gbc") { config::gb_type = 2; }
-
 			//Enable Turbo File memory card
 			else if(config::cli_args[x] == "--turbo-file-memcard") { config::turbo_file_options |= 0x1; }
 
@@ -893,26 +884,6 @@ bool parse_ini_file()
 			else 
 			{ 
 				std::cout<<"GBE::Error - Could not parse gbe.ini (#ir_device) \n";
-				return false;
-			}
-		}
-
-		//Set emulated system type
-		else if(ini_item == "#system_type")
-		{
-			if((x + 1) < size) 
-			{
-				util::from_str(ini_opts[++x], output);
-
-				if((output >= 0) && (output <= 2)) 
-				{
-					config::gb_type = output;
-				}
-			}
-
-			else 
-			{
-				std::cout<<"GBE::Error - Could not parse gbe.ini (#system_type) \n";
 				return false;
 			}
 		}

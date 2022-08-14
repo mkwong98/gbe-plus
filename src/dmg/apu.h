@@ -21,7 +21,7 @@ class DMG_APU
 	public:
 	
 	//Link to memory map
-	DMG_MMU* mem;
+	GB_MMU* mem;
 
 	dmg_apu_data apu_stat;
 

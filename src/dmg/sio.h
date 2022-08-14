@@ -28,7 +28,7 @@ class DMG_SIO
 	public:
 
 	//Link to memory map
-	DMG_MMU* mem;
+	GB_MMU* mem;
 
 	dmg_sio_data sio_stat;
 

@@ -60,7 +60,7 @@ class GB_core : virtual public core_emu
 		//Misc
 		u32 get_core_data(u32 core_index);
 
-		DMG_MMU core_mmu;
+		GB_MMU* core_mmu;
 		Z80* core_cpu;
 		DMG_GamePad core_pad;
 };

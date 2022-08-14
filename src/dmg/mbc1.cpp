@@ -16,7 +16,7 @@
 #include "common/util.h"
 
 /****** Performs write operations specific to the MBC1 ******/
-void DMG_MMU::mbc1_write(u16 address, u8 value)
+void GB_MMU::mbc1_write(u16 address, u8 value)
 {
 	//Write to External RAM
 	if((address >= 0xA000) && (address <= 0xBFFF) && (cart.ram))
@@ -46,7 +46,7 @@ void DMG_MMU::mbc1_write(u16 address, u8 value)
 }
 
 /****** Performs read operations specific to the MBC1 ******/
-u8 DMG_MMU::mbc1_read(u16 address)
+u8 GB_MMU::mbc1_read(u16 address)
 {
 	//Read using ROM Banking
 	if((address >= 0x4000) && (address <= 0x7FFF))
@@ -85,7 +85,7 @@ u8 DMG_MMU::mbc1_read(u16 address)
 }
 
 /****** Performs write operations specific to the MBC1M ******/
-void DMG_MMU::mbc1_multicart_write(u16 address, u8 value)
+void GB_MMU::mbc1_multicart_write(u16 address, u8 value)
 {
 	//Write to External RAM
 	if((address >= 0xA000) && (address <= 0xBFFF) && (cart.ram))
@@ -116,7 +116,7 @@ void DMG_MMU::mbc1_multicart_write(u16 address, u8 value)
 }
 
 /****** Performs read operations specific to the MBC1M ******/
-u8 DMG_MMU::mbc1_multicart_read(u16 address)
+u8 GB_MMU::mbc1_multicart_read(u16 address)
 {
 	//Read using ROM Banking - Bank 0
 	if(address <= 0x3FFF)
@@ -171,7 +171,7 @@ u8 DMG_MMU::mbc1_multicart_read(u16 address)
 }
 
 /****** Performs write operations specific to the MBC1S ******/
-void DMG_MMU::mbc1s_write(u16 address, u8 value)
+void GB_MMU::mbc1s_write(u16 address, u8 value)
 {
 	//MBC register - Enable or Disable RAM Banking
 	if((address <= 0x1FFF) && (cart.ram))
@@ -209,7 +209,7 @@ void DMG_MMU::mbc1s_write(u16 address, u8 value)
 }
 
 /****** Performs read operations specific to the MBC1S ******/
-u8 DMG_MMU::mbc1s_read(u16 address)
+u8 GB_MMU::mbc1s_read(u16 address)
 {
 	//Read using ROM Banking
 	if((address >= 0x4000) && (address <= 0x7FFF))
@@ -259,7 +259,7 @@ u8 DMG_MMU::mbc1s_read(u16 address)
 }
 
 /****** Open external image and convert to sonar data ******/
-bool DMG_MMU::mbc1s_load_sonar_data(std::string filename)
+bool GB_MMU::mbc1s_load_sonar_data(std::string filename)
 {
 	if(filename.empty()) { return false; }
 

@@ -12,7 +12,7 @@
 #include "mmu.h"
 
 /****** Performs write operations specific to the HuC-3 ******/
-void DMG_MMU::huc3_write(u16 address, u8 value)
+void GB_MMU::huc3_write(u16 address, u8 value)
 {
 	//Write to External RAM
 	if((address >= 0xA000) && (address <= 0xBFFF))
@@ -52,7 +52,7 @@ void DMG_MMU::huc3_write(u16 address, u8 value)
 } 
 
 /****** Performs read operations specific to the HuC-3 ******/
-u8 DMG_MMU::huc3_read(u16 address)
+u8 GB_MMU::huc3_read(u16 address)
 {
 	//Read using ROM Banking - Bank 0
 	if(address <= 0x3FFF) { return memory_map[address]; }

@@ -15,7 +15,7 @@
 #include "common/util.h"
 
 /****** Performs write operations specific to the GB Camera ******/
-void DMG_MMU::cam_write(u16 address, u8 value)
+void GB_MMU::cam_write(u16 address, u8 value)
 {
 	//MBC register - Enable or Disable RAM Banking (writing only, banks can still be read, camera registers too!)
 	if(address <= 0x1FFF)
@@ -61,7 +61,7 @@ void DMG_MMU::cam_write(u16 address, u8 value)
 }
 
 /****** Performs write operations specific to the GB Camera ******/
-u8 DMG_MMU::cam_read(u16 address)
+u8 GB_MMU::cam_read(u16 address)
 {
 	//Read using ROM Banking
 	if((address >= 0x4000) && (address <= 0x7FFF))
@@ -93,7 +93,7 @@ u8 DMG_MMU::cam_read(u16 address)
 }
 
 /****** Open external image and convert to GB colors in VRAM ******/
-bool DMG_MMU::cam_load_snapshot(std::string filename)
+bool GB_MMU::cam_load_snapshot(std::string filename)
 {
 	//Load source image
 	SDL_Surface* src_img = NULL;

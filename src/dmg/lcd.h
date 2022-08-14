@@ -22,7 +22,7 @@ class DMG_LCD
 	public:
 	
 	//Link to memory map
-	DMG_MMU* mem;
+	GB_MMU* mem;
 
 	//Core Functions
 	DMG_LCD();

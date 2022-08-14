@@ -13,7 +13,7 @@
 #include "mmu.h"
 
 /****** Performs write operations specific to the MBC5 ******/
-void DMG_MMU::mbc5_write(u16 address, u8 value)
+void GB_MMU::mbc5_write(u16 address, u8 value)
 {
 	//Write to External RAM or RTC register
 	if((address >= 0xA000) && (address <= 0xBFFF))
@@ -162,7 +162,7 @@ void DMG_MMU::mbc5_write(u16 address, u8 value)
 }
 
 /****** Performs write operations specific to the MBC5 ******/
-u8 DMG_MMU::mbc5_read(u16 address)
+u8 GB_MMU::mbc5_read(u16 address)
 {
 	//Read using ROM Banking
 	if((address >= 0x4000) && (address <= 0x7FFF))

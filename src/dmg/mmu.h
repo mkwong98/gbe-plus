@@ -8,8 +8,8 @@
 //
 // Handles reading and writing bytes to memory locations
 
-#ifndef GB_MMU
-#define GB_MMU
+#ifndef GB_MEM
+#define GB_MEM
 
 #include <fstream>
 #include <string>
@@ -24,7 +24,7 @@
 #include "apu_data.h"
 #include "sio_data.h"
 
-class DMG_MMU
+class GB_MMU
 {
 	public:
 
@@ -147,17 +147,19 @@ class DMG_MMU
 	u32 sub_screen_update;
 	bool sub_screen_lock;
 
-	DMG_MMU();
-	~DMG_MMU();
+	GB_MMU();
+	~GB_MMU();
 
 	void reset();
 	void grab_time();
 
-	u8 read_u8(u16 address);
+	virtual u8 read_u8(u16 address) = 0;
+	u8 read_u8_sub(u16 address);
 	u16 read_u16(u16 address);
 	s8 read_s8(u16 address);
 
-	void write_u8(u16 address, u8 value);
+	virtual void write_u8(u16 address, u8 value);
+	virtual void set_sio_shift_clock(u8 value) = 0;
 	void write_u16(u16 address, u16 value);
 
 	//GBC DMAs
@@ -165,6 +167,7 @@ class DMG_MMU
 	void gdma();
 
 	bool read_file(std::string filename);
+	virtual void init_io_reg() = 0;
 	bool read_bios(std::string filename);
 	bool save_backup(std::string filename);
 	bool load_backup(std::string filename);
@@ -236,8 +239,7 @@ class DMG_MMU
 	bool mmu_write(std::string filename);
 	u32 size();
 
-	private:
-
+	protected:
 	u8 previous_value;
 
 	//Only the MMU and LCD should communicate through this structure
@@ -253,4 +255,22 @@ class DMG_MMU
 	dmg_sio_data* sio_stat;
 };
 
-#endif // GB_MMU
+class DMG_MMU : public GB_MMU
+{
+public:
+	u8 read_u8(u16 address);
+	void write_u8(u16 address, u8 value);
+	void set_sio_shift_clock(u8 value);
+	void init_io_reg();
+};
+
+class GBC_MMU : public GB_MMU
+{
+public:
+	u8 read_u8(u16 address);
+	void write_u8(u16 address, u8 value);
+	void set_sio_shift_clock(u8 value);
+	void init_io_reg();
+};
+
+#endif // GB_MEM

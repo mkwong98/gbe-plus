@@ -87,7 +87,7 @@ class Z80
 	u32 tima_speed;
 
 	//Memory management unit
-	DMG_MMU* mem;
+	GB_MMU* mem;
 
 	//CPU Running flag
 	bool running;

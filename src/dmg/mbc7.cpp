@@ -13,7 +13,7 @@
 #include "mmu.h" 
 
 /****** Performs write operations specific to the MBC7 ******/
-void DMG_MMU::mbc7_write(u16 address, u8 value)
+void GB_MMU::mbc7_write(u16 address, u8 value)
 {
 	//MBC register - Select ROM bank
 	if((address >= 0x2000) && (address <= 0x3FFF)) 
@@ -35,7 +35,7 @@ void DMG_MMU::mbc7_write(u16 address, u8 value)
 }
 
 /****** Performs write operations specific to the MBC7 RAM ******/
-void DMG_MMU::mbc7_write_ram(u8 value)
+void GB_MMU::mbc7_write_ram(u8 value)
 {
 	//MBC7 State 0 - Idle state?
 	//MBC7 State 1 - Receive MBC7 command
@@ -300,7 +300,7 @@ void DMG_MMU::mbc7_write_ram(u8 value)
 }
 
 /****** Performs write operations specific to the MBC7 ******/
-u8 DMG_MMU::mbc7_read(u16 address)
+u8 GB_MMU::mbc7_read(u16 address)
 {
 	//Read using ROM Banking
 	if((address >= 0x4000) && (address <= 0x7FFF))

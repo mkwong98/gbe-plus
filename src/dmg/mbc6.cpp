@@ -13,7 +13,7 @@
 #include "mmu.h" 
 
 /****** Performs write operations specific to the MBC6 ******/
-void DMG_MMU::mbc6_write(u16 address, u8 value)
+void GB_MMU::mbc6_write(u16 address, u8 value)
 {
 	//Write to External RAM Bank 0
 	if((address >= 0xA000) && (address <= 0xAFFF))
@@ -175,7 +175,7 @@ void DMG_MMU::mbc6_write(u16 address, u8 value)
 }
 
 /****** Performs read operations specific to the MBC6 ******/
-u8 DMG_MMU::mbc6_read(u16 address)
+u8 GB_MMU::mbc6_read(u16 address)
 {
 	//Read using ROM Banking - Bank 0
 	if((address >= 0x4000) && (address <= 0x5FFF))

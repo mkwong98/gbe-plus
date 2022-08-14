@@ -2103,7 +2103,7 @@ void DMG_LCD::step(int cpu_clock)
 				}
 
 				//Process gyroscope
-				if(mem->cart.mbc_type == DMG_MMU::MBC7) { mem->g_pad->process_gyroscope(); }
+				if(mem->cart.mbc_type == GB_MMU::MBC7) { mem->g_pad->process_gyroscope(); }
 
 				//Process Gameshark cheats
 				if(config::use_cheats) { mem->set_gs_cheats(); }
