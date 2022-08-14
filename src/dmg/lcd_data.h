@@ -47,7 +47,7 @@ struct dmg_lcd_data
 	u8 signed_tile_lut[256];
 	u8 unsigned_tile_lut[256];
 	u8 flip_8[8];
-        u8 flip_16[16];
+	u8 flip_16[16];
 
 	bool oam_update;
 	bool oam_update_list[40];

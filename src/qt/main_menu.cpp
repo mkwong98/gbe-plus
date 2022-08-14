@@ -334,7 +334,7 @@ void main_menu::open_file()
 
 	if(config::cli_args.empty())
 	{
-		QString filename = QFileDialog::getOpenFileName(this, tr("Open"), "", tr("GBx/NDS/MIN/AM3 files (*.gb *.gbc *.gba *.nds *.min *.am3)"));
+		QString filename = QFileDialog::getOpenFileName(this, tr("Open"), "", tr("GBx files (*.gb *.gbc)"));
 		if(filename.isNull()) { SDL_PauseAudio(0); return; }
 
 		config::rom_file = filename.toStdString();
