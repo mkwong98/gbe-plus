@@ -9,15 +9,15 @@
 // Draws background, window, and sprites to screen
 // Responsible for blitting pixel data and limiting frame rate
 
-#ifndef GB_LCD
-#define GB_LCD
+#ifndef GB_DISPLAY
+#define GB_DISPLAY
 
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_opengl.h"
 #include "mmu.h"
 #include "custom_graphics_data.h"
 
-class DMG_LCD
+class GB_LCD
 {
 	public:
 	
@@ -25,10 +25,12 @@ class DMG_LCD
 	GB_MMU* mem;
 
 	//Core Functions
-	DMG_LCD();
-	~DMG_LCD();
+	GB_LCD();
+	~GB_LCD();
 
 	void step(int cpu_clock);
+	virtual void step_sub(int cpu_clock);
+
 	void reset();
 	bool init();
 	bool opengl_init();
@@ -39,23 +41,18 @@ class DMG_LCD
 	bool load_meta_data();
 	bool find_meta_data();
 
-	void dump_dmg_obj(u8 obj_index);
-	void dump_dmg_bg(u16 bg_index);
+	virtual void dump_obj(u8 obj_index) = 0;
+	virtual void dump_bg(u16 obj_index) = 0;
 
-	void dump_gbc_obj(u8 obj_index);
-	void dump_gbc_bg(u16 bg_index);
-
-	void update_dmg_obj_hash(u8 obj_index);
-	void update_dmg_bg_hash(u16 bg_index);
-
-	void update_gbc_obj_hash(u8 obj_index);
-	void update_gbc_bg_hash(u16 map_addr);
+	virtual void update_obj_hash(u8 obj_index) = 0;
+	virtual void update_all_bg_hash() = 0;
+	virtual void update_bg_hash(u16 bg_index) = 0;
 
 	void render_scanline(u8 line, u8 type);
 	u32 get_scanline_pixel(u8 pixel);
 
 	bool has_hash(u16 addr, std::string hash);
-	std::string get_hash(u16 addr, u8 gfx_type);
+	virtual std::string get_hash(u16 addr, u8 gfx_type) = 0;
 	u32 adjust_pixel_brightness(u32 color, u8 palette_id, u8 gfx_type);
 	void invalidate_cgfx();
 
@@ -88,7 +85,7 @@ class DMG_LCD
 
 	bool power_antenna_osd;
 
-	private:
+	protected:
 
 	struct oam_entries
 	{
@@ -132,39 +129,65 @@ class DMG_LCD
 
 	//OAM updates
 	void update_oam();
-	void update_obj_render_list();
+	virtual void update_obj_render_list() = 0;
 
 	//GBC color palette updates
 	void update_bg_colors();
 	void update_obj_colors();
 
-	//Per-scanline rendering - DMG (B/W)
-	void render_dmg_scanline();
-	void render_dmg_bg_scanline();
-	void render_dmg_win_scanline();
-	void render_dmg_obj_scanline();
+	//Per-scanline rendering
+	virtual void run_render_scanline() = 0;
+	virtual void render_bg_scanline() = 0;
+	virtual void render_win_scanline() = 0;
+	virtual void render_obj_scanline() = 0;
 
-	//Per-scanline rendering - DMG (CGFX)
-	void render_cgfx_dmg_obj_scanline(u8 sprite_id);
-	void render_cgfx_dmg_bg_scanline(u16 bg_id, bool is_bg);
-
-	//Per-scanline rendering - GBC
-	void render_gbc_scanline();
-	void render_gbc_bg_scanline();
-	void render_gbc_win_scanline();
-	void render_gbc_obj_scanline();
-
-	//Per-scanline rendering - GBC (CGFX)
-	void render_cgfx_gbc_obj_scanline(u8 sprite_id);
-	void render_cgfx_gbc_bg_scanline(u16 tile_data, u8 bg_map_attribute, bool is_bg);
-
-	//Per-pixel rendering - DMG (B/W)
-	bool render_dmg_obj_pixel();
-	bool render_dmg_bg_pixel();
+	//Per-scanline rendering (CGFX)
+	virtual void render_cgfx_obj_scanline(u8 sprite_id) = 0;
 
 	void scanline_compare();
 
 	void opengl_blit();
 };
 
-#endif // GB_LCD 
+class DMG_LCD : public GB_LCD
+{
+public:
+	void dump_obj(u8 obj_index);
+	void dump_bg(u16 obj_index);
+	void update_obj_hash(u8 obj_index);
+	void update_all_bg_hash();
+	void update_bg_hash(u16 bg_index);
+	std::string get_hash(u16 addr, u8 gfx_type);
+
+protected:
+	void update_obj_render_list();
+	void run_render_scanline();
+	void render_bg_scanline();
+	void render_win_scanline();
+	void render_obj_scanline();
+	void render_cgfx_obj_scanline(u8 sprite_id);
+	void render_cgfx_bg_scanline(u16 bg_id, bool is_bg);
+};
+
+class GBC_LCD : public GB_LCD
+{
+public:
+	void step_sub(int cpu_clock);
+	void dump_obj(u8 obj_index);
+	void dump_bg(u16 obj_index);
+	void update_obj_hash(u8 obj_index);
+	void update_all_bg_hash();
+	void update_bg_hash(u16 bg_index);
+	std::string get_hash(u16 addr, u8 gfx_type);
+
+protected:
+	void update_obj_render_list();
+	void run_render_scanline();
+	void render_bg_scanline();
+	void render_win_scanline();
+	void render_obj_scanline();
+	void render_cgfx_obj_scanline(u8 sprite_id);
+	void render_cgfx_bg_scanline(u16 tile_data, u8 bg_map_attribute, bool is_bg);
+};
+
+#endif // GB_DISPLAY 

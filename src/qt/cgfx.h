@@ -118,20 +118,14 @@ class gbe_cgfx : public QDialog
 	bool enable_manifest_critical;
 	bool redump;
 
-	QImage grab_obj_data(int obj_index);
-	QImage grab_dmg_obj_data(int obj_index);
-	QImage grab_gbc_obj_data(int obj_index);
-
-	QImage grab_bg_data(int bg_index);
-	QImage grab_dmg_bg_data(int bg_index);
-	QImage grab_gbc_bg_data(int bg_index);
+	virtual QImage grab_obj_data(int obj_index) = 0;
+	virtual QImage grab_bg_data(int bg_index) = 0;
 
 	protected:
 	void closeEvent(QCloseEvent* event);
 	bool eventFilter(QObject* target, QEvent* event);
 	void paintEvent(QPaintEvent* event);
 
-	private:
 	QWidget* layers_set;
 
 	QGridLayout* obj_layout;
@@ -153,9 +147,10 @@ class gbe_cgfx : public QDialog
 	QLabel* current_layer;
 	QLabel* current_tile;
 
-	void update_preview(u32 x, u32 y);
-	void dump_layer_tile(u32 x, u32 y);
-	std::string hash_tile(u8 x, u8 y);
+	virtual void update_preview(u32 x, u32 y) = 0;
+	virtual void dump_layer_tile(u32 x, u32 y) = 0;
+	void dump_obj_layer_tile(u32 x, u32 y);
+	virtual std::string hash_tile(u8 x, u8 y) = 0;
 
 	u8 dump_type;
 	int advanced_index;
@@ -169,7 +164,7 @@ class gbe_cgfx : public QDialog
 	bool mouse_drag;
 	bool meta_highlight;
 
-	private slots:
+	protected slots:
 	void close_cgfx();
 	void close_advanced();
 	void dump_obj(int obj_index);
@@ -195,6 +190,30 @@ class gbe_cgfx : public QDialog
 	void update_input_control(int index);
 	void update_obj_meta_size();
 	void select_obj();
+};
+
+class dmg_cgfx : public gbe_cgfx
+{
+public:
+	QImage grab_obj_data(int obj_index);
+	QImage grab_bg_data(int bg_index);
+
+protected:
+	void update_preview(u32 x, u32 y);
+	void dump_layer_tile(u32 x, u32 y);
+	std::string hash_tile(u8 x, u8 y);
+};
+
+class gbc_cgfx : public gbe_cgfx
+{
+public:
+	QImage grab_obj_data(int obj_index);
+	QImage grab_bg_data(int bg_index);
+
+protected:
+	void update_preview(u32 x, u32 y);
+	void dump_layer_tile(u32 x, u32 y);
+	std::string hash_tile(u8 x, u8 y);
 };
 
 #endif //CGFX_GBE_QT 

@@ -104,7 +104,7 @@ class Z80
 	//Audio-Video and other controllers
 	struct io_controllers
 	{
-		DMG_LCD video;
+		GB_LCD* video;
 		DMG_APU audio;
 		DMG_SIO serial_io;
 	} controllers;
@@ -163,6 +163,7 @@ class DMG_Z80 : public Z80
 {
 public:
 	DMG_Z80();
+	~DMG_Z80();
 	void reset();
 };
 
@@ -170,6 +171,7 @@ class GBC_Z80 : public Z80
 {
 public:
 	GBC_Z80();
+	~GBC_Z80();
 	void reset();
 	void exec_op(u8 opcode);
 };

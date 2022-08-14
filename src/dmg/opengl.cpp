@@ -27,7 +27,7 @@
 #include "common/gx_util.h"
 
 /****** Initialize OpenGL through SDL ******/
-bool DMG_LCD::opengl_init()
+bool GB_LCD::opengl_init()
 {
 	#ifdef GBE_OGL
 
@@ -159,7 +159,7 @@ bool DMG_LCD::opengl_init()
 }
 
 /****** Blit using OpenGL ******/
-void DMG_LCD::opengl_blit()
+void GB_LCD::opengl_blit()
 {
 	#ifdef GBE_OGL
 

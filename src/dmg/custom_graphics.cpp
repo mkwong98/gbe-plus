@@ -16,9 +16,10 @@
 #include "common/util.h"
 #include "common/cgfx_common.h"
 #include "lcd.h"
+#include "common/config.h"
 
 /****** Loads the manifest file ******/
-bool DMG_LCD::load_manifest(std::string filename) 
+bool GB_LCD::load_manifest(std::string filename) 
 {
 	std::ifstream file(filename.c_str(), std::ios::in); 
 	std::string input_line = "";
@@ -140,9 +141,9 @@ bool DMG_LCD::load_manifest(std::string filename)
 
 				switch(type_byte)
 				{
-					//DMG, GBC, or GBA OBJ
+					//OBJ
 					case 1:
-						sub_hash = hash.substr(4);
+						sub_hash = config::gb_type < 2 ? hash.substr(4) : hash.substr(5);
 						cgfx_stat.m_id.push_back(cgfx_stat.obj_hash_list.size());
 						cgfx_stat.obj_hash_list.push_back(hash);
 						cgfx_stat.m_hashes.insert(std::make_pair(hash, hash_id));
@@ -150,34 +151,11 @@ bool DMG_LCD::load_manifest(std::string filename)
 						break;
 
 					case 2:
-						sub_hash = hash.substr(5);
-						cgfx_stat.m_id.push_back(cgfx_stat.obj_hash_list.size());
-						cgfx_stat.obj_hash_list.push_back(hash);
-						cgfx_stat.m_hashes.insert(std::make_pair(hash, hash_id));
-						cgfx_stat.m_hashes_raw.insert(std::make_pair(sub_hash, hash_id));
-						break;
-
-					case 3:
-						break;
-
-					//DMG, GBC, or GBA BG
-					case 10:
-						sub_hash = hash.substr(4);
+						sub_hash = config::gb_type < 2 ? hash.substr(4) : hash.substr(5);
 						cgfx_stat.m_id.push_back(cgfx_stat.bg_hash_list.size());
 						cgfx_stat.bg_hash_list.push_back(hash);
 						cgfx_stat.m_hashes.insert(std::make_pair(hash, hash_id));
 						cgfx_stat.m_hashes_raw.insert(std::make_pair(sub_hash, hash_id));
-						break;
-						
-					case 20:
-						sub_hash = hash.substr(5);
-						cgfx_stat.m_id.push_back(cgfx_stat.bg_hash_list.size());
-						cgfx_stat.bg_hash_list.push_back(hash);
-						cgfx_stat.m_hashes.insert(std::make_pair(hash, hash_id));
-						cgfx_stat.m_hashes_raw.insert(std::make_pair(sub_hash, hash_id));
-						break;
-
-					case 30:
 						break;
 		
 					//Undefined type
@@ -257,7 +235,7 @@ bool DMG_LCD::load_manifest(std::string filename)
 }
 
 /****** Loads 24-bit data from source and converts it to 32-bit ARGB ******/
-bool DMG_LCD::load_image_data() 
+bool GB_LCD::load_image_data() 
 {
 	//TODO - PNG loading via SDL_image
 
@@ -316,7 +294,7 @@ bool DMG_LCD::load_image_data()
 }
 
 /****** Loads 24-bit data from source and converts it to 32-bit ARGB - For metatiles ******/
-bool DMG_LCD::load_meta_data() 
+bool GB_LCD::load_meta_data() 
 {
 	//TODO - PNG loading via SDL_image
 
@@ -373,7 +351,7 @@ bool DMG_LCD::load_meta_data()
 }
 
 /****** Finds meta data from the meta tile for regular manifest entries ******/
-bool DMG_LCD::find_meta_data()
+bool GB_LCD::find_meta_data()
 {
 	//Find the base name for the entry
 	std::string base_name = "";
@@ -469,7 +447,7 @@ bool DMG_LCD::find_meta_data()
 } 
 	
 /****** Dumps DMG OBJ tile from selected memory address ******/
-void DMG_LCD::dump_dmg_obj(u8 obj_index) 
+void DMG_LCD::dump_obj(u8 obj_index) 
 {
 	SDL_Surface* obj_dump = NULL;
 	u8 obj_height = 0;
@@ -516,7 +494,7 @@ void DMG_LCD::dump_dmg_obj(u8 obj_index)
 		}
 	}
 
-	//For new OBJs, dump BMP file
+	//For new OBJs, dump PNG file
 	cgfx_stat.obj_hash_list.push_back(final_hash);
 
 	obj_dump = SDL_CreateRGBSurface(SDL_SWSURFACE, 8, obj_height, 32, 0, 0, 0, 0);
@@ -589,7 +567,7 @@ void DMG_LCD::dump_dmg_obj(u8 obj_index)
 		}
 	}
 
-	//Save to BMP
+	//Save to PNG
 	if(IMG_SavePNG(obj_dump, dump_file.c_str()) == 0)
 	{
 		cgfx::last_saved = true;
@@ -611,7 +589,7 @@ void DMG_LCD::dump_dmg_obj(u8 obj_index)
 }
 
 /****** Dumps GBC OBJ tile from selected memory address ******/
-void DMG_LCD::dump_gbc_obj(u8 obj_index) 
+void GBC_LCD::dump_obj(u8 obj_index) 
 {
 	SDL_Surface* obj_dump = NULL;
 	u8 obj_height = 0;
@@ -671,7 +649,7 @@ void DMG_LCD::dump_gbc_obj(u8 obj_index)
 		}
 	}
 
-	//For new OBJs, dump BMP file
+	//For new OBJs, dump PNG file
 	cgfx_stat.obj_hash_list.push_back(final_hash);
 
 	obj_dump = SDL_CreateRGBSurface(SDL_SWSURFACE, 8, obj_height, 32, 0, 0, 0, 0);
@@ -723,7 +701,7 @@ void DMG_LCD::dump_gbc_obj(u8 obj_index)
 		}
 	}
 
-	//Save to BMP
+	//Save to PNG
 	if(IMG_SavePNG(obj_dump, dump_file.c_str()) == 0)
 	{
 		cgfx::last_saved = true;
@@ -748,7 +726,7 @@ void DMG_LCD::dump_gbc_obj(u8 obj_index)
 }
 
 /****** Dumps DMG BG tile from selected memory address ******/
-void DMG_LCD::dump_dmg_bg(u16 bg_index) 
+void DMG_LCD::dump_bg(u16 bg_index) 
 {
 	SDL_Surface* bg_dump = NULL;
 
@@ -881,7 +859,7 @@ void DMG_LCD::dump_dmg_bg(u16 bg_index)
 }
 
 /****** Dumps GBC BG tile from selected memory address (GUI version) ******/
-void DMG_LCD::dump_gbc_bg(u16 bg_index) 
+void GBC_LCD::dump_bg(u16 bg_index) 
 {
 	SDL_Surface* bg_dump = NULL;
 
@@ -1013,7 +991,7 @@ void DMG_LCD::dump_gbc_bg(u16 bg_index)
 }
 
 /****** Updates the current hash for the selected DMG OBJ ******/
-void DMG_LCD::update_dmg_obj_hash(u8 obj_index)
+void DMG_LCD::update_obj_hash(u8 obj_index)
 {
 	u8 obj_height = 0;
 
@@ -1059,7 +1037,7 @@ void DMG_LCD::update_dmg_obj_hash(u8 obj_index)
 }
 
 /****** Updates the current hash for the selected GBC OBJ ******/
-void DMG_LCD::update_gbc_obj_hash(u8 obj_index) 
+void GBC_LCD::update_obj_hash(u8 obj_index) 
 {
 	u8 obj_height = 0;
 
@@ -1118,7 +1096,7 @@ void DMG_LCD::update_gbc_obj_hash(u8 obj_index)
 }
 
 /****** Updates the current hash for the selected DMG BG tile ******/
-void DMG_LCD::update_dmg_bg_hash(u16 bg_index)
+void DMG_LCD::update_bg_hash(u16 bg_index)
 {
 	cgfx_stat.current_bg_hash[bg_index] = "";
 	std::string final_hash = "";
@@ -1159,7 +1137,7 @@ void DMG_LCD::update_dmg_bg_hash(u16 bg_index)
 }
 
 /****** Updates the current hash for the selected GBC BG tile ******/
-void DMG_LCD::update_gbc_bg_hash(u16 map_addr)
+void GBC_LCD::update_bg_hash(u16 map_addr)
 {
 	//Grab VRAM bank
 	u8 old_vram_bank = mem->vram_bank;
@@ -1228,7 +1206,7 @@ void DMG_LCD::update_gbc_bg_hash(u16 map_addr)
 }	
 
 /****** Search for an existing hash from the manifest ******/
-bool DMG_LCD::has_hash(u16 addr, std::string hash)
+bool GB_LCD::has_hash(u16 addr, std::string hash)
 {
 	//Sanity check on hash lengths
 	if(hash.length() < 5) { return false; }
@@ -1284,7 +1262,7 @@ bool DMG_LCD::has_hash(u16 addr, std::string hash)
 }
 
 /****** Adjusts pixel brightness according to a given GBC palette ******/
-u32 DMG_LCD::adjust_pixel_brightness(u32 color, u8 palette_id, u8 gfx_type)
+u32 GB_LCD::adjust_pixel_brightness(u32 color, u8 palette_id, u8 gfx_type)
 {
 	u8 pal_max = (gfx_type) ? cgfx_stat.obj_pal_max[palette_id] : cgfx_stat.bg_pal_max[palette_id];
 	u8 pal_min = (gfx_type) ? cgfx_stat.obj_pal_min[palette_id] : cgfx_stat.bg_pal_min[palette_id];
@@ -1317,11 +1295,11 @@ std::string DMG_LCD::get_hash(u16 addr, u8 gfx_type)
 	std::string final_hash = "";
 
 	//Get DMG OBJ hash
-	if(gfx_type == 1)
+	if (gfx_type == 1)
 	{
 		//0-7 index, 8-15 tile number from OAM
 		u8 obj_index = addr & 0xFF;
-		
+
 		addr >>= 8;
 		addr = 0x8000 + (addr << 4);
 
@@ -1329,7 +1307,7 @@ std::string DMG_LCD::get_hash(u16 addr, u8 gfx_type)
 		u8 obj_height = (mem->memory_map[REG_LCDC] & 0x04) ? 16 : 8;
 
 		//Create a hash for this OBJ tile
-		for(int x = 0; x < obj_height/2; x++)
+		for (int x = 0; x < obj_height / 2; x++)
 		{
 			u16 temp_hash = mem->read_u8((x * 4) + addr);
 			temp_hash <<= 8;
@@ -1347,8 +1325,37 @@ std::string DMG_LCD::get_hash(u16 addr, u8 gfx_type)
 		final_hash = hash::raw_to_64(pal_data) + "_" + final_hash;
 	}
 
+	//Get DMG BG hash
+	else if (gfx_type == 2)
+	{
+		//Create a hash for this BG tile
+		for (int x = 0; x < 4; x++)
+		{
+			u16 temp_hash = mem->read_u8((x * 4) + addr);
+			temp_hash <<= 8;
+			temp_hash += mem->read_u8((x * 4) + addr + 1);
+			final_hash += hash::raw_to_64(temp_hash);
+
+			temp_hash = mem->read_u8((x * 4) + addr + 2);
+			temp_hash <<= 8;
+			temp_hash += mem->read_u8((x * 4) + addr + 3);
+			final_hash += hash::raw_to_64(temp_hash);
+		}
+
+		//Prepend palette data
+		u8 pal_data = mem->memory_map[REG_BGP];
+		final_hash = hash::raw_to_64(pal_data) + "_" + final_hash;
+	}
+
+	return final_hash;
+}
+
+std::string GBC_LCD::get_hash(u16 addr, u8 gfx_type)
+{
+	std::string final_hash = "";
+
 	//Get GBC OBJ hash
-	else if(gfx_type == 2)
+	if(gfx_type == 1)
 	{
 		//0-7 index, 8-15 tile number from OAM
 		u8 obj_index = addr & 0xFF;
@@ -1394,30 +1401,8 @@ std::string DMG_LCD::get_hash(u16 addr, u8 gfx_type)
 		mem->vram_bank = old_vram_bank;
 	}
 
-	//Get DMG BG hash
-	else if(gfx_type == 10)
-	{
-		//Create a hash for this BG tile
-		for(int x = 0; x < 4; x++)
-		{
-			u16 temp_hash = mem->read_u8((x * 4) + addr);
-			temp_hash <<= 8;
-			temp_hash += mem->read_u8((x * 4) + addr + 1);
-			final_hash += hash::raw_to_64(temp_hash);
-
-			temp_hash = mem->read_u8((x * 4) + addr + 2);
-			temp_hash <<= 8;
-			temp_hash += mem->read_u8((x * 4) + addr + 3);
-			final_hash += hash::raw_to_64(temp_hash);
-		}
-
-		//Prepend palette data
-		u8 pal_data = mem->memory_map[REG_BGP];
-		final_hash = hash::raw_to_64(pal_data) + "_" + final_hash;
-	}
-
 	//Get GBC BG hash
-	else if(gfx_type == 20)
+	else if(gfx_type == 2)
 	{
 		//Set VRAM bank
 		u8 old_vram_bank = mem->vram_bank;
@@ -1455,7 +1440,7 @@ std::string DMG_LCD::get_hash(u16 addr, u8 gfx_type)
 }
 
 /****** Invalidates all current hashes and forces updates for all of VRAM ******/
-void DMG_LCD::invalidate_cgfx()
+void GB_LCD::invalidate_cgfx()
 {
 	cgfx_stat.current_obj_hash.clear();
 	cgfx_stat.current_obj_hash.resize(40, "");

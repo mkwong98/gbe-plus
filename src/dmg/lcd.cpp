@@ -16,21 +16,21 @@
 #include "common/util.h"
 
 /****** LCD Constructor ******/
-DMG_LCD::DMG_LCD()
+GB_LCD::GB_LCD()
 {
 	window = NULL;
 	reset();
 }
 
 /****** LCD Destructor ******/
-DMG_LCD::~DMG_LCD()
+GB_LCD::~GB_LCD()
 {
 	SDL_DestroyWindow(window);
 	std::cout<<"LCD::Shutdown\n";
 }
 
 /****** Reset LCD ******/
-void DMG_LCD::reset()
+void GB_LCD::reset()
 {
 	final_screen = NULL;
 	mem = NULL;
@@ -215,7 +215,7 @@ void DMG_LCD::reset()
 }
 
 /****** Initialize LCD with SDL ******/
-bool DMG_LCD::init()
+bool GB_LCD::init()
 {
 	//Initialize with SDL rendering software or hardware
 	if(config::sdl_render)
@@ -265,7 +265,7 @@ bool DMG_LCD::init()
 }
 
 /****** Read LCD data from save state ******/
-bool DMG_LCD::lcd_read(u32 offset, std::string filename)
+bool GB_LCD::lcd_read(u32 offset, std::string filename)
 {
 	std::ifstream file(filename.c_str(), std::ios::binary);
 	
@@ -296,7 +296,7 @@ bool DMG_LCD::lcd_read(u32 offset, std::string filename)
 }
 
 /****** Read LCD data from save state ******/
-bool DMG_LCD::lcd_write(std::string filename)
+bool GB_LCD::lcd_write(std::string filename)
 {
 	std::ofstream file(filename.c_str(), std::ios::binary | std::ios::app);
 	
@@ -316,7 +316,7 @@ bool DMG_LCD::lcd_write(std::string filename)
 }
 
 /****** Compares LY and LYC - Generates STAT interrupt ******/
-void DMG_LCD::scanline_compare()
+void GB_LCD::scanline_compare()
 {
 	if(mem->memory_map[REG_LY] == mem->memory_map[REG_LYC]) 
 	{ 
@@ -327,7 +327,7 @@ void DMG_LCD::scanline_compare()
 }
 
 /****** Updates OAM entries when values in memory change ******/
-void DMG_LCD::update_oam()
+void GB_LCD::update_oam()
 {
 	lcd_stat.oam_update = false;
 
@@ -367,8 +367,7 @@ void DMG_LCD::update_oam()
 			//CGFX - Update OBJ hashes
 			if(cgfx::load_cgfx) 
 			{
-				if(config::gb_type == 2) { update_gbc_obj_hash(x); }
-				else { update_dmg_obj_hash(x); }
+				update_obj_hash(x); 
 			}
 		}
 
@@ -388,75 +387,76 @@ void DMG_LCD::update_obj_render_list()
 	u8 obj_sort_length = 0;
 
 	//Update render list for DMG games
-	if(config::gb_type != 2)
+	//Cycle through all of the sprites
+	for(int x = 0; x < 40; x++)
 	{
-		//Cycle through all of the sprites
-		for(int x = 0; x < 40; x++)
+		u8 test_top = ((obj[x].y + lcd_stat.obj_size) > 0x100) ? 0 : obj[x].y;
+		u8 test_bottom = (obj[x].y + lcd_stat.obj_size);
+
+		//Check to see if sprite is rendered on the current scanline
+		if((lcd_stat.current_scanline >= test_top) && (lcd_stat.current_scanline < test_bottom))
 		{
-			u8 test_top = ((obj[x].y + lcd_stat.obj_size) > 0x100) ? 0 : obj[x].y;
-			u8 test_bottom = (obj[x].y + lcd_stat.obj_size);
-
-			//Check to see if sprite is rendered on the current scanline
-			if((lcd_stat.current_scanline >= test_top) && (lcd_stat.current_scanline < test_bottom))
-			{
-				obj_x_sort[obj_sort_length++] = x;
-			}
-
-			if(obj_sort_length == 10) { break; }
+			obj_x_sort[obj_sort_length++] = x;
 		}
 
-		//Sort them based on X coordinate
-		for(int scanline_pixel = 0; scanline_pixel < 256; scanline_pixel++)
-		{
-			for(int x = 0; x < obj_sort_length; x++)
-			{
-				u8 sprite_id = obj_x_sort[x];
-
-				if(obj[sprite_id].x == scanline_pixel) 
-				{
-					obj_render_length++;
-					obj_render_list[obj_render_length] = sprite_id; 
-				}
-
-				//Enforce 10 sprite-per-scanline limit
-				if(obj_render_length == 9) { return; }
-			}
-		}
+		if(obj_sort_length == 10) { break; }
 	}
 
-	//Update render list for GBC games
-	else
+	//Sort them based on X coordinate
+	for(int scanline_pixel = 0; scanline_pixel < 256; scanline_pixel++)
 	{
-		//Cycle through all of the sprites
-		for(int x = 0; x < 40; x++)
+		for(int x = 0; x < obj_sort_length; x++)
 		{
-			u8 test_top = ((obj[x].y + lcd_stat.obj_size) > 0x100) ? 0 : obj[x].y;
-			u8 test_bottom = (obj[x].y + lcd_stat.obj_size);
+			u8 sprite_id = obj_x_sort[x];
 
-			//Check to see if sprite is rendered on the current scanline
-			if((lcd_stat.current_scanline >= test_top) && (lcd_stat.current_scanline < test_bottom))
+			if(obj[sprite_id].x == scanline_pixel) 
 			{
 				obj_render_length++;
-				obj_render_list[obj_render_length] = x; 
+				obj_render_list[obj_render_length] = sprite_id; 
 			}
 
 			//Enforce 10 sprite-per-scanline limit
-			if(obj_render_length == 9) { break; }
+			if(obj_render_length == 9) { return; }
 		}
 	}
 }
 
+void GBC_LCD::update_obj_render_list()
+{
+	obj_render_length = -1;
+
+	u8 obj_x_sort[40];
+	u8 obj_sort_length = 0;
+
+	//Cycle through all of the sprites
+	for (int x = 0; x < 40; x++)
+	{
+		u8 test_top = ((obj[x].y + lcd_stat.obj_size) > 0x100) ? 0 : obj[x].y;
+		u8 test_bottom = (obj[x].y + lcd_stat.obj_size);
+
+		//Check to see if sprite is rendered on the current scanline
+		if ((lcd_stat.current_scanline >= test_top) && (lcd_stat.current_scanline < test_bottom))
+		{
+			obj_render_length++;
+			obj_render_list[obj_render_length] = x;
+		}
+
+		//Enforce 10 sprite-per-scanline limit
+		if (obj_render_length == 9) { break; }
+	}
+}
+
 /****** Render pixels for a given scanline (per-scanline) - DMG version ******/
-void DMG_LCD::render_dmg_scanline() 
+void DMG_LCD::run_render_scanline() 
 {
 	//Draw background pixel data
-	if(lcd_stat.bg_enable) { render_dmg_bg_scanline(); }
+	if(lcd_stat.bg_enable) { render_bg_scanline(); }
 
 	//Draw window pixel data
-	if(lcd_stat.window_enable) { render_dmg_win_scanline(); }
+	if(lcd_stat.window_enable) { render_win_scanline(); }
 				
 	//Draw sprite pixel data
-	if(lcd_stat.obj_enable) { render_dmg_obj_scanline(); }
+	if(lcd_stat.obj_enable) { render_obj_scanline(); }
 
 	//Ignore CGFX when greater than 1:1
 	if((cgfx::loaded) && (cgfx::scaling_factor > 1)) { return; }
@@ -514,16 +514,16 @@ void DMG_LCD::render_dmg_scanline()
 }
 
 /****** Render pixels for a given scanline (per-scanline) - GBC version ******/
-void DMG_LCD::render_gbc_scanline() 
+void GBC_LCD::run_render_scanline() 
 {
 	//Draw background pixel data
-	render_gbc_bg_scanline();
+	render_bg_scanline();
 
 	//Draw window pixel data
-	if(lcd_stat.window_enable) { render_gbc_win_scanline(); }
+	if(lcd_stat.window_enable) { render_win_scanline(); }
 
 	//Draw sprite pixel data
-	if(lcd_stat.obj_enable) { render_gbc_obj_scanline(); }
+	if(lcd_stat.obj_enable) { render_obj_scanline(); }
 
 	//Ignore CGFX when greater than 1:1
 	if((cgfx::loaded) && (cgfx::scaling_factor > 1)) { return; }
@@ -581,7 +581,7 @@ void DMG_LCD::render_gbc_scanline()
 }
 
 /****** Manually renders a given scanline - Used for external interfaces to grab screen data ******/
-void DMG_LCD::render_scanline(u8 line, u8 type)
+void GB_LCD::render_scanline(u8 line, u8 type)
 {
 	//Temporarily force current scanline
 	u8 temp_line = lcd_stat.current_scanline;
@@ -597,12 +597,9 @@ void DMG_LCD::render_scanline(u8 line, u8 type)
 	//Render based on specified type
 	switch(type)
 	{
-		case 0x00: render_dmg_bg_scanline(); break;
-		case 0x01: render_dmg_win_scanline(); break;
-		case 0x02: update_obj_render_list(); render_dmg_obj_scanline(); break;
-		case 0x03: render_gbc_bg_scanline(); break;
-		case 0x04: render_gbc_win_scanline(); break;
-		case 0x05: update_obj_render_list(); render_gbc_obj_scanline(); break;
+		case 0x00: render_bg_scanline(); break;
+		case 0x01: render_win_scanline(); break;
+		case 0x02: update_obj_render_list(); render_obj_scanline(); break;
 	}
 
 	//Restore current scanline and CGFX
@@ -611,10 +608,10 @@ void DMG_LCD::render_scanline(u8 line, u8 type)
 }
 
 /****** Manually retrieve a given pixel from scanline buffer - Used for external interfaces ******/
-u32 DMG_LCD::get_scanline_pixel(u8 pixel) { return scanline_buffer[pixel]; }
+u32 GB_LCD::get_scanline_pixel(u8 pixel) { return scanline_buffer[pixel]; }
 
 /****** Renders pixels for the BG (per-scanline) - DMG version ******/
-void DMG_LCD::render_dmg_bg_scanline()
+void DMG_LCD::render_bg_scanline()
 {
 	//Determine where to start drawing
 	u8 rendered_scanline = lcd_stat.current_scanline + lcd_stat.bg_scroll_y;
@@ -646,7 +643,7 @@ void DMG_LCD::render_dmg_bg_scanline()
 		
 		if((cgfx::load_cgfx) && (has_hash(hash_addr, cgfx_stat.current_bg_hash[bg_id])) && (cgfx_stat.m_types[cgfx_stat.last_id] == 10))
 		{
-			render_cgfx_dmg_bg_scanline(bg_id, true);
+			render_cgfx_bg_scanline(bg_id, true);
 		}
 
 		//Render original pixel data
@@ -706,7 +703,7 @@ void DMG_LCD::render_dmg_bg_scanline()
 }
 
 /****** Renders pixels for the BG (per-scanline) - DMG CGFX version ******/
-void DMG_LCD::render_cgfx_dmg_bg_scanline(u16 bg_id, bool is_bg)
+void DMG_LCD::render_cgfx_bg_scanline(u16 bg_id, bool is_bg)
 {
 	//Determine where to start drawing
 	u8 rendered_scanline = is_bg ? (lcd_stat.current_scanline + lcd_stat.bg_scroll_y) : (lcd_stat.current_scanline - lcd_stat.window_y);
@@ -764,7 +761,7 @@ void DMG_LCD::render_cgfx_dmg_bg_scanline(u16 bg_id, bool is_bg)
 }
 
 /****** Renders pixels for the BG (per-scanline) - GBC version ******/
-void DMG_LCD::render_gbc_bg_scanline()
+void GBC_LCD::render_bg_scanline()
 {
 	//Determine where to start drawing
 	u8 rendered_scanline = lcd_stat.current_scanline + lcd_stat.bg_scroll_y;
@@ -811,7 +808,7 @@ void DMG_LCD::render_gbc_bg_scanline()
 		
 		if((cgfx::load_cgfx) && (has_hash(hash_addr, cgfx_stat.current_gbc_bg_hash[map_id])) && (cgfx_stat.m_types[cgfx_stat.last_id] == 20))
 		{
-			render_cgfx_gbc_bg_scanline(tile_data, bg_map_attribute, true);
+			render_cgfx_bg_scanline(tile_data, bg_map_attribute, true);
 		}
 
 		//Render original pixel data
@@ -864,7 +861,7 @@ void DMG_LCD::render_gbc_bg_scanline()
 }
 
 /****** Renders pixels for the BG (per-scanline) - GBC CGFX version ******/
-void DMG_LCD::render_cgfx_gbc_bg_scanline(u16 tile_data, u8 bg_map_attribute, bool is_bg)
+void GBC_LCD::render_cgfx_bg_scanline(u16 tile_data, u8 bg_map_attribute, bool is_bg)
 {
 	//Determine where to start drawing
 	u8 rendered_scanline = is_bg ? (lcd_stat.current_scanline + lcd_stat.bg_scroll_y) : (lcd_stat.current_scanline - lcd_stat.window_y);
@@ -963,7 +960,7 @@ void DMG_LCD::render_cgfx_gbc_bg_scanline(u16 tile_data, u8 bg_map_attribute, bo
 }
 
 /****** Renders pixels for the Window (per-scanline) - DMG version ******/
-void DMG_LCD::render_dmg_win_scanline()
+void DMG_LCD::render_win_scanline()
 {
 	//Determine if scanline is within window, if not abort rendering
 	if((lcd_stat.current_scanline < lcd_stat.window_y) || (lcd_stat.window_x >= 160)) { return; }
@@ -1000,7 +997,7 @@ void DMG_LCD::render_dmg_win_scanline()
 		
 		if((cgfx::load_cgfx) && (has_hash(hash_addr, cgfx_stat.current_bg_hash[bg_id])) && (cgfx_stat.m_types[cgfx_stat.last_id] == 10))
 		{
-			render_cgfx_dmg_bg_scanline(bg_id, false);
+			render_cgfx_bg_scanline(bg_id, false);
 		}
 
 		//Render original pixel data
@@ -1063,7 +1060,7 @@ void DMG_LCD::render_dmg_win_scanline()
 }
 
 /****** Renders pixels for the Window (per-scanline) - GBC version ******/
-void DMG_LCD::render_gbc_win_scanline()
+void GBC_LCD::render_win_scanline()
 {
 	//Determine if scanline is within window, if not abort rendering
 	if((lcd_stat.current_scanline < lcd_stat.window_y) || (lcd_stat.window_x >= 160)) { return; }
@@ -1115,7 +1112,7 @@ void DMG_LCD::render_gbc_win_scanline()
 		
 		if((cgfx::load_cgfx) && (has_hash(hash_addr, cgfx_stat.current_gbc_bg_hash[map_id])) && (cgfx_stat.m_types[cgfx_stat.last_id] == 20))
 		{
-			render_cgfx_gbc_bg_scanline(tile_data, bg_map_attribute, false);
+			render_cgfx_bg_scanline(tile_data, bg_map_attribute, false);
 		}
 
 		//Render original pixel data
@@ -1171,7 +1168,7 @@ void DMG_LCD::render_gbc_win_scanline()
 }
 
 /****** Renders pixels for OBJs (per-scanline) - DMG version ******/
-void DMG_LCD::render_dmg_obj_scanline()
+void DMG_LCD::render_obj_scanline()
 {
 	//If no sprites are rendered on this line, quit now
 	if(obj_render_length < 0) { return; }
@@ -1186,7 +1183,7 @@ void DMG_LCD::render_dmg_obj_scanline()
 		
 		if((cgfx::load_cgfx) && (has_hash(hash_addr, cgfx_stat.current_obj_hash[sprite_id])) && (cgfx_stat.m_types[cgfx_stat.last_id] == 1))
 		{
-			render_cgfx_dmg_obj_scanline(sprite_id);
+			render_cgfx_obj_scanline(sprite_id);
 		}
 
 		//Render original pixel data
@@ -1279,7 +1276,7 @@ void DMG_LCD::render_dmg_obj_scanline()
 }
 
 /****** Renders pixels for OBJs (per-scanline) - DMG CGFX version ******/
-void DMG_LCD::render_cgfx_dmg_obj_scanline(u8 sprite_id)
+void DMG_LCD::render_cgfx_obj_scanline(u8 sprite_id)
 {
 	//Set the current pixel to start obj rendering
 	lcd_stat.scanline_pixel_counter = obj[sprite_id].x;
@@ -1347,7 +1344,7 @@ void DMG_LCD::render_cgfx_dmg_obj_scanline(u8 sprite_id)
 }	
 
 /****** Renders pixels for OBJs (per-scanline) - GBC version ******/
-void DMG_LCD::render_gbc_obj_scanline()
+void GBC_LCD::render_obj_scanline()
 {
 	//If no sprites are rendered on this line, quit now
 	if(obj_render_length < 0) { return; }
@@ -1362,7 +1359,7 @@ void DMG_LCD::render_gbc_obj_scanline()
 		
 		if((cgfx::load_cgfx) && (has_hash(hash_addr, cgfx_stat.current_obj_hash[sprite_id])) && (cgfx_stat.m_types[cgfx_stat.last_id] == 2))
 		{
-			render_cgfx_gbc_obj_scanline(sprite_id);
+			render_cgfx_obj_scanline(sprite_id);
 		}
 
 		//Render original pixel data
@@ -1448,7 +1445,7 @@ void DMG_LCD::render_gbc_obj_scanline()
 }
 
 /****** Renders pixels for OBJs (per-scanline) - GBC CGFX version ******/
-void DMG_LCD::render_cgfx_gbc_obj_scanline(u8 sprite_id)
+void GBC_LCD::render_cgfx_obj_scanline(u8 sprite_id)
 {
 	//Set the current pixel to start obj rendering
 	lcd_stat.scanline_pixel_counter = obj[sprite_id].x;
@@ -1536,7 +1533,7 @@ void DMG_LCD::render_cgfx_gbc_obj_scanline(u8 sprite_id)
 }
 
 /****** Update background color palettes on the GBC ******/
-void DMG_LCD::update_bg_colors()
+void GB_LCD::update_bg_colors()
 {
 	u8 hi_lo = (mem->memory_map[REG_BCPS] & 0x1);
 	u8 color = (mem->memory_map[REG_BCPS] >> 1) & 0x3;
@@ -1627,7 +1624,7 @@ void DMG_LCD::update_bg_colors()
 }
 
 /****** Update sprite color palettes on the GBC ******/
-void DMG_LCD::update_obj_colors()
+void GB_LCD::update_obj_colors()
 {
 	u8 hi_lo = (mem->memory_map[REG_OCPS] & 0x1);
 	u8 color = (mem->memory_map[REG_OCPS] >> 1) & 0x3;
@@ -1692,7 +1689,7 @@ void DMG_LCD::update_obj_colors()
 	{
 		for(int x = 0; x < 40; x++)
 		{
-			if(obj[x].color_palette_number == palette) { update_gbc_obj_hash(x); }
+			if(obj[x].color_palette_number == palette) { update_obj_hash(x); }
 		}
 	}
 
@@ -1712,13 +1709,13 @@ void DMG_LCD::update_obj_colors()
 }
 
 /****** Execute LCD operations ******/
-void DMG_LCD::step(int cpu_clock) 
+void GB_LCD::step(int cpu_clock)
 {
 	cpu_clock >>= config::oc_flags;
 	cpu_clock = (cpu_clock == 0) ? 1 : cpu_clock;
 
-        //Enable the LCD
-	if((lcd_stat.on_off) && (lcd_stat.lcd_enable)) 
+	//Enable the LCD
+	if ((lcd_stat.on_off) && (lcd_stat.lcd_enable))
 	{
 		lcd_stat.on_off = false;
 		lcd_stat.lcd_mode = 2;
@@ -1727,7 +1724,7 @@ void DMG_LCD::step(int cpu_clock)
 	}
 
 	//Disable the LCD (VBlank only?)
-	else if((lcd_stat.on_off) && (!lcd_stat.lcd_enable))
+	else if ((lcd_stat.on_off) && (!lcd_stat.lcd_enable))
 	{
 		lcd_stat.on_off = false;
 
@@ -1735,7 +1732,7 @@ void DMG_LCD::step(int cpu_clock)
 		//On real DMG HW, it creates a black line on the scanline the LCD turns off
 		//Nintendo did NOT like this, as it could damage the LCD over repeated uses
 		//Note: this is the same effect you see when hitting the power switch OFF
-		if(lcd_stat.lcd_mode != 1) { std::cout<<"LCD::Warning - Disabling LCD outside of VBlank\n"; }
+		if (lcd_stat.lcd_mode != 1) { std::cout << "LCD::Warning - Disabling LCD outside of VBlank\n"; }
 
 		//Set LY to zero here, but DO NOT do a LYC test until LCD is turned back on
 		//Mr. Do! requires the test to occur only when the LCD is turned on
@@ -1743,16 +1740,11 @@ void DMG_LCD::step(int cpu_clock)
 		lcd_stat.lcd_clock = 0;
 		lcd_stat.lcd_mode = 0;
 	}
+	step_sub(cpu_clock);
+}
 
-	//Update background color palettes on the GBC
-	if((lcd_stat.update_bg_colors) && (config::gb_type == 2)) { update_bg_colors(); }
-
-	//Update sprite color palettes on the GBC
-	if((lcd_stat.update_obj_colors) && (config::gb_type == 2)) { update_obj_colors(); }
-
-	//General Purpose DMA
-	if((lcd_stat.hdma_in_progress) && (lcd_stat.hdma_type == 0) && (config::gb_type == 2)) { mem->gdma(); }
-
+void GB_LCD::step_sub(int cpu_clock) 
+{
 	//Perform LCD operations if LCD is enabled
 	if(lcd_stat.lcd_enable) 
 	{
@@ -1807,37 +1799,7 @@ void DMG_LCD::step(int cpu_clock)
 					//CGFX - Update BG Hashes
 					if(cgfx_stat.update_bg)
 					{
-						if(config::gb_type == 1)
-						{
-							for(int x = 0; x < 384; x++)
-							{
-								if(cgfx_stat.bg_update_list[x])
-								{
-									update_dmg_bg_hash(x);
-									cgfx_stat.bg_update_list[x] = false;
-								}
-							}
-						}
-
-						else
-						{
-							//Check for updates based on tile data
-							for(int tile_number = 0; tile_number < 256; tile_number++)
-							{
-								//Cycle through all tile numbers that were updated
-								if(cgfx_stat.bg_tile_update_list[tile_number])
-								{
-									//Scan BG map for all tiles that use this tile number
-									for(int x = 0; x < 2048; x++)
-									{
-										if(mem->video_ram[0][0x1800 + x] == tile_number) { update_gbc_bg_hash(0x9800 + x); }
-									}
-
-									cgfx_stat.bg_tile_update_list[tile_number] = false;
-								}
-							}
-						}
-
+						update_all_bg_hash();
 						cgfx_stat.update_bg = false;
 					}
 
@@ -1848,7 +1810,7 @@ void DMG_LCD::step(int cpu_clock)
 						{
 							if(cgfx_stat.bg_map_update_list[x]) 
 							{
-								update_gbc_bg_hash(0x9800 + x);
+								update_bg_hash(0x9800 + x);
 								cgfx_stat.bg_map_update_list[x] = false;
 							}
 						}
@@ -1857,8 +1819,7 @@ void DMG_LCD::step(int cpu_clock)
 					}
 					
 					//Render scanline when first entering Mode 0
-					if(config::gb_type != 2 ) { render_dmg_scanline(); }
-					else { render_gbc_scanline(); }
+					run_render_scanline();
 
 					//HBlank STAT INT
 					if(mem->memory_map[REG_STAT] & 0x08) { mem->memory_map[IF_FLAG] |= 2; }
@@ -2168,4 +2129,49 @@ void DMG_LCD::step(int cpu_clock)
 	}
 
 	mem->memory_map[REG_STAT] = (mem->memory_map[REG_STAT] & ~0x3) | lcd_stat.lcd_mode;
+}
+
+void GBC_LCD::step_sub(int cpu_clock)
+{
+	//Update background color palettes on the GBC
+	if (lcd_stat.update_bg_colors) { update_bg_colors(); }
+
+	//Update sprite color palettes on the GBC
+	if (lcd_stat.update_obj_colors) { update_obj_colors(); }
+
+	//General Purpose DMA
+	if ((lcd_stat.hdma_in_progress) && (lcd_stat.hdma_type == 0)) { mem->gdma(); }
+
+	GB_LCD::step_sub(cpu_clock);
+}
+
+void DMG_LCD::update_all_bg_hash()
+{
+	for (int x = 0; x < 384; x++)
+	{
+		if (cgfx_stat.bg_update_list[x])
+		{
+			update_bg_hash(x);
+			cgfx_stat.bg_update_list[x] = false;
+		}
+	}
+}
+
+void GBC_LCD::update_all_bg_hash()
+{
+	//Check for updates based on tile data
+	for (int tile_number = 0; tile_number < 256; tile_number++)
+	{
+		//Cycle through all tile numbers that were updated
+		if (cgfx_stat.bg_tile_update_list[tile_number])
+		{
+			//Scan BG map for all tiles that use this tile number
+			for (int x = 0; x < 2048; x++)
+			{
+				if (mem->video_ram[0][0x1800 + x] == tile_number) { update_bg_hash(0x9800 + x); }
+			}
+
+			cgfx_stat.bg_tile_update_list[tile_number] = false;
+		}
+	}
 }

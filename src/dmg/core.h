@@ -40,8 +40,8 @@ class GB_core : virtual public core_emu
 		u32 ex_get_reg(u8 reg_index);
 
 		//CGFX interface
-		virtual void dump_obj(int obj_index) = 0;
-		virtual void dump_bg(int bg_index) = 0;
+		void dump_obj(int obj_index);
+		void dump_bg(int bg_index);
 		u32* get_obj_palette(int pal_index);
 		u32* get_bg_palette(int pal_index);
 		std::string get_hash(u32 addr, u8 gfx_type);
@@ -71,8 +71,6 @@ class DMG_core : public GB_core
 public:
 	DMG_core();
 	~DMG_core();
-	void dump_obj(int obj_index);
-	void dump_bg(int bg_index);
 };
 
 class GBC_core : public GB_core
@@ -81,8 +79,6 @@ public:
 	GBC_core();
 	~GBC_core();
 	void run_core();
-	void dump_obj(int obj_index);
-	void dump_bg(int bg_index);
 };
 		
 #endif // GB_CORE

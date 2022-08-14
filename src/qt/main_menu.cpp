@@ -269,11 +269,6 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 	settings = new gen_settings();
 	settings->set_ini_options();
 
-	//Set up custom graphics dialog
-	cgfx = new gbe_cgfx();
-	cgfx->hide();
-	cgfx->advanced->setChecked(true);
-
 	//Setup About pop-up
 	about_box = new QWidget();
 	about_box->resize(300, 250);
@@ -517,12 +512,13 @@ void main_menu::quit()
 
 	config::dmg_bios_path = settings->dmg_bios->text().toStdString();
 	config::gbc_bios_path = settings->gbc_bios->text().toStdString();
-	cgfx::manifest_file = settings->manifest->text().toStdString();
 	config::ss_path = settings->screenshot->text().toStdString();
-	cgfx::dump_bg_path = settings->dump_bg->text().toStdString();
-	cgfx::dump_obj_path = settings->dump_obj->text().toStdString();
 	config::save_path = settings->game_saves->text().toStdString();
 	config::cheats_path = settings->cheats_path->text().toStdString();
+
+	cgfx::manifest_file = settings->manifest->text().toStdString();
+	cgfx::dump_bg_path = settings->dump_bg->text().toStdString();
+	cgfx::dump_obj_path = settings->dump_obj->text().toStdString();
 
 	switch(settings->freq->currentIndex())
 	{
@@ -647,22 +643,29 @@ void main_menu::boot_game()
 		config::gb_type = system_type;
 	}
 
-	//Determine CGFX scaling factor
-	cgfx::scaling_factor = (settings->cgfx_scale->currentIndex() + 1);
-	if(!cgfx::load_cgfx) { cgfx::scaling_factor = 1; }
-
-	//Start the appropiate system core - DMG, GBC
-	base_width = (160 * cgfx::scaling_factor);
-	base_height = (144 * cgfx::scaling_factor);
-
 	if (config::gb_type < 2)
 	{
 		main_menu::gbe_plus = new DMG_core();
+		cgfx = new dmg_cgfx();
 	}
 	else
 	{
 		main_menu::gbe_plus = new GBC_core();
+		cgfx = new gbc_cgfx();
 	}
+
+	//Set up custom graphics dialog
+	cgfx->hide();
+	cgfx->advanced->setChecked(true);
+
+
+	//Determine CGFX scaling factor
+	cgfx::scaling_factor = (settings->cgfx_scale->currentIndex() + 1);
+	if (!cgfx::load_cgfx) { cgfx::scaling_factor = 1; }
+
+	//Start the appropiate system core - DMG, GBC
+	base_width = (160 * cgfx::scaling_factor);
+	base_height = (144 * cgfx::scaling_factor);
 
 	resize((base_width * config::scaling_factor), (base_height * config::scaling_factor) + menu_height);
 

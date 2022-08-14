@@ -2134,9 +2134,6 @@ bool save_ini_file()
 	//Emulated IR device
 	output_lines.push_back("[#ir_device:" + util::to_str(config::ir_device) + "]");
 
-	//Set emulated system type
-	output_lines.push_back("[#system_type:" + util::to_str(config::gb_type) + "]");
-
 	//Use cheats
 	val = (config::use_cheats) ? "1" : "0";
 	output_lines.push_back("[#use_cheats:" + val + "]");

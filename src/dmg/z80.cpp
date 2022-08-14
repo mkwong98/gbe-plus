@@ -13,12 +13,14 @@
 /****** Z80 Constructor ******/
 DMG_Z80::DMG_Z80() 
 {
+	controllers.video = new DMG_LCD();
 	if(config::use_bios) { reset_bios(); }
 	else { DMG_Z80::reset(); }
 }
 
 GBC_Z80::GBC_Z80()
 {
+	controllers.video = new GBC_LCD();
 	if (config::use_bios) { reset_bios(); }
 	else { GBC_Z80::reset(); }
 }
@@ -28,6 +30,17 @@ Z80::~Z80()
 { 
 	std::cout<<"CPU::Shutdown\n";
 }
+
+DMG_Z80::~DMG_Z80()
+{
+	delete controllers.video;
+}
+
+GBC_Z80::~GBC_Z80()
+{
+	delete controllers.video;
+}
+
 
 /****** Z80 Reset ******/
 void Z80::reset() 

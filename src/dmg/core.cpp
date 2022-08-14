@@ -62,9 +62,9 @@ void GB_core::init_cpu()
 	core_cpu->mem = core_mmu;
 
 	//Link LCD and MMU
-	core_cpu->controllers.video.mem = core_mmu;
-	core_mmu->set_lcd_data(&core_cpu->controllers.video.lcd_stat);
-	core_mmu->set_cgfx_data(&core_cpu->controllers.video.cgfx_stat);
+	core_cpu->controllers.video->mem = core_mmu;
+	core_mmu->set_lcd_data(&core_cpu->controllers.video->lcd_stat);
+	core_mmu->set_cgfx_data(&core_cpu->controllers.video->cgfx_stat);
 
 	//Link APU and MMU
 	core_cpu->controllers.audio.mem = core_mmu;
@@ -87,7 +87,7 @@ void GB_core::start()
 	core_cpu->running = true;
 
 	//Initialize video output
-	if(!core_cpu->controllers.video.init())
+	if(!core_cpu->controllers.video->init())
 	{
 		running = false;
 		core_cpu->running = false;
@@ -127,7 +127,7 @@ void GB_core::reset()
 	bool can_reset = true;
 
 	core_cpu->reset();
-	core_cpu->controllers.video.reset();
+	core_cpu->controllers.video->reset();
 	core_cpu->controllers.audio.reset();
 	core_cpu->controllers.serial_io.reset();
 	core_mmu->reset();
@@ -136,7 +136,7 @@ void GB_core::reset()
 	core_cpu->mem = core_mmu;
 
 	//Link LCD and MMU
-	core_cpu->controllers.video.mem = core_mmu;
+	core_cpu->controllers.video->mem = core_mmu;
 
 	//Link APU and MMU
 	core_cpu->controllers.audio.mem = core_mmu;
@@ -191,12 +191,12 @@ void GB_core::load_state(u8 slot)
 	offset += core_cpu->controllers.audio.size();
 
 	//Offset 213410
-	if(!core_cpu->controllers.video.lcd_read(offset, state_file)) { return; }
+	if(!core_cpu->controllers.video->lcd_read(offset, state_file)) { return; }
 
 	std::cout<<"GBE::Loaded state " << state_file << "\n";
 
 	//Invalidate current CGFX
-	if(cgfx::load_cgfx) { core_cpu->controllers.video.invalidate_cgfx(); }
+	if(cgfx::load_cgfx) { core_cpu->controllers.video->invalidate_cgfx(); }
 
 	//OSD
 	config::osd_message = "LOADED STATE " + util::to_str(slot);
@@ -214,7 +214,7 @@ void GB_core::save_state(u8 slot)
 	if(!core_cpu->cpu_write(state_file)) { return; }
 	if(!core_mmu->mmu_write(state_file)) { return; }
 	if(!core_cpu->controllers.audio.apu_write(state_file)) { return; }
-	if(!core_cpu->controllers.video.lcd_write(state_file)) { return; }
+	if(!core_cpu->controllers.video->lcd_write(state_file)) { return; }
 
 	std::cout<<"GBE::Saved state " << state_file << "\n";
 
@@ -230,7 +230,7 @@ void GB_core::run_core()
 	while(running)
 	{
 		//Handle SDL Events
-		if(core_cpu->controllers.video.lcd_stat.current_scanline == 144)
+		if(core_cpu->controllers.video->lcd_stat.current_scanline == 144)
 		{
 			if(SDL_PollEvent(&event))
 			{
@@ -345,8 +345,8 @@ void GB_core::run_core()
 			}
 
 			//Update LCD
-			if(core_cpu->double_speed) { core_cpu->controllers.video.step(core_cpu->cycles >> 1); }
-			else { core_cpu->controllers.video.step(core_cpu->cycles); }
+			if(core_cpu->double_speed) { core_cpu->controllers.video->step(core_cpu->cycles >> 1); }
+			else { core_cpu->controllers.video->step(core_cpu->cycles); }
 
 			//Update DIV timer - Every 4 M clocks
 			core_cpu->div_counter += core_cpu->cycles;
@@ -473,7 +473,7 @@ void GB_core::run_core()
 								if(core_cpu->controllers.serial_io.sio_stat.transfer_byte & 0x1)
 								{
 									core_cpu->controllers.serial_io.power_antenna_on = true;
-									core_cpu->controllers.video.power_antenna_osd = true;
+									core_cpu->controllers.video->power_antenna_osd = true;
 									core_mmu->memory_map[REG_SB] = 0xF2;
 									core_mmu->memory_map[IF_FLAG] |= 0x08;
 								}
@@ -481,7 +481,7 @@ void GB_core::run_core()
 								else if(core_cpu->controllers.serial_io.sio_stat.transfer_byte == 0)
 								{
 									core_cpu->controllers.serial_io.power_antenna_on = false;
-									core_cpu->controllers.video.power_antenna_osd = false;
+									core_cpu->controllers.video->power_antenna_osd = false;
 									core_mmu->memory_map[REG_SB] = 0xF3;
 									core_mmu->memory_map[IF_FLAG] |= 0x08;
 								}
@@ -632,8 +632,8 @@ void GB_core::step()
 		}
 
 		//Update LCD
-		if(core_cpu->double_speed) { core_cpu->controllers.video.step(core_cpu->cycles >> 1); }
-		else { core_cpu->controllers.video.step(core_cpu->cycles); }
+		if(core_cpu->double_speed) { core_cpu->controllers.video->step(core_cpu->cycles >> 1); }
+		else { core_cpu->controllers.video->step(core_cpu->cycles); }
 
 		//Update DIV timer - Every 4 M clocks
 		core_cpu->div_counter += core_cpu->cycles;
@@ -754,7 +754,7 @@ void GB_core::step()
 							if(core_cpu->controllers.serial_io.sio_stat.transfer_byte & 0x1)
 							{
 								core_cpu->controllers.serial_io.power_antenna_on = true;
-								core_cpu->controllers.video.power_antenna_osd = true;
+								core_cpu->controllers.video->power_antenna_osd = true;
 								core_mmu->memory_map[REG_SB] = 0xF2;
 								core_mmu->memory_map[IF_FLAG] |= 0x08;
 							}
@@ -762,7 +762,7 @@ void GB_core::step()
 							else if(core_cpu->controllers.serial_io.sio_stat.transfer_byte == 0)
 							{
 								core_cpu->controllers.serial_io.power_antenna_on = false;
-								core_cpu->controllers.video.power_antenna_osd = false;
+								core_cpu->controllers.video->power_antenna_osd = false;
 								core_mmu->memory_map[REG_SB] = 0xF3;
 								core_mmu->memory_map[IF_FLAG] |= 0x08;
 							}
@@ -871,7 +871,7 @@ void GB_core::handle_hotkey(SDL_Event& event)
 		save_stream << rand() % 1024 << rand() % 1024 << rand() % 1024;
 		save_name += save_stream.str() + ".bmp";
 	
-		SDL_SaveBMP(core_cpu->controllers.video.final_screen, save_name.c_str());
+		SDL_SaveBMP(core_cpu->controllers.video->final_screen, save_name.c_str());
 
 		//OSD
 		config::osd_message = "SAVED SCREENSHOT";
@@ -896,14 +896,14 @@ void GB_core::handle_hotkey(SDL_Event& event)
 		}
 
 		//Destroy old window
-		SDL_DestroyWindow(core_cpu->controllers.video.window);
+		SDL_DestroyWindow(core_cpu->controllers.video->window);
 
 		//Initialize new window - SDL
 		if(!config::use_opengl)
 		{
-			core_cpu->controllers.video.window = SDL_CreateWindow("GBE+", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, config::sys_width, config::sys_height, config::flags);
-			core_cpu->controllers.video.final_screen = SDL_GetWindowSurface(core_cpu->controllers.video.window);
-			SDL_GetWindowSize(core_cpu->controllers.video.window, &config::win_width, &config::win_height);
+			core_cpu->controllers.video->window = SDL_CreateWindow("GBE+", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, config::sys_width, config::sys_height, config::flags);
+			core_cpu->controllers.video->final_screen = SDL_GetWindowSurface(core_cpu->controllers.video->window);
+			SDL_GetWindowSize(core_cpu->controllers.video->window, &config::win_width, &config::win_height);
 
 			//Find the maximum fullscreen dimensions that maintain the original aspect ratio
 			if(config::flags & SDL_WINDOW_FULLSCREEN_DESKTOP)
@@ -916,14 +916,14 @@ void GB_core::handle_hotkey(SDL_Event& event)
 				if(max_width <= max_height) { ratio = max_width; }
 				else { ratio = max_height; }
 
-				core_cpu->controllers.video.max_fullscreen_ratio = ratio;
+				core_cpu->controllers.video->max_fullscreen_ratio = ratio;
 			}
 		}
 
 		//Initialize new window - OpenGL
 		else
 		{
-			core_cpu->controllers.video.opengl_init();
+			core_cpu->controllers.video->opengl_init();
 		}
 	}
 
@@ -1215,49 +1215,33 @@ u8 GB_core::ex_read_u8(u16 address) { return core_mmu->read_u8(address); }
 void GB_core::ex_write_u8(u16 address, u8 value) { core_mmu->write_u8(address, value); }
 
 /****** Dumps selected OBJ to a file ******/
-void DMG_core::dump_obj(int obj_index)
+void GB_core::dump_obj(int obj_index)
 {
-	//DMG OBJs
-	core_cpu->controllers.video.dump_dmg_obj(obj_index);
+	core_cpu->controllers.video->dump_obj(obj_index);
 }
 
 /****** Dumps selected BG tile to a file ******/
-void DMG_core::dump_bg(int bg_index)
+void GB_core::dump_bg(int bg_index)
 {
-	//DMG BG tiles
-	core_cpu->controllers.video.dump_dmg_bg(bg_index);
-}
-
-/****** Dumps selected OBJ to a file ******/
-void GBC_core::dump_obj(int obj_index)
-{
-	//GBC OBJs
-	core_cpu->controllers.video.dump_gbc_obj(obj_index);
-}
-
-/****** Dumps selected BG tile to a file ******/
-void GBC_core::dump_bg(int bg_index)
-{
-	//GBC BG tiles
-	core_cpu->controllers.video.dump_gbc_bg(bg_index);
+	core_cpu->controllers.video->dump_bg(bg_index);
 }
 
 /****** Grabs the OBJ palette ******/
 u32* GB_core::get_obj_palette(int pal_index)
 {
-	return &core_cpu->controllers.video.lcd_stat.obj_colors_final[0][pal_index];
+	return &core_cpu->controllers.video->lcd_stat.obj_colors_final[0][pal_index];
 }
 
 /****** Grabs the BG palette ******/
 u32* GB_core::get_bg_palette(int pal_index)
 {
-	return &core_cpu->controllers.video.lcd_stat.bg_colors_final[0][pal_index];
+	return &core_cpu->controllers.video->lcd_stat.bg_colors_final[0][pal_index];
 }
 
 /****** Grabs the hash for a specific tile ******/
 std::string GB_core::get_hash(u32 addr, u8 gfx_type)
 {
-	return core_cpu->controllers.video.get_hash(addr, gfx_type);
+	return core_cpu->controllers.video->get_hash(addr, gfx_type);
 }
 
 /****** Starts netplay connection ******/
@@ -1329,55 +1313,34 @@ u32 GB_core::get_core_data(u32 core_index)
 
 		//Invalidate CGFX
 		case 0x2:
-			core_cpu->controllers.video.invalidate_cgfx();
+			core_cpu->controllers.video->invalidate_cgfx();
 			result = 1;
 			break;
 
 		//Grab current scanline pixel
 		case 0x3:
 			//Use bits 8-15 as index
-			result = core_cpu->controllers.video.get_scanline_pixel((core_index >> 8) & 0xFF);
+			result = core_cpu->controllers.video->get_scanline_pixel((core_index >> 8) & 0xFF);
 			break;
 
-		//Render DMG BG Scanline
+		//Render BG Scanline
 		case 0x4:
 			//Use bits 8-15 as index
-			core_cpu->controllers.video.render_scanline(((core_index >> 8) & 0xFF), 0);
+			core_cpu->controllers.video->render_scanline(((core_index >> 8) & 0xFF), 0);
 			result = 1;
 			break;
 
-		//Render DMG Window Scanline
+		//Render Window Scanline
 		case 0x5:
 			//Use bits 8-15 as index
-			core_cpu->controllers.video.render_scanline(((core_index >> 8) & 0xFF), 1);
+			core_cpu->controllers.video->render_scanline(((core_index >> 8) & 0xFF), 1);
 			result = 1;
 			break;
 
-		//Render DMG OBJ Scanline
+		//Render OBJ Scanline
 		case 0x6:
 			//Use bits 8-15 as index
-			core_cpu->controllers.video.render_scanline(((core_index >> 8) & 0xFF), 2);
-			result = 1;
-			break;
-
-		//Render GBC BG Scanline
-		case 0x7:
-			//Use bits 8-15 as index
-			core_cpu->controllers.video.render_scanline(((core_index >> 8) & 0xFF), 3);
-			result = 1;
-			break;
-
-		//Render GBC Window Scanline
-		case 0x8:
-			//Use bits 8-15 as index
-			core_cpu->controllers.video.render_scanline(((core_index >> 8) & 0xFF), 4);
-			result = 1;
-			break;
-
-		//Render GBC OBJ Scanline
-		case 0x9:
-			//Use bits 8-15 as index
-			core_cpu->controllers.video.render_scanline(((core_index >> 8) & 0xFF), 5);
+			core_cpu->controllers.video->render_scanline(((core_index >> 8) & 0xFF), 2);
 			result = 1;
 			break;
 	}
