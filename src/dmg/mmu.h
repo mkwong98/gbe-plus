@@ -52,18 +52,12 @@ class GB_MMU
 	std::vector< std::vector<u8> > read_only_bank;
 	std::vector< std::vector<u8> > random_access_bank;
 
-	//Working RAM Banks - GBC only
-	std::vector< std::vector<u8> > working_ram_bank;
-	std::vector< std::vector<u8> > video_ram;
-
 	//Flash memory - MBC6 only
 	std::vector< std::vector<u8> > flash;
 
 	//Bank controls
 	u16 rom_bank;
 	u8 ram_bank;
-	u8 wram_bank;
-	u8 vram_bank;
 	u8 bank_bits;
 	u8 bank_mode;
 	bool ram_banking_enabled;
@@ -150,7 +144,7 @@ class GB_MMU
 	GB_MMU();
 	~GB_MMU();
 
-	void reset();
+	virtual void reset();
 	void grab_time();
 
 	virtual u8 read_u8(u16 address) = 0;
@@ -236,8 +230,10 @@ class GB_MMU
 
 	//Serialize data for save state loading/saving
 	bool mmu_read(u32 offset, std::string filename);
+	virtual void mmu_read_content(std::ifstream* file);
 	bool mmu_write(std::string filename);
-	u32 size();
+	virtual void mmu_write_content(std::ofstream* file);
+	virtual u32 size();
 
 	protected:
 	u8 previous_value;
@@ -267,10 +263,24 @@ public:
 class GBC_MMU : public GB_MMU
 {
 public:
+	//Working RAM Banks - GBC only
+	std::vector< std::vector<u8> > video_ram;
+	u8 vram_bank;
+
+	std::vector< std::vector<u8> > working_ram_bank;
+	u8 wram_bank;
+
+	GBC_MMU();
+	void reset();
+
 	u8 read_u8(u16 address);
 	void write_u8(u16 address, u8 value);
 	void set_sio_shift_clock(u8 value);
 	void init_io_reg();
+
+	void mmu_read_content(std::ifstream* file);
+	void mmu_write_content(std::ofstream* file);
+	u32 size();
 };
 
 #endif // GB_MEM

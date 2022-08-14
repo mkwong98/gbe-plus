@@ -20,6 +20,17 @@ GB_MMU::GB_MMU()
 	reset();
 }
 
+GBC_MMU::GBC_MMU()
+{
+	vram_bank = 0;
+	video_ram.resize(0x2);
+	for (int x = 0; x < 0x2; x++) { video_ram[x].resize(0x2000, 0); }
+
+	wram_bank = 1;
+	working_ram_bank.resize(0x8);
+	for (int x = 0; x < 0x8; x++) { working_ram_bank[x].resize(0x1000, 0); }
+}
+
 /****** MMU Deconstructor ******/
 GB_MMU::~GB_MMU() 
 {
@@ -52,8 +63,6 @@ void GB_MMU::reset()
 
 	rom_bank = 1;
 	ram_bank = 0;
-	wram_bank = 1;
-	vram_bank = 0;
 	bank_bits = 0;
 	bank_mode = 0;
 	ram_banking_enabled = false;
@@ -126,12 +135,6 @@ void GB_MMU::reset()
 	random_access_bank.resize(0x10);
 	for(int x = 0; x < 0x10; x++) { random_access_bank[x].resize(0x2000, 0); }
 
-	working_ram_bank.resize(0x8);
-	for(int x = 0; x < 0x8; x++) { working_ram_bank[x].resize(0x1000, 0); }
-
-	video_ram.resize(0x2);
-	for(int x = 0; x < 0x2; x++) { video_ram[x].resize(0x2000, 0); }
-
 	flash.resize(0x80);
 	for(int x = 0; x < 0x80; x++) { flash[x].resize(0x2000, 0x00); }
 
@@ -147,6 +150,13 @@ void GB_MMU::reset()
 	std::cout<<"MMU::Initialized\n";
 }
 
+void GBC_MMU::reset()
+{
+	vram_bank = 0;
+	wram_bank = 1;
+	GB_MMU::reset();
+}
+
 /****** Read MMU data from save state ******/
 bool GB_MMU::mmu_read(u32 offset, std::string filename)
 {
@@ -157,55 +167,69 @@ bool GB_MMU::mmu_read(u32 offset, std::string filename)
 	//Go to offset
 	file.seekg(offset);
 
-	//Serialize DMG/GBC RAM from save state
-	u8* ex_ram = &memory_map[0x8000];
-	file.read((char*)ex_ram, 0x8000);
-
-	for(int x = 0; x < 0x2; x++)
-	{
-		ex_ram = &video_ram[x][0];
-		file.read((char*)ex_ram, 0x2000);
-	}
-
-	for(int x = 0; x < 0x8; x++)
-	{
-		ex_ram = &working_ram_bank[x][0];
-		file.read((char*)ex_ram, 0x1000);
-	}
-
-	for(int x = 0; x < 0x10; x++)
-	{
-		ex_ram = &random_access_bank[x][0];
-		file.read((char*)ex_ram, 0x2000);
-	}
-
-	//Serialize misc MMU data from save state
-	file.read((char*)&rom_bank, sizeof(rom_bank));
-	file.read((char*)&ram_bank, sizeof(ram_bank));
-	file.read((char*)&wram_bank, sizeof(wram_bank));
-	file.read((char*)&vram_bank, sizeof(vram_bank));
-	file.read((char*)&bank_bits, sizeof(bank_bits));
-	file.read((char*)&bank_mode, sizeof(bank_mode));
-	file.read((char*)&ram_banking_enabled, sizeof(ram_banking_enabled));
-	file.read((char*)&in_bios, sizeof(in_bios));
-	file.read((char*)&bios_type, sizeof(bios_type));
-	file.read((char*)&bios_size, sizeof(bios_size));
-	file.read((char*)&cart, sizeof(cart));
-	file.read((char*)&previous_value, sizeof(previous_value));
+	mmu_read_content(&file);
 
 	//Sanitize MMU data from save state
 	if((bios_size != 0x100) && (bios_size != 0x900)) { bios_size = 0x100; }
 	
 	rom_bank &= 0x1FF;
 	ram_bank &= 0xF;
-	wram_bank &= 0x3;
-	vram_bank &= 0x1;
 	bank_mode &= 0x1;
 	bank_bits &= 0xF;
 
 	file.close();
 	return true;
 }
+
+void GB_MMU::mmu_read_content(std::ifstream* file)
+{
+	//Serialize DMG/GBC RAM from save state
+	u8* ex_ram = &memory_map[0x8000];
+	file->read((char*)ex_ram, 0x8000);
+
+	for (int x = 0; x < 0x10; x++)
+	{
+		ex_ram = &random_access_bank[x][0];
+		file->read((char*)ex_ram, 0x2000);
+	}
+
+	//Serialize misc MMU data from save state
+	file->read((char*)&rom_bank, sizeof(rom_bank));
+	file->read((char*)&ram_bank, sizeof(ram_bank));
+	file->read((char*)&bank_bits, sizeof(bank_bits));
+	file->read((char*)&bank_mode, sizeof(bank_mode));
+	file->read((char*)&ram_banking_enabled, sizeof(ram_banking_enabled));
+	file->read((char*)&in_bios, sizeof(in_bios));
+	file->read((char*)&bios_type, sizeof(bios_type));
+	file->read((char*)&bios_size, sizeof(bios_size));
+	file->read((char*)&cart, sizeof(cart));
+	file->read((char*)&previous_value, sizeof(previous_value));
+}
+
+void GBC_MMU::mmu_read_content(std::ifstream* file)
+{
+	u8* ex_ram;
+	//Serialize GBC RAM from save state
+	for (int x = 0; x < 0x2; x++)
+	{
+		ex_ram = &video_ram[x][0];
+		file->read((char*)ex_ram, 0x2000);
+	}
+	file->read((char*)&vram_bank, sizeof(vram_bank));
+	vram_bank &= 0x1;
+
+	for (int x = 0; x < 0x8; x++)
+	{
+		ex_ram = &working_ram_bank[x][0];
+		file->read((char*)ex_ram, 0x1000);
+	}
+	file->read((char*)&wram_bank, sizeof(wram_bank));
+	wram_bank &= 0x3;
+
+	GB_MMU::mmu_read_content(file);
+
+}
+
 
 /****** Write MMU data to save state ******/
 bool GB_MMU::mmu_write(std::string filename)
@@ -214,41 +238,51 @@ bool GB_MMU::mmu_write(std::string filename)
 	
 	if(!file.is_open()) { return false; }
 
-	//Serialize DMG/GBC RAM to save state
-	file.write(reinterpret_cast<char*> (&memory_map[0x8000]), 0x8000);
-	for(int x = 0; x < 0x2; x++) { file.write(reinterpret_cast<char*> (&video_ram[x][0]), 0x2000); }
-	for(int x = 0; x < 0x8; x++) { file.write(reinterpret_cast<char*> (&working_ram_bank[x][0]), 0x1000); }
-	for(int x = 0; x < 0x10; x++) { file.write(reinterpret_cast<char*> (&random_access_bank[x][0]), 0x2000); }
-
-	//Serialize misc MMU data to save state
-	file.write((char*)&rom_bank, sizeof(rom_bank));
-	file.write((char*)&ram_bank, sizeof(ram_bank));
-	file.write((char*)&wram_bank, sizeof(wram_bank));
-	file.write((char*)&vram_bank, sizeof(vram_bank));
-	file.write((char*)&bank_bits, sizeof(bank_bits));
-	file.write((char*)&bank_mode, sizeof(bank_mode));
-	file.write((char*)&ram_banking_enabled, sizeof(ram_banking_enabled));
-	file.write((char*)&in_bios, sizeof(in_bios));
-	file.write((char*)&bios_type, sizeof(bios_type));
-	file.write((char*)&bios_size, sizeof(bios_size));
-	file.write((char*)&cart, sizeof(cart));
-	file.write((char*)&previous_value, sizeof(previous_value));
+	mmu_write_content(&file);
 
 	file.close();
 	return true;
 }
+
+void GB_MMU::mmu_write_content(std::ofstream* file) {
+	//Serialize DMG/GBC RAM to save state
+	file->write(reinterpret_cast<char*> (&memory_map[0x8000]), 0x8000);
+	for (int x = 0; x < 0x10; x++) { file->write(reinterpret_cast<char*> (&random_access_bank[x][0]), 0x2000); }
+
+	//Serialize misc MMU data to save state
+	file->write((char*)&rom_bank, sizeof(rom_bank));
+	file->write((char*)&ram_bank, sizeof(ram_bank));
+	file->write((char*)&bank_bits, sizeof(bank_bits));
+	file->write((char*)&bank_mode, sizeof(bank_mode));
+	file->write((char*)&ram_banking_enabled, sizeof(ram_banking_enabled));
+	file->write((char*)&in_bios, sizeof(in_bios));
+	file->write((char*)&bios_type, sizeof(bios_type));
+	file->write((char*)&bios_size, sizeof(bios_size));
+	file->write((char*)&cart, sizeof(cart));
+	file->write((char*)&previous_value, sizeof(previous_value));
+}
+
+void GBC_MMU::mmu_write_content(std::ofstream* file) {
+	//Serialize GBC RAM to save state
+	for (int x = 0; x < 0x2; x++) { file->write(reinterpret_cast<char*> (&video_ram[x][0]), 0x2000); }
+	file->write((char*)&vram_bank, sizeof(vram_bank));
+
+	for (int x = 0; x < 0x8; x++) { file->write(reinterpret_cast<char*> (&working_ram_bank[x][0]), 0x1000); }
+	file->write((char*)&wram_bank, sizeof(wram_bank));
+
+	GB_MMU::mmu_write_content(file);
+}
+
 
 /****** Gets the size of MMU data for serialization ******/
 u32 GB_MMU::size()
 {
 	u32 mmu_size = 0;
 	
-	mmu_size += 0x34000;
+	mmu_size += 0x2C000;
 
 	mmu_size += sizeof(rom_bank);
 	mmu_size += sizeof(ram_bank);
-	mmu_size += sizeof(wram_bank);
-	mmu_size += sizeof(vram_bank);
 	mmu_size += sizeof(bank_bits);
 	mmu_size += sizeof(bank_mode);
 	mmu_size += sizeof(ram_banking_enabled);
@@ -257,6 +291,16 @@ u32 GB_MMU::size()
 	mmu_size += sizeof(bios_size);
 	mmu_size += sizeof(cart);
 	mmu_size += sizeof(previous_value);
+
+	return mmu_size;
+}
+
+u32 GBC_MMU::size()
+{
+	u32 mmu_size = GB_MMU::size();
+	mmu_size += 0xC000;
+	mmu_size += sizeof(vram_bank);
+	mmu_size += sizeof(wram_bank);
 
 	return mmu_size;
 }
@@ -269,7 +313,7 @@ u8 DMG_MMU::read_u8(u16 address)
 		//Read from VRAM
 		if ((address >= 0x8000) && (address <= 0x9FFF))
 		{
-			return video_ram[0][address - 0x8000];
+			return memory_map[address];
 		}
 
 		//Read from RP
@@ -401,9 +445,6 @@ u8 GB_MMU::read_u8_sub(u16 address)
 	//Read normally
 	return memory_map[address]; 
 }
-
-
-
 
 
 /****** Read signed byte from memory ******/
@@ -1329,8 +1370,8 @@ void DMG_MMU::write_u8(u16 address, u8 value)
 	//Write to VRAM
 	if ((address >= 0x8000) && (address <= 0x9FFF))
 	{
-		previous_value = video_ram[0][address - 0x8000];
-		video_ram[0][address - 0x8000] = value;
+		previous_value = memory_map[address];
+		memory_map[address] = value;
 	}
 
 	//STAT
@@ -1357,7 +1398,6 @@ void DMG_MMU::write_u8(u16 address, u8 value)
 	//VBK - Update VRAM bank
 	else if (address == REG_VBK)
 	{
-		vram_bank = value & 0x1;
 		memory_map[address] = 0xFF;
 	}
 
@@ -1378,8 +1418,6 @@ void DMG_MMU::write_u8(u16 address, u8 value)
 	//SVBK - Update Working RAM bank
 	else if (address == REG_SVBK)
 	{
-		wram_bank = (value & 0x7);
-		if (wram_bank == 0) { wram_bank = 1; }
 		memory_map[address] = 0xFF;
 	}
 

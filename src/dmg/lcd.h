@@ -131,10 +131,6 @@ class GB_LCD
 	void update_oam();
 	virtual void update_obj_render_list() = 0;
 
-	//GBC color palette updates
-	void update_bg_colors();
-	void update_obj_colors();
-
 	//Per-scanline rendering
 	virtual void run_render_scanline() = 0;
 	virtual void render_bg_scanline() = 0;
@@ -182,6 +178,11 @@ public:
 
 protected:
 	void update_obj_render_list();
+
+	//GBC color palette updates
+	void update_bg_colors();
+	void update_obj_colors();
+
 	void run_render_scanline();
 	void render_bg_scanline();
 	void render_win_scanline();

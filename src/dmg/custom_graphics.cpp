@@ -604,8 +604,8 @@ void GBC_LCD::dump_obj(u8 obj_index)
 	u16 obj_tile_addr = 0x8000 + (obj[obj_index].tile_number << 4);
 
 	//Grab VRAM bank
-	u8 old_vram_bank = mem->vram_bank;
-	mem->vram_bank = obj[obj_index].vram_bank;
+	u8 old_vram_bank = ((GBC_MMU*)mem)->vram_bank;
+	((GBC_MMU*)mem)->vram_bank = obj[obj_index].vram_bank;
 
 	//Create a hash for this OBJ tile
 	for(int x = 0; x < obj_height/2; x++)
@@ -642,7 +642,7 @@ void GBC_LCD::dump_obj(u8 obj_index)
 		{
 			if(final_hash == cgfx_stat.obj_hash_list[x])
 			{
-				mem->vram_bank = old_vram_bank;
+				((GBC_MMU*)mem)->vram_bank = old_vram_bank;
 				cgfx::last_added = false;
 				return;
 			}
@@ -715,7 +715,7 @@ void GBC_LCD::dump_obj(u8 obj_index)
 	}
 
 	//Reset VRAM bank
-	mem->vram_bank = old_vram_bank;
+	((GBC_MMU*)mem)->vram_bank = old_vram_bank;
 
 	//Save CGFX data
 	cgfx::last_hash = final_hash;
@@ -870,8 +870,8 @@ void GBC_LCD::dump_bg(u16 bg_index)
 	u16 bg_tile_addr = 0x8000 + (bg_index << 4);
 
 	//Set VRAM bank
-	u8 old_vram_bank = mem->vram_bank;
-	mem->vram_bank = cgfx::gbc_bg_vram_bank;
+	u8 old_vram_bank = ((GBC_MMU*)mem)->vram_bank;
+	((GBC_MMU*)mem)->vram_bank = cgfx::gbc_bg_vram_bank;
 
 	//Create a hash for this BG tile
 	for(int x = 0; x < 4; x++)
@@ -908,7 +908,7 @@ void GBC_LCD::dump_bg(u16 bg_index)
 		{
 			if(final_hash == cgfx_stat.bg_hash_list[x])
 			{
-				mem->vram_bank = old_vram_bank;
+				((GBC_MMU*)mem)->vram_bank = old_vram_bank;
 				cgfx::last_added = false;
 				return;
 			}
@@ -980,7 +980,7 @@ void GBC_LCD::dump_bg(u16 bg_index)
 	}
 
 	//Reset VRAM bank
-	mem->vram_bank = old_vram_bank;
+	((GBC_MMU*)mem)->vram_bank = old_vram_bank;
 
 	//Save CGFX data
 	cgfx::last_hash = final_hash;
@@ -1051,8 +1051,8 @@ void GBC_LCD::update_obj_hash(u8 obj_index)
 	u16 obj_tile_addr = 0x8000 + (obj[obj_index].tile_number << 4);
 
 	//Grab VRAM bank
-	u8 old_vram_bank = mem->vram_bank;
-	mem->vram_bank = obj[obj_index].vram_bank;
+	u8 old_vram_bank = ((GBC_MMU*)mem)->vram_bank;
+	((GBC_MMU*)mem)->vram_bank = obj[obj_index].vram_bank;
 
 	//Create a hash for this OBJ tile
 	for(int x = 0; x < obj_height/2; x++)
@@ -1086,7 +1086,7 @@ void GBC_LCD::update_obj_hash(u8 obj_index)
 	if(cgfx_stat.obj_hash_list.size() > 128) { cgfx_stat.obj_hash_list.erase(cgfx_stat.obj_hash_list.begin()); }
 
 	//Reset VRAM bank
-	mem->vram_bank = old_vram_bank;
+	((GBC_MMU*)mem)->vram_bank = old_vram_bank;
 
 	//Update the OBJ hash list
 	for(int x = 0; x < cgfx_stat.obj_hash_list.size(); x++)
@@ -1140,17 +1140,17 @@ void DMG_LCD::update_bg_hash(u16 bg_index)
 void GBC_LCD::update_bg_hash(u16 map_addr)
 {
 	//Grab VRAM bank
-	u8 old_vram_bank = mem->vram_bank;
-	mem->vram_bank = 1;
+	u8 old_vram_bank = ((GBC_MMU*)mem)->vram_bank;
+	((GBC_MMU*)mem)->vram_bank = 1;
 
 	//Parse BG attributes
 	u8 bg_attribute = mem->read_u8(map_addr);
 	u8 palette = bg_attribute & 0x7;
 	u8 vram_bank = (bg_attribute & 0x8) ? 1 : 0;
 
-	mem->vram_bank = 0;
+	((GBC_MMU*)mem)->vram_bank = 0;
 	u8 tile_number = mem->read_u8(map_addr);
-	mem->vram_bank = vram_bank;
+	((GBC_MMU*)mem)->vram_bank = vram_bank;
 
 	//Convert tile number to signed if necessary
 	if(lcd_stat.bg_tile_addr == 0x8800) { tile_number = lcd_stat.signed_tile_lut[tile_number]; }
@@ -1192,7 +1192,7 @@ void GBC_LCD::update_bg_hash(u16 map_addr)
 	//Update the BG hash list
 	for(int x = 0; x < cgfx_stat.bg_hash_list.size(); x++)
 	{
-		if(final_hash == cgfx_stat.bg_hash_list[x]) { mem->vram_bank = old_vram_bank; return; }
+		if(final_hash == cgfx_stat.bg_hash_list[x]) { ((GBC_MMU*)mem)->vram_bank = old_vram_bank; return; }
 	}
 
 	cgfx_stat.bg_hash_list.push_back(final_hash);
@@ -1202,7 +1202,7 @@ void GBC_LCD::update_bg_hash(u16 map_addr)
 	if(cgfx_stat.bg_hash_list.size() > 1024) { cgfx_stat.bg_hash_list.erase(cgfx_stat.bg_hash_list.begin()); }
 
 	//Reset VRAM bank
-	mem->vram_bank = old_vram_bank;
+	((GBC_MMU*)mem)->vram_bank = old_vram_bank;
 }	
 
 /****** Search for an existing hash from the manifest ******/
@@ -1367,8 +1367,8 @@ std::string GBC_LCD::get_hash(u16 addr, u8 gfx_type)
 		u8 obj_height = (mem->memory_map[REG_LCDC] & 0x04) ? 16 : 8;
 
 		//Grab VRAM bank
-		u8 old_vram_bank = mem->vram_bank;
-		mem->vram_bank = obj[obj_index].vram_bank;
+		u8 old_vram_bank = ((GBC_MMU*)mem)->vram_bank;
+		((GBC_MMU*)mem)->vram_bank = obj[obj_index].vram_bank;
 
 		//Get color palette from OAM
 		u8 color_pal = obj[obj_index].color_palette_number;
@@ -1398,15 +1398,15 @@ std::string GBC_LCD::get_hash(u16 addr, u8 gfx_type)
 		}
 
 		final_hash = hue_data + "_" + final_hash;
-		mem->vram_bank = old_vram_bank;
+		((GBC_MMU*)mem)->vram_bank = old_vram_bank;
 	}
 
 	//Get GBC BG hash
 	else if(gfx_type == 2)
 	{
 		//Set VRAM bank
-		u8 old_vram_bank = mem->vram_bank;
-		mem->vram_bank = cgfx::gbc_bg_vram_bank;
+		u8 old_vram_bank = ((GBC_MMU*)mem)->vram_bank;
+		((GBC_MMU*)mem)->vram_bank = cgfx::gbc_bg_vram_bank;
 
 		//Create a hash for this BG tile
 		for(int x = 0; x < 4; x++)
@@ -1433,7 +1433,7 @@ std::string GBC_LCD::get_hash(u16 addr, u8 gfx_type)
 		}
 
 		final_hash = hue_data + "_" + final_hash;
-		mem->vram_bank = old_vram_bank;
+		((GBC_MMU*)mem)->vram_bank = old_vram_bank;
 	}
 
 	return final_hash;

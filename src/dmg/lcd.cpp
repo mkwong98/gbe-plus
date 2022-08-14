@@ -775,18 +775,18 @@ void GBC_LCD::render_bg_scanline()
 	for(int x = tile_lower_range; x < tile_upper_range; x++)
 	{
 		//Always read CHR data from Bank 0
-		u8 old_vram_bank = mem->vram_bank;
-		mem->vram_bank = 0;
+		u8 old_vram_bank = ((GBC_MMU*)mem)->vram_bank;
+		((GBC_MMU*)mem)->vram_bank = 0;
 
 		u8 map_entry = mem->read_u8(lcd_stat.bg_map_addr + x);
 		u8 tile_pixel = 0;
 
 		//Read BG Map attributes from Bank 1
-		mem->vram_bank = 1;
+		((GBC_MMU*)mem)->vram_bank = 1;
 		u8 bg_map_attribute = mem->read_u8(lcd_stat.bg_map_addr + x);
 		u8 bg_palette = bg_map_attribute & 0x7;
 		u8 bg_priority = (bg_map_attribute & 0x80) ? 1 : 0;
-		mem->vram_bank = (bg_map_attribute & 0x8) ? 1 : 0;
+		((GBC_MMU*)mem)->vram_bank = (bg_map_attribute & 0x8) ? 1 : 0;
 
 		//Determine which line of the tiles to generate pixels for this scanline
 		u8 tile_line = rendered_scanline % 8;
@@ -800,7 +800,7 @@ void GBC_LCD::render_bg_scanline()
 
 		//Grab bytes from VRAM representing 8x1 pixel data
 		u16 tile_data = mem->read_u16(tile_addr);
-		mem->vram_bank = old_vram_bank;
+		((GBC_MMU*)mem)->vram_bank = old_vram_bank;
 
 		//Render CGFX
 		u16 map_id = (lcd_stat.bg_map_addr + x) - 0x9800;
@@ -1079,18 +1079,18 @@ void GBC_LCD::render_win_scanline()
 	for(int x = tile_lower_range; x < tile_upper_range; x++)
 	{
 		//Always read CHR data from Bank 0
-		u8 old_vram_bank = mem->vram_bank;
-		mem->vram_bank = 0;
+		u8 old_vram_bank = ((GBC_MMU*)mem)->vram_bank;
+		((GBC_MMU*)mem)->vram_bank = 0;
 
 		u8 map_entry = mem->read_u8(lcd_stat.window_map_addr + x);
 		u8 tile_pixel = 0;
 
 		//Read BG Map attributes from Bank 1
-		mem->vram_bank = 1;
+		((GBC_MMU*)mem)->vram_bank = 1;
 		u8 bg_map_attribute = mem->read_u8(lcd_stat.window_map_addr + x);
 		u8 bg_palette = bg_map_attribute & 0x7;
 		u8 bg_priority = (bg_map_attribute & 0x80) ? 1 : 0;
-		mem->vram_bank = (bg_map_attribute & 0x8) ? 1 : 0;
+		((GBC_MMU*)mem)->vram_bank = (bg_map_attribute & 0x8) ? 1 : 0;
 
 		//Determine which line of the tiles to generate pixels for this scanline
 		u8 tile_line = rendered_scanline % 8;
@@ -1104,7 +1104,7 @@ void GBC_LCD::render_win_scanline()
 
 		//Grab bytes from VRAM representing 8x1 pixel data
 		u16 tile_data = mem->read_u16(tile_addr);
-		mem->vram_bank = old_vram_bank;
+		((GBC_MMU*)mem)->vram_bank = old_vram_bank;
 
 		//Render CGFX
 		u16 map_id = (lcd_stat.window_map_addr + x) - 0x9800;
@@ -1378,10 +1378,10 @@ void GBC_LCD::render_obj_scanline()
 			u16 tile_addr = (0x8000 + (obj[sprite_id].tile_number << 4) + (tile_line << 1));
 
 			//Grab bytes from VRAM representing 8x1 pixel data
-			u8 old_vram_bank = mem->vram_bank;
-			mem->vram_bank = obj[sprite_id].vram_bank;
+			u8 old_vram_bank = ((GBC_MMU*)mem)->vram_bank;
+			((GBC_MMU*)mem)->vram_bank = obj[sprite_id].vram_bank;
 			u16 tile_data = mem->read_u16(tile_addr);
-			mem->vram_bank = old_vram_bank;
+			((GBC_MMU*)mem)->vram_bank = old_vram_bank;
 
 			for(int y = 7; y >= 0; y--)
 			{
@@ -1533,7 +1533,7 @@ void GBC_LCD::render_cgfx_obj_scanline(u8 sprite_id)
 }
 
 /****** Update background color palettes on the GBC ******/
-void GB_LCD::update_bg_colors()
+void GBC_LCD::update_bg_colors()
 {
 	u8 hi_lo = (mem->memory_map[REG_BCPS] & 0x1);
 	u8 color = (mem->memory_map[REG_BCPS] >> 1) & 0x3;
@@ -1591,8 +1591,8 @@ void GB_LCD::update_bg_colors()
 	//CGFX - Update BG hashes
 	if((cgfx::load_cgfx) && (old_color != lcd_stat.bg_colors_final[color][palette]))
 	{
-		u8 temp_vram_bank = mem->vram_bank;
-		mem->vram_bank = 1;
+		u8 temp_vram_bank = ((GBC_MMU*)mem)->vram_bank;
+		((GBC_MMU*)mem)->vram_bank = 1;
 
 		for(u16 x = 0; x < 2048; x++)
 		{
@@ -1605,7 +1605,7 @@ void GB_LCD::update_bg_colors()
 			}
 		}
 
-		mem->vram_bank = temp_vram_bank;
+		((GBC_MMU*)mem)->vram_bank = temp_vram_bank;
 	}
 
 	//CGFX - Find max-min palette brightness
@@ -1624,7 +1624,7 @@ void GB_LCD::update_bg_colors()
 }
 
 /****** Update sprite color palettes on the GBC ******/
-void GB_LCD::update_obj_colors()
+void GBC_LCD::update_obj_colors()
 {
 	u8 hi_lo = (mem->memory_map[REG_OCPS] & 0x1);
 	u8 color = (mem->memory_map[REG_OCPS] >> 1) & 0x3;
@@ -2168,7 +2168,7 @@ void GBC_LCD::update_all_bg_hash()
 			//Scan BG map for all tiles that use this tile number
 			for (int x = 0; x < 2048; x++)
 			{
-				if (mem->video_ram[0][0x1800 + x] == tile_number) { update_bg_hash(0x9800 + x); }
+				if (((GBC_MMU*)mem)->video_ram[0][0x1800 + x] == tile_number) { update_bg_hash(0x9800 + x); }
 			}
 
 			cgfx_stat.bg_tile_update_list[tile_number] = false;

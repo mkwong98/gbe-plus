@@ -98,7 +98,6 @@ class Z80
 	bool interrupt_delay;
 	bool halt;
 	bool pause;
-	bool double_speed;
 	bool skip_instruction;
 
 	//Audio-Video and other controllers
@@ -112,14 +111,17 @@ class Z80
 	//Core Functions
 	~Z80();
 	virtual void reset();
-	void reset_bios();
+	virtual void reset_bios();
 	virtual void exec_op(u8 opcode);
 	void exec_op(u16 opcode);
+	virtual u32 get_cycles() = 0;
 
 	//Serialize data for save state loading/saving
 	bool cpu_read(u32 offset, std::string filename);
+	virtual void cpu_read_content(std::ifstream* file);
 	bool cpu_write(std::string filename);
-	u32 size();
+	virtual void cpu_write_content(std::ofstream* file);
+	virtual u32 size();
 
 	//Interrupt handling
 	bool handle_interrupts();
@@ -165,14 +167,23 @@ public:
 	DMG_Z80();
 	~DMG_Z80();
 	void reset();
+	u32 get_cycles();
 };
 
 class GBC_Z80 : public Z80
 {
 public:
+	bool double_speed;
+
 	GBC_Z80();
 	~GBC_Z80();
 	void reset();
+	void reset_bios();
 	void exec_op(u8 opcode);
+	u32 get_cycles();
+
+	void cpu_read_content(std::ifstream* file);
+	void cpu_write_content(std::ofstream* file);
+	u32 size();
 };
 #endif // GB_CPU

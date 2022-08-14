@@ -269,7 +269,7 @@ void GB_core::run_core()
 				//Perform syncing operations when hard sync is enabled
 				if(config::netplay_hard_sync)
 				{
-					core_cpu->controllers.serial_io.sio_stat.sync_counter += (core_cpu->double_speed) ? (core_cpu->cycles >> 1) : core_cpu->cycles;
+					core_cpu->controllers.serial_io.sio_stat.sync_counter += core_cpu->get_cycles();
 
 					//Once this Game Boy has reached a specified amount of cycles, freeze until the other Game Boy finished that many cycles
 					if(core_cpu->controllers.serial_io.sio_stat.sync_counter >= core_cpu->controllers.serial_io.sio_stat.sync_clock)
@@ -345,8 +345,7 @@ void GB_core::run_core()
 			}
 
 			//Update LCD
-			if(core_cpu->double_speed) { core_cpu->controllers.video->step(core_cpu->cycles >> 1); }
-			else { core_cpu->controllers.video->step(core_cpu->cycles); }
+			core_cpu->controllers.video->step(core_cpu->get_cycles());
 
 			//Update DIV timer - Every 4 M clocks
 			core_cpu->div_counter += core_cpu->cycles;
@@ -393,7 +392,7 @@ void GB_core::run_core()
 			//Update serial input-output operations
 			if(core_cpu->controllers.serial_io.sio_stat.shifts_left != 0)
 			{
-				core_cpu->controllers.serial_io.sio_stat.shift_counter += (core_cpu->double_speed) ? (core_cpu->cycles >> 1) : core_cpu->cycles;
+				core_cpu->controllers.serial_io.sio_stat.shift_counter += core_cpu->get_cycles();
 
 				if((core_cpu->controllers.serial_io.barcode_boy.send_data) && ((core_mmu->memory_map[REG_SC] & 0x80) == 0))
 				{
@@ -556,7 +555,7 @@ void GB_core::step()
 			//Perform syncing operations when hard sync is enabled
 			if(config::netplay_hard_sync)
 			{
-				core_cpu->controllers.serial_io.sio_stat.sync_counter += (core_cpu->double_speed) ? (core_cpu->cycles >> 1) : core_cpu->cycles;;
+				core_cpu->controllers.serial_io.sio_stat.sync_counter += core_cpu->get_cycles();
 
 				//Once this Game Boy has reached a specified amount of cycles, freeze until the other Game Boy finished that many cycles
 				if(core_cpu->controllers.serial_io.sio_stat.sync_counter >= core_cpu->controllers.serial_io.sio_stat.sync_clock)
@@ -632,8 +631,7 @@ void GB_core::step()
 		}
 
 		//Update LCD
-		if(core_cpu->double_speed) { core_cpu->controllers.video->step(core_cpu->cycles >> 1); }
-		else { core_cpu->controllers.video->step(core_cpu->cycles); }
+		core_cpu->controllers.video->step(core_cpu->get_cycles());
 
 		//Update DIV timer - Every 4 M clocks
 		core_cpu->div_counter += core_cpu->cycles;
@@ -674,7 +672,7 @@ void GB_core::step()
 		//Update serial input-output operations
 		if(core_cpu->controllers.serial_io.sio_stat.shifts_left != 0)
 		{
-			core_cpu->controllers.serial_io.sio_stat.shift_counter += (core_cpu->double_speed) ? (core_cpu->cycles >> 1) : core_cpu->cycles;;
+			core_cpu->controllers.serial_io.sio_stat.shift_counter += core_cpu->get_cycles();
 
 			if((core_cpu->controllers.serial_io.barcode_boy.send_data) && ((core_mmu->memory_map[REG_SC] & 0x80) == 0))
 			{
