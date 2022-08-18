@@ -238,10 +238,8 @@ bool GB_LCD::init()
 	else if((!config::sdl_render) && (config::use_opengl))
 	{
 		original_screen = SDL_CreateRGBSurface(SDL_SWSURFACE, config::sys_width, config::sys_height, 32, 0, 0, 0, 0);
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "", "", NULL);
 	}
 	if ((config::sdl_render || config::use_opengl) && original_screen == NULL) { return false; }
-	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "", "a", NULL);
 
 	std::cout<<"LCD::Initialized\n";
 

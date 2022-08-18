@@ -125,7 +125,7 @@ void hard_screen::initializeGL()
 /****** Hardware screen paint event ******/
 void hard_screen::paintGL()
 {
-	if(qt_gui::screen == NULL)
+	if(qt_gui::screen == NULL || qt_gui::final_screen == NULL)
 	{
 		QPainter painter(this);
 		painter.setBrush(Qt::black);

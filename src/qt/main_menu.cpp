@@ -573,8 +573,6 @@ void main_menu::boot_game()
 	config::use_stereo = (settings->stereo_enable->isChecked()) ? true : false;
 	config::pause_emu = false;
 
-	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "", "x", NULL);
-
 	//Check OpenGL status
 	if(settings->ogl->isChecked())
 	{
@@ -583,7 +581,6 @@ void main_menu::boot_game()
 		sw_screen->hide();
 		hw_screen->setEnabled(true);
 		hw_screen->show();
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "", "5", NULL);
 	}
 
 	else
@@ -628,8 +625,6 @@ void main_menu::boot_game()
 		config::gb_type = system_type;
 	}
 
-	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "", "y", NULL);
-
 	if (config::gb_type < 2)
 	{
 		main_menu::gbe_plus = new DMG_core();
@@ -640,7 +635,6 @@ void main_menu::boot_game()
 		main_menu::gbe_plus = new GBC_core();
 		cgfx = new gbc_cgfx();
 	}
-	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "", "b", NULL);
 
 	//Set up custom graphics dialog
 	cgfx->hide();
@@ -666,8 +660,6 @@ void main_menu::boot_game()
 
 	qt_gui::screen = new QImage(base_width, base_height, QImage::Format_ARGB32);
 
-	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "", "c", NULL);
-
 	//Enable CGFX menu
 	findChild<QAction*>("custom_gfx_action")->setEnabled(true);
 
@@ -691,12 +683,8 @@ void main_menu::boot_game()
 		fullscreen();
 	}
 
-	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "", "d", NULL);
-
 	//Engage the core
 	main_menu::gbe_plus->start();
-
-	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "", "e", NULL);
 
 	//Actually run the core
 	main_menu::gbe_plus->run_core();
