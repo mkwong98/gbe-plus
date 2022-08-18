@@ -152,7 +152,7 @@ void GB_LCD::reset()
 	for(int x = 0; x < 8; x++) { lcd_stat.flip_8[x] = (7 - x); }
 
 	//16 pixel (vertical) flipping lookup generation
-        for(int x = 0; x < 16; x++) { lcd_stat.flip_16[x] = (15 - x); }
+	for(int x = 0; x < 16; x++) { lcd_stat.flip_16[x] = (15 - x); }
 
 	//CGFX setup
 	cgfx_stat.current_obj_hash.clear();
@@ -192,23 +192,6 @@ void GB_LCD::reset()
 	config::resize_mode = 0;
 	config::request_resize = false;
 
-	//Load CGFX manifest
-	if(cgfx::load_cgfx) 
-	{
-		cgfx::load_cgfx = cgfx::loaded = load_manifest(cgfx::manifest_file);
-		
-		//Initialize HD buffer for CGFX greater that 1:1
-		if((cgfx::load_cgfx) && (cgfx::scaling_factor > 1))
-		{
-			config::sys_width *= cgfx::scaling_factor;
-			config::sys_height *= cgfx::scaling_factor;
-			cgfx::scale_squared = cgfx::scaling_factor * cgfx::scaling_factor;
-
-			hd_screen_buffer.clear();
-			hd_screen_buffer.resize((config::sys_width * config::sys_height), 0);
-		}
-	}
-
 	max_fullscreen_ratio = 2;
 
 	power_antenna_osd = false;
@@ -245,19 +228,20 @@ bool GB_LCD::init()
 			config::scaling_factor = 1;
 
 			final_screen = SDL_GetWindowSurface(window);
-			original_screen = SDL_CreateRGBSurface(SDL_SWSURFACE, config::sys_width, config::sys_height, 32, 0, 0, 0, 0);
+			if (final_screen == NULL) { return false; }
 		}
-
-		if(final_screen == NULL) { return false; }
-
+		original_screen = SDL_CreateRGBSurface(SDL_SWSURFACE, config::sys_width, config::sys_height, 32, 0, 0, 0, 0);
 		SDL_SetWindowIcon(window, util::load_icon(config::data_path + "icons/gbe_plus.bmp"));
 	}
 
 	//Initialize with only a buffer for OpenGL (for external rendering)
 	else if((!config::sdl_render) && (config::use_opengl))
 	{
-		final_screen = SDL_CreateRGBSurface(SDL_SWSURFACE, config::sys_width, config::sys_height, 32, 0, 0, 0, 0);
+		original_screen = SDL_CreateRGBSurface(SDL_SWSURFACE, config::sys_width, config::sys_height, 32, 0, 0, 0, 0);
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "", "", NULL);
 	}
+	if ((config::sdl_render || config::use_opengl) && original_screen == NULL) { return false; }
+	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "", "a", NULL);
 
 	std::cout<<"LCD::Initialized\n";
 
@@ -641,7 +625,7 @@ void DMG_LCD::render_bg_scanline()
 		//Render CGFX
 		u16 hash_addr = lcd_stat.bg_tile_addr + (map_entry << 4);
 		
-		if((cgfx::load_cgfx) && (has_hash(hash_addr, cgfx_stat.current_bg_hash[bg_id])) && (cgfx_stat.m_types[cgfx_stat.last_id] == 10))
+		if((cgfx::load_cgfx) && (has_hash(hash_addr, cgfx_stat.current_bg_hash[bg_id])) && (cgfx_stat.m_types[cgfx_stat.last_id] == 2))
 		{
 			render_cgfx_bg_scanline(bg_id, true);
 		}
@@ -654,49 +638,33 @@ void DMG_LCD::render_bg_scanline()
 
 			for(int y = 7; y >= 0; y--)
 			{
-				//Calculate raw value of the tile's pixel
-				tile_pixel = ((tile_data >> 8) & (1 << y)) ? 2 : 0;
-				tile_pixel |= (tile_data & (1 << y)) ? 1 : 0;
-
-				//Set the raw color of the BG
-				scanline_raw[lcd_stat.scanline_pixel_counter] = tile_pixel;
-				
-				switch(lcd_stat.bgp[tile_pixel])
+				if(lcd_stat.scanline_pixel_counter < 160)
 				{
-					case 0: 
-						scanline_buffer[lcd_stat.scanline_pixel_counter++] = config::DMG_BG_PAL[0];
-						break;
+					//Calculate raw value of the tile's pixel
+					tile_pixel = ((tile_data >> 8) & (1 << y)) ? 2 : 0;
+					tile_pixel |= (tile_data & (1 << y)) ? 1 : 0;
 
-					case 1: 
-						scanline_buffer[lcd_stat.scanline_pixel_counter++] = config::DMG_BG_PAL[1];
-						break;
+					//Set the raw color of the BG
+					scanline_raw[lcd_stat.scanline_pixel_counter] = tile_pixel;
+					scanline_buffer[lcd_stat.scanline_pixel_counter] = config::DMG_BG_PAL[lcd_stat.bgp[tile_pixel]];
 
-					case 2: 
-						scanline_buffer[lcd_stat.scanline_pixel_counter++] = config::DMG_BG_PAL[2];
-						break;
-
-					case 3: 
-						scanline_buffer[lcd_stat.scanline_pixel_counter++] = config::DMG_BG_PAL[3];
-						break;
-				}
-
-				u8 last_scanline_pixel = lcd_stat.scanline_pixel_counter - 1;
-
-				//Render HD
-				if((cgfx::loaded) && (cgfx::scaling_factor > 1) && (last_scanline_pixel < 160))
-				{
-					u32 pos = (last_scanline_pixel * cgfx::scaling_factor) + (lcd_stat.current_scanline * cgfx::scaling_factor * config::sys_width);
-			
-					for(int a = 0; a < cgfx::scaling_factor; a++)
+					//Render HD
+					if ((cgfx::loaded) && (cgfx::scaling_factor > 1))
 					{
-						for(int b = 0; b < cgfx::scaling_factor; b++)
+						u32 pos = (lcd_stat.scanline_pixel_counter * cgfx::scaling_factor) + (lcd_stat.current_scanline * cgfx::scaling_factor * config::sys_width);
+
+						for (int a = 0; a < cgfx::scaling_factor; a++)
 						{
-							hd_screen_buffer[pos + b] = scanline_buffer[last_scanline_pixel];
+							for (int b = 0; b < cgfx::scaling_factor; b++)
+							{
+								hd_screen_buffer[pos + b] = scanline_buffer[lcd_stat.scanline_pixel_counter];
+							}
+
+							pos += config::sys_width;
 						}
-	
-						pos += config::sys_width;
 					}
 				}
+				lcd_stat.scanline_pixel_counter++;
 			}
 		}
 	}
@@ -1935,111 +1903,69 @@ void GB_LCD::step_sub(int cpu_clock)
 							screen_buffer[0x5A00 + x] = mem->sub_screen_buffer[x];
 						}
 					}
-
-					//Use SDL
-					if(config::sdl_render)
+					if (config::sdl_render || config::use_opengl)
 					{
-						//If using SDL and no OpenGL, manually stretch for fullscreen via SDL
-						if((config::flags & SDL_WINDOW_FULLSCREEN_DESKTOP) && (!config::use_opengl))
+						//Lock source surface
+						if (SDL_MUSTLOCK(original_screen)) { SDL_LockSurface(original_screen); }
+						u32* out_pixel_data = (u32*)original_screen->pixels;
+
+						//Regular 1:1 framebuffer rendering
+						if ((!cgfx::loaded) || (cgfx::scaling_factor <= 1))
 						{
-							//Lock source surface
-							if(SDL_MUSTLOCK(original_screen)){ SDL_LockSurface(original_screen); }
-							u32* out_pixel_data = (u32*)original_screen->pixels;
-
-							//Regular 1:1 framebuffer rendering
-							if((!cgfx::loaded) || (cgfx::scaling_factor <= 1))
-							{
-								for(int a = 0; a < screen_buffer.size(); a++) { out_pixel_data[a] = screen_buffer[a]; }
-							}
-
-							//HD CGFX framebuffer rendering
-							else if((cgfx::loaded) && (cgfx::scaling_factor > 1))
-							{
-								for(int a = 0; a < hd_screen_buffer.size(); a++) { out_pixel_data[a] = hd_screen_buffer[a]; }
-							}
-
-							//Unlock source surface
-							if(SDL_MUSTLOCK(original_screen)){ SDL_UnlockSurface(original_screen); }
-
-							//Blit the original surface to the final stretched one
-							SDL_Rect dest_rect;
-							dest_rect.w = config::sys_width * max_fullscreen_ratio;
-							dest_rect.h = config::sys_height * max_fullscreen_ratio;
-							dest_rect.x = ((config::win_width - dest_rect.w) >> 1);
-							dest_rect.y = ((config::win_height - dest_rect.h) >> 1);
-							SDL_BlitScaled(original_screen, NULL, final_screen, &dest_rect);
-
-							if(SDL_UpdateWindowSurface(window) != 0) { std::cout<<"LCD::Error - Could not blit\n"; }
+							for (int a = 0; a < screen_buffer.size(); a++) { out_pixel_data[a] = screen_buffer[a]; }
 						}
 
-						//Otherwise, render normally (SDL 1:1, OpenGL handles its own stretching)
-						else
+						//HD CGFX framebuffer rendering
+						else if ((cgfx::loaded) && (cgfx::scaling_factor > 1))
 						{
-							//Lock source surface
-							if(SDL_MUSTLOCK(final_screen)){ SDL_LockSurface(final_screen); }
-							u32* out_pixel_data = (u32*)final_screen->pixels;
+							for (int a = 0; a < hd_screen_buffer.size(); a++) { out_pixel_data[a] = hd_screen_buffer[a]; }
+						}
 
-							//Regular 1:1 framebuffer rendering
-							if((!cgfx::loaded) || (cgfx::scaling_factor <= 1))
+						//Unlock source surface
+						if (SDL_MUSTLOCK(original_screen)) { SDL_UnlockSurface(original_screen); }
+
+						//Use SDL
+						if (config::sdl_render)
+						{
+							//If using SDL and no OpenGL, manually stretch for fullscreen via SDL
+							if ((config::flags & SDL_WINDOW_FULLSCREEN_DESKTOP) && (!config::use_opengl))
 							{
-								for(int a = 0; a < screen_buffer.size(); a++) { out_pixel_data[a] = screen_buffer[a]; }
+								//Blit the original surface to the final stretched one
+								SDL_Rect dest_rect;
+								dest_rect.w = config::sys_width * max_fullscreen_ratio;
+								dest_rect.h = config::sys_height * max_fullscreen_ratio;
+								dest_rect.x = ((config::win_width - dest_rect.w) >> 1);
+								dest_rect.y = ((config::win_height - dest_rect.h) >> 1);
+								SDL_BlitScaled(original_screen, NULL, final_screen, &dest_rect);
+
+								if (SDL_UpdateWindowSurface(window) != 0) { std::cout << "LCD::Error - Could not blit\n"; }
 							}
 
-							//HD CGFX framebuffer rendering
-							else if((cgfx::loaded) && (cgfx::scaling_factor > 1))
+							//Otherwise, render normally (SDL 1:1, OpenGL handles its own stretching)
+							else
 							{
-								for(int a = 0; a < hd_screen_buffer.size(); a++) { out_pixel_data[a] = hd_screen_buffer[a]; }
-							}
+								//Display final screen buffer - OpenGL
+								if (config::use_opengl) { opengl_blit(); }
 
-							//Unlock source surface
-							if(SDL_MUSTLOCK(final_screen)){ SDL_UnlockSurface(final_screen); }
-		
-							//Display final screen buffer - OpenGL
-							if(config::use_opengl) { opengl_blit(); }
-				
-							//Display final screen buffer - SDL
-							else 
-							{
-								if(SDL_UpdateWindowSurface(window) != 0) { std::cout<<"LCD::Error - Could not blit\n"; }
+								//Display final screen buffer - SDL
+								else
+								{
+									if (SDL_UpdateWindowSurface(window) != 0) { std::cout << "LCD::Error - Could not blit\n"; }
+								}
 							}
+						}
+						else 
+						{
+							config::render_external_hw(original_screen);
 						}
 					}
-
-					//Use external rendering method (GUI)
-					else 
+					else
 					{
-						if(!config::use_opengl)
-						{
-							//Regular 1:1 framebuffer rendering
-							if((!cgfx::loaded) || (cgfx::scaling_factor <= 1)) { config::render_external_sw(screen_buffer); }
-						
-							//HD CGFX framebuffer rendering
-							else if((cgfx::loaded) && (cgfx::scaling_factor > 1)) { config::render_external_sw(hd_screen_buffer); }
-						}
+						//Regular 1:1 framebuffer rendering
+						if ((!cgfx::loaded) || (cgfx::scaling_factor <= 1)) { config::render_external_sw(screen_buffer); }
 
-						else
-						{
-							//Lock source surface
-							if(SDL_MUSTLOCK(final_screen)){ SDL_LockSurface(final_screen); }
-							u32* out_pixel_data = (u32*)final_screen->pixels;
-
-							//Regular 1:1 framebuffer rendering
-							if((!cgfx::loaded) || (cgfx::scaling_factor <= 1))
-							{
-								for(int a = 0; a < screen_buffer.size(); a++) { out_pixel_data[a] = screen_buffer[a]; }
-							}
-
-							//HD CGFX framebuffer rendering
-							else if((cgfx::loaded) && (cgfx::scaling_factor > 1))
-							{
-								for(int a = 0; a < hd_screen_buffer.size(); a++) { out_pixel_data[a] = hd_screen_buffer[a]; }
-							}
-
-							//Unlock source surface
-							if(SDL_MUSTLOCK(final_screen)){ SDL_UnlockSurface(final_screen); }
-
-							config::render_external_hw(final_screen);
-						}
+						//HD CGFX framebuffer rendering
+						else if ((cgfx::loaded) && (cgfx::scaling_factor > 1)) { config::render_external_sw(hd_screen_buffer); }
 					}
 				}
 

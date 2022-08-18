@@ -40,7 +40,7 @@ GB_MMU::~GB_MMU()
 		for(u32 x = 0; x < cart.cam_buffer.size(); x++) { random_access_bank[0][0x100 + x] = 0x0; }
 	}
 
-	save_backup(config::save_file);
+	save_backup(get_rom_save());
 	memory_map.clear();
 	std::cout<<"MMU::Shutdown\n"; 
 }
@@ -2198,7 +2198,7 @@ bool GB_MMU::read_file(std::string filename)
 	init_io_reg();
 
 	//Load backup save data if applicable
-    load_backup(config::save_file);
+    load_backup(get_rom_save());
 
 	return true;
 }
@@ -2403,12 +2403,6 @@ bool GB_MMU::load_backup(std::string filename)
 /****** Save backup save data ******/
 bool GB_MMU::save_backup(std::string filename)
 {
-	//Use config save path if applicable
-	if(!config::save_path.empty())
-	{
-		 filename = config::save_path + util::get_filename_from_path(filename);
-	}
-
 	if(cart.battery)
 	{
 		//Rearrange GB Memory Cartridge save data into regular a format that can be saved to disk

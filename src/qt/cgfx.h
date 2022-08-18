@@ -64,6 +64,9 @@ class gbe_cgfx : public QDialog
 	QPushButton* cancel_button;
 	QPushButton* dump_button;
 
+	QComboBox* cgfx_scale;
+
+
 	//Layers tab widgets
 	QComboBox* layer_select;
 	QSpinBox* render_stop_line;

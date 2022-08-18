@@ -21,6 +21,7 @@
 /****** Loads the manifest file ******/
 bool GB_LCD::load_manifest(std::string filename) 
 {
+	cgfx::scaling_factor = 1;
 	std::ifstream file(filename.c_str(), std::ios::in); 
 	std::string input_line = "";
 	std::string line_char = "";
@@ -92,6 +93,10 @@ bool GB_LCD::load_manifest(std::string filename)
 
 				else { line_item += line_char; }
 			}
+		}
+		else if (input_line.substr(0, 6) == "SCALE=")
+		{
+			cgfx::scaling_factor = std::stoi(input_line.substr(6));
 		}
 
 		//Determine if manifest is properly formed (roughly)
@@ -228,6 +233,15 @@ bool GB_LCD::load_manifest(std::string filename)
 			cgfx_stat.m_meta_forms.push_back(form_value);
 		}
 	}
+
+
+	//Initialize HD buffer for CGFX greater that 1:1
+	config::sys_width *= cgfx::scaling_factor;
+	config::sys_height *= cgfx::scaling_factor;
+	cgfx::scale_squared = cgfx::scaling_factor * cgfx::scaling_factor;
+
+	hd_screen_buffer.clear();
+	hd_screen_buffer.resize((config::sys_width * config::sys_height), 0);
 
 	std::cout<<"CGFX::" << filename << " loaded successfully\n"; 
 
@@ -1464,30 +1478,31 @@ void GB_LCD::invalidate_cgfx()
 	cgfx_stat.update_map = true;
 
 	//Recalculate palette max-min BG brightness
-	for(u32 y = 0; y < 8; y++)
+	for (u32 y = 0; y < 8; y++)
 	{
 		cgfx_stat.bg_pal_max[y] = cgfx_stat.bg_pal_min[y] = util::get_brightness_fast(lcd_stat.bg_colors_final[0][y]);
 
-		for(u32 x = 0; x < 4; x++)
+		for (u32 x = 0; x < 4; x++)
 		{
 			u8 brightness = util::get_brightness_fast(lcd_stat.bg_colors_final[x][y]);
 
-			if(brightness > cgfx_stat.bg_pal_max[y]) { cgfx_stat.bg_pal_max[y] = brightness; }
-			if(brightness < cgfx_stat.bg_pal_min[y]) { cgfx_stat.bg_pal_min[y] = brightness; }
+			if (brightness > cgfx_stat.bg_pal_max[y]) { cgfx_stat.bg_pal_max[y] = brightness; }
+			if (brightness < cgfx_stat.bg_pal_min[y]) { cgfx_stat.bg_pal_min[y] = brightness; }
 		}
 	}
 
 	//Recalculate palette max-min OBJ brightness
-	for(u32 y = 0; y < 8; y++)
+	for (u32 y = 0; y < 8; y++)
 	{
 		cgfx_stat.obj_pal_max[y] = cgfx_stat.obj_pal_min[y] = util::get_brightness_fast(lcd_stat.obj_colors_final[1][y]);
 
-		for(u32 x = 1; x < 4; x++)
+		for (u32 x = 1; x < 4; x++)
 		{
 			u8 brightness = util::get_brightness_fast(lcd_stat.obj_colors_final[x][y]);
 
-			if(brightness > cgfx_stat.obj_pal_max[y]) { cgfx_stat.obj_pal_max[y] = brightness; }
-			if(brightness < cgfx_stat.obj_pal_min[y]) { cgfx_stat.obj_pal_min[y] = brightness; }
+			if (brightness > cgfx_stat.obj_pal_max[y]) { cgfx_stat.obj_pal_max[y] = brightness; }
+			if (brightness < cgfx_stat.obj_pal_min[y]) { cgfx_stat.obj_pal_min[y] = brightness; }
 		}
 	}
+
 }

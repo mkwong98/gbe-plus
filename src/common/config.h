@@ -24,6 +24,14 @@ void set_dmg_colors(u8 color_type);
 u8 get_system_type_from_file(std::string filename);
 bool parse_cli_args();
 void parse_filenames();
+
+void set_rom_file(std::string filename);
+std::string get_rom_file();
+std::string get_rom_name();
+std::string get_rom_save();
+std::string get_rom_state();
+
+
 bool parse_ini_file();
 bool parse_cheats_file(bool add_cheats);
 bool save_ini_file();
@@ -45,9 +53,7 @@ enum special_cart_types
 
 namespace config
 { 
-	extern std::string rom_file;
 	extern std::string bios_file;
-	extern std::string save_file;
 	extern std::string dmg_bios_path;
 	extern std::string gbc_bios_path;
 	extern std::string save_path;

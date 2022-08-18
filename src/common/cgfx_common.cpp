@@ -9,6 +9,7 @@
 // Emulator-wide custom graphics assets
 
 #include "cgfx_common.h"
+#include "config.h"
 
 namespace cgfx
 { 
@@ -27,7 +28,6 @@ namespace cgfx
 	u32 transparency_color = 0x00000000;
 
 	std::string cgfx_path = "cgfx/";
-	std::string manifest_file = "";
 	std::string dump_bg_path = "";
 	std::string dump_obj_path = "";
 	std::string dump_name = "";
@@ -40,4 +40,14 @@ namespace cgfx
 	bool last_added = false;
 	bool last_saved = false;
 	bool ignore_existing_hash = false;
+}
+
+std::string get_game_cgfx_folder()
+{
+	return cgfx::cgfx_path + get_rom_name() + "/";
+}
+
+std::string get_manifest_file() 
+{
+	return get_game_cgfx_folder() + "manifest.txt";
 }

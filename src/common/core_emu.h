@@ -50,6 +50,7 @@ class core_emu
 	virtual void ex_write_u8(u16 address, u8 value) = 0;
 
 	//CGFX interface
+	virtual void read_cgfx() = 0;
 	virtual void dump_obj(int obj_index) = 0;
 	virtual void dump_bg(int bg_index) = 0;
 	virtual u32* get_obj_palette(int pal_index) = 0;

@@ -382,8 +382,31 @@ gbe_cgfx::gbe_cgfx(QWidget *parent) : QDialog(parent)
 	manifest_layout->addWidget(manifest_display);
 	manifest_tab->setLayout(manifest_layout);
 	
+	//Display settings - CGFX scale
+	QWidget* cgfx_scale_set = new QWidget(this);
+	QLabel* cgfx_scale_label = new QLabel("Custom Graphics (CGFX) Scale : ");
+	cgfx_scale = new QComboBox(cgfx_scale_set);
+	cgfx_scale->setToolTip("Scaling factor for all custom graphics.\nOnly applies when CGFX are loaded.");
+	cgfx_scale->addItem("1x");
+	cgfx_scale->addItem("2x");
+	cgfx_scale->addItem("3x");
+	cgfx_scale->addItem("4x");
+	cgfx_scale->addItem("5x");
+	cgfx_scale->addItem("6x");
+	cgfx_scale->addItem("7x");
+	cgfx_scale->addItem("8x");
+	cgfx_scale->addItem("9x");
+	cgfx_scale->addItem("10x");
+
+	QHBoxLayout* cgfx_scale_layout = new QHBoxLayout;
+	cgfx_scale_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+	cgfx_scale_layout->addWidget(cgfx_scale_label);
+	cgfx_scale_layout->addWidget(cgfx_scale);
+	cgfx_scale_set->setLayout(cgfx_scale_layout);
+
 	//Final tab layout
 	QVBoxLayout* main_layout = new QVBoxLayout;
+	main_layout->addWidget(cgfx_scale_set);
 	main_layout->addWidget(tabs);
 	main_layout->addWidget(tabs_button);
 	setLayout(main_layout);
@@ -972,7 +995,7 @@ void gbe_cgfx::close_advanced()
 void gbe_cgfx::dump_obj(int obj_index)
 {
 	//Show warning dialog
-	if((cgfx::manifest_file.empty()) && (enable_manifest_warning))
+	if((get_manifest_file().empty()) && (enable_manifest_warning))
 	{
 		manifest_warning->show();
 		manifest_warning->raise();
@@ -1026,7 +1049,7 @@ void gbe_cgfx::dump_obj(int obj_index)
 void gbe_cgfx::dump_bg(int bg_index)
 {
 	//Show warning dialog
-	if((cgfx::manifest_file.empty()) && (enable_manifest_warning))
+	if((get_manifest_file().empty()) && (enable_manifest_warning))
 	{
 		manifest_warning->show();
 		manifest_warning->raise();
@@ -2296,7 +2319,7 @@ void gbe_cgfx::paintEvent(QPaintEvent* event)
 void gbe_cgfx::write_manifest_entry()
 {
 	//Open manifest file, then write to it
-	std::ofstream file(cgfx::manifest_file.c_str(), std::ios::out | std::ios::app);
+	std::ofstream file(get_manifest_file().c_str(), std::ios::out | std::ios::app);
 
 	//Show warning if manifest file cannot be accessed
 	if((!file.is_open()) && (enable_manifest_critical))
@@ -2371,7 +2394,7 @@ bool gbe_cgfx::delete_manifest_entry(int index)
 {
 	std::vector <std::string> manifest;
 
-	std::ifstream in_file(cgfx::manifest_file.c_str(), std::ios::in); 
+	std::ifstream in_file(get_manifest_file().c_str(), std::ios::in);
 	std::string input_line = "";
 	std::string line_char = "";
 
@@ -2379,7 +2402,7 @@ bool gbe_cgfx::delete_manifest_entry(int index)
 
 	if(!in_file.is_open())
 	{
-		std::cout<<"CGFX::Could not open manifest file " << cgfx::manifest_file << ". Check file path or permissions. \n";
+		std::cout<<"CGFX::Could not open manifest file " << get_manifest_file() << ". Check file path or permissions. \n";
 		return false; 
 	}
 
@@ -2441,11 +2464,11 @@ bool gbe_cgfx::delete_manifest_entry(int index)
 	//If manifest is empty, quit now
 	if(manifest.empty()) { return false; }
 
-	std::ofstream out_file(cgfx::manifest_file.c_str(), std::ios::out | std::ios::trunc);
+	std::ofstream out_file(get_manifest_file().c_str(), std::ios::out | std::ios::trunc);
 
 	if(!out_file.is_open())
 	{
-		std::cout<<"CGFX::Could not open manifest file " << cgfx::manifest_file << ". Check file path or permissions. \n";
+		std::cout<<"CGFX::Could not open manifest file " << get_manifest_file() << ". Check file path or permissions. \n";
 		return false; 
 	}
 
@@ -2560,7 +2583,7 @@ void gbe_cgfx::dump_selection()
 	if(layer_select->currentIndex() == 2) { return; }
 
 	//Show warning dialog
-	if((cgfx::manifest_file.empty()) && (enable_manifest_warning))
+	if((get_manifest_file().empty()) && (enable_manifest_warning))
 	{
 		manifest_warning->show();
 		manifest_warning->raise();
@@ -2632,7 +2655,7 @@ void gbe_cgfx::dump_selection()
 	layer_change();
 
 	//Open manifest file, then write to it
-	std::ofstream file(cgfx::manifest_file.c_str(), std::ios::out | std::ios::app);
+	std::ofstream file(get_manifest_file().c_str(), std::ios::out | std::ios::app);
 	std::string entry = "";
 
 	//TODO - Add a Qt warning here
@@ -2700,7 +2723,7 @@ void gbe_cgfx::dump_selection()
 void gbe_cgfx::dump_obj_meta_tile()
 {
 	//Show warning dialog
-	if((cgfx::manifest_file.empty()) && (enable_manifest_warning))
+	if((get_manifest_file().empty()) && (enable_manifest_warning))
 	{
 		manifest_warning->show();
 		manifest_warning->raise();
@@ -2738,7 +2761,7 @@ void gbe_cgfx::dump_obj_meta_tile()
 	}
 
 	//Open manifest file, then write to it
-	std::ofstream file(cgfx::manifest_file.c_str(), std::ios::out | std::ios::app);
+	std::ofstream file(get_manifest_file().c_str(), std::ios::out | std::ios::app);
 	std::string entry = "";
 
 	//TODO - Add a Qt warning here
@@ -3021,13 +3044,13 @@ bool gbe_cgfx::parse_manifest_items()
 	std::vector <std::string> manifest;
 	std::vector <u8> manifest_entry_size;
 
-	std::ifstream file(cgfx::manifest_file.c_str(), std::ios::in); 
+	std::ifstream file(get_manifest_file().c_str(), std::ios::in);
 	std::string input_line = "";
 	std::string line_char = "";
 
 	if(!file.is_open())
 	{
-		std::cout<<"CGFX::Could not open manifest file " << cgfx::manifest_file << ". Check file path or permissions. \n";
+		std::cout<<"CGFX::Could not open manifest file " << get_manifest_file() << ". Check file path or permissions. \n";
 		return false; 
 	}
 
@@ -3038,7 +3061,7 @@ bool gbe_cgfx::parse_manifest_items()
 		bool ignore = false;	
 		u8 item_count = 0;	
 
-		//Check if line starts with [ - if not, skip line
+		//Check if line starts with [ - if not, check for scaling factor skip line
 		if(line_char == "[")
 		{
 			std::string line_item = "";
@@ -3069,7 +3092,7 @@ bool gbe_cgfx::parse_manifest_items()
 		//Each metatile entry should have 3 parameters
 		if((item_count != 5) && (item_count != 3) && (item_count != 0))
 		{
-			std::cout<<"CGFX::Manifest file " << cgfx::manifest_file << " has some missing parameters for some entries. \n";
+			std::cout<<"CGFX::Manifest file " << get_manifest_file() << " has some missing parameters for some entries. \n";
 			std::cout<<"CGFX::Entry -> " << input_line << "\n";
 			file.close();
 			return false;

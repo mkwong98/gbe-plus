@@ -21,8 +21,11 @@
 namespace config
 {
 	std::string rom_file = "";
+	std::string rom_root = "";
+	std::string rom_name = "";
+	std::string state_file = "";
+
 	std::string bios_file = "";
-	std::string save_file = "";
 	std::string dmg_bios_path = "";
 	std::string gbc_bios_path = "";
 	std::string save_path = "";
@@ -703,9 +706,51 @@ bool parse_cli_args()
 void parse_filenames()
 {
 	//ROM file is always first argument
-	config::rom_file = config::cli_args[0];
-	config::save_file = config::rom_file + ".sav";
+	set_rom_file(config::cli_args[0]);
 }
+
+void set_rom_file(std::string filename)
+{
+	config::rom_file = filename;
+	
+	std::size_t match = filename.find_last_of(".");
+	if (match != std::string::npos) { config::rom_root = filename.substr(0, match); }
+	else { config::rom_root = filename; }
+
+	config::state_file = config::rom_root + ".ss";
+
+	config::rom_name = util::get_filename_from_path(config::rom_root);
+
+}
+
+std::string get_rom_file()
+{
+	return config::rom_file;
+}
+
+std::string get_rom_name()
+{
+	return config::rom_name;
+}
+
+std::string get_rom_save()
+{
+	//Use config save path if applicable
+	if (!config::save_path.empty())
+	{
+		return config::save_path + config::rom_name + ".sav";
+	}
+	else 
+	{
+		return config::rom_root + ".sav";
+	}
+}
+
+std::string get_rom_state() 
+{
+	return config::state_file;
+}
+
 
 /****** Parse options from the .ini file ******/
 bool parse_ini_file()
@@ -1771,7 +1816,7 @@ bool parse_ini_file()
 		}
 
 		//CGFX manifest path
-		else if(ini_item == "#manifest_path")
+		else if(ini_item == "#cgfx_path")
 		{
 			if((x + 1) < size) 
 			{
@@ -1780,12 +1825,12 @@ bool parse_ini_file()
 				first_char = ini_item[0];
 				
 				//When left blank, don't parse the next line item
-				if(first_char != "#") { cgfx::manifest_file = ini_item; }
-				else { cgfx::manifest_file = ""; x--;}
+				if(first_char != "#") { cgfx::cgfx_path = ini_item; }
+				else { cgfx::cgfx_path = ""; x--;}
  
 			}
 
-			else { cgfx::manifest_file = ""; }
+			else { cgfx::cgfx_path = ""; }
 		}
 
 		//CGFX BG Tile dump folder
@@ -2337,8 +2382,8 @@ bool save_ini_file()
 	output_lines.push_back("[#use_cgfx:" + val + "]");
 
 	//CGFX manifest path
-	val = (cgfx::manifest_file == "") ? "" : (":'" + cgfx::manifest_file + "'");
-	output_lines.push_back("[#manifest_path" + val + "]");
+	val = (cgfx::cgfx_path == "") ? "" : (":'" + cgfx::cgfx_path + "'");
+	output_lines.push_back("[#cgfx_path" + val + "]");
 
 	//CGFX BG Tile dump folder
 	val = (cgfx::dump_bg_path == "") ? "" : (":'" + cgfx::dump_bg_path + "'");

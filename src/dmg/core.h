@@ -40,6 +40,7 @@ class GB_core : virtual public core_emu
 		u32 ex_get_reg(u8 reg_index);
 
 		//CGFX interface
+		void read_cgfx();
 		void dump_obj(int obj_index);
 		void dump_bg(int bg_index);
 		u32* get_obj_palette(int pal_index);

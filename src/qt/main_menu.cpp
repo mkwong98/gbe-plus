@@ -337,8 +337,7 @@ void main_menu::open_file()
 		QString filename = QFileDialog::getOpenFileName(this, tr("Open"), "", tr("GBx files (*.gb *.gbc)"));
 		if(filename.isNull()) { SDL_PauseAudio(0); return; }
 
-		config::rom_file = filename.toStdString();
-		config::save_file = config::rom_file + ".sav";
+		set_rom_file(filename.toStdString());
 	}
 
 	else
@@ -349,32 +348,17 @@ void main_menu::open_file()
 
 	SDL_PauseAudio(0);
 
-	//Close the core
-	if(main_menu::gbe_plus != NULL) 
-	{
-		main_menu::gbe_plus->shutdown();
-		main_menu::gbe_plus->core_emu::~core_emu();
-	}
-
-	config::sdl_render = false;
-	config::render_external_sw = render_screen_sw;
-	config::render_external_hw = render_screen_hw;
-	config::sample_rate = settings->sample_rate;
-
-	if(qt_gui::screen != NULL) { delete qt_gui::screen; }
-	qt_gui::screen = NULL;
-
 	//Search the recent files list and add this path to it
 	bool add_recent = true;
 
 	for(int x = 0; x < config::recent_files.size(); x++)
 	{
-		if(config::recent_files[x] == config::rom_file) { add_recent = false; }
+		if(config::recent_files[x] == get_rom_file()) { add_recent = false; }
 	}
 
 	if(add_recent)
 	{
-		config::recent_files.push_back(config::rom_file);
+		config::recent_files.push_back(get_rom_file());
 
 		//Delete the earliest element
 		if(config::recent_files.size() > 10) { config::recent_files.erase(config::recent_files.begin()); }
@@ -404,22 +388,7 @@ void main_menu::open_file()
 /****** Boots system without a cartridge ******/
 void main_menu::open_no_cart()
 {
-	//Close the core
-	if(main_menu::gbe_plus != NULL) 
-	{
-		main_menu::gbe_plus->shutdown();
-		main_menu::gbe_plus->core_emu::~core_emu();
-	}
-
-	config::sdl_render = false;
-	config::render_external_sw = render_screen_sw;
-	config::render_external_hw = render_screen_hw;
-	config::sample_rate = settings->sample_rate;
-
-	if(qt_gui::screen != NULL) { delete qt_gui::screen; }
-	qt_gui::screen = NULL;
-
-	config::rom_file = "NOCART";
+	set_rom_file("NOCART");
 
 	boot_game();
 }
@@ -516,9 +485,7 @@ void main_menu::quit()
 	config::save_path = settings->game_saves->text().toStdString();
 	config::cheats_path = settings->cheats_path->text().toStdString();
 
-	cgfx::manifest_file = settings->manifest->text().toStdString();
-	cgfx::dump_bg_path = settings->dump_bg->text().toStdString();
-	cgfx::dump_obj_path = settings->dump_obj->text().toStdString();
+	cgfx::cgfx_path = settings->cgfx_path->text().toStdString();
 
 	switch(settings->freq->currentIndex())
 	{
@@ -541,19 +508,34 @@ void main_menu::quit()
 /****** Boots and starts emulation ******/
 void main_menu::boot_game()
 {
-	//Check to see if the ROM file actually exists
-	QFile test_file(QString::fromStdString(config::rom_file));
-	
-	if((config::rom_file != "NOCART") && (!test_file.exists()))
+	//Close the core
+	if (main_menu::gbe_plus != NULL)
 	{
-		std::string mesg_text = "The specified file: '" + config::rom_file + "' could not be loaded"; 
+		main_menu::gbe_plus->shutdown();
+		main_menu::gbe_plus->core_emu::~core_emu();
+	}
+
+	config::sdl_render = false;
+	config::render_external_sw = render_screen_sw;
+	config::render_external_hw = render_screen_hw;
+	config::sample_rate = settings->sample_rate;
+
+	if (qt_gui::screen != NULL) { delete qt_gui::screen; }
+	qt_gui::screen = NULL;
+
+	//Check to see if the ROM file actually exists
+	QFile test_file(QString::fromStdString(get_rom_file()));
+	
+	if((get_rom_file() != "NOCART") && (!test_file.exists()))
+	{
+		std::string mesg_text = "The specified file: '" + get_rom_file() + "' could not be loaded";
 		warning_box->setText(QString::fromStdString(mesg_text));
 		warning_box->show();
 		return;
 	}
 
 	std::string test_bios_path = "";
-	u8 system_type = get_system_type_from_file(config::rom_file);
+	u8 system_type = get_system_type_from_file(get_rom_file());
 
 	switch(system_type)
 	{
@@ -563,7 +545,7 @@ void main_menu::boot_game()
 
 	test_file.setFileName(QString::fromStdString(test_bios_path));
 
-	if((config::rom_file == "NOCART") && (!config::use_bios))
+	if((get_rom_file() == "NOCART") && (!config::use_bios))
 	{
 		std::string mesg_text = "A BIOS/Boot ROM file must be used when booting without a cartridge\n";
 		warning_box->setText(QString::fromStdString(mesg_text));
@@ -591,6 +573,8 @@ void main_menu::boot_game()
 	config::use_stereo = (settings->stereo_enable->isChecked()) ? true : false;
 	config::pause_emu = false;
 
+	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "", "x", NULL);
+
 	//Check OpenGL status
 	if(settings->ogl->isChecked())
 	{
@@ -599,6 +583,7 @@ void main_menu::boot_game()
 		sw_screen->hide();
 		hw_screen->setEnabled(true);
 		hw_screen->show();
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "", "5", NULL);
 	}
 
 	else
@@ -638,10 +623,12 @@ void main_menu::boot_game()
 
 	menu_height = menu_bar->height();
 
-	if(config::rom_file != "NOCART")
+	if(get_rom_file() != "NOCART")
 	{
 		config::gb_type = system_type;
 	}
+
+	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "", "y", NULL);
 
 	if (config::gb_type < 2)
 	{
@@ -653,15 +640,19 @@ void main_menu::boot_game()
 		main_menu::gbe_plus = new GBC_core();
 		cgfx = new gbc_cgfx();
 	}
+	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "", "b", NULL);
 
 	//Set up custom graphics dialog
 	cgfx->hide();
 	cgfx->advanced->setChecked(true);
 
-
-	//Determine CGFX scaling factor
-	cgfx::scaling_factor = (settings->cgfx_scale->currentIndex() + 1);
-	if (!cgfx::load_cgfx) { cgfx::scaling_factor = 1; }
+	//Read specified ROM file
+	main_menu::gbe_plus->read_file(get_rom_file());
+	//Read manifest
+	if (cgfx::load_cgfx)
+	{
+		main_menu::gbe_plus->read_cgfx();
+	}
 
 	//Start the appropiate system core - DMG, GBC
 	base_width = (160 * cgfx::scaling_factor);
@@ -673,15 +664,13 @@ void main_menu::boot_game()
 	if(config::use_opengl) { hw_screen->resize((base_width * config::scaling_factor), (base_height * config::scaling_factor)); }
 	else { sw_screen->resize((base_width * config::scaling_factor), (base_height * config::scaling_factor)); }
 
-	if(qt_gui::screen != NULL) { delete qt_gui::screen; }
 	qt_gui::screen = new QImage(base_width, base_height, QImage::Format_ARGB32);
+
+	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "", "c", NULL);
 
 	//Enable CGFX menu
 	findChild<QAction*>("custom_gfx_action")->setEnabled(true);
 
-	//Read specified ROM file
-	main_menu::gbe_plus->read_file(config::rom_file);
-	
 	//Read BIOS file optionally
 	if(config::use_bios) 
 	{
@@ -702,8 +691,12 @@ void main_menu::boot_game()
 		fullscreen();
 	}
 
+	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "", "d", NULL);
+
 	//Engage the core
 	main_menu::gbe_plus->start();
+
+	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "", "e", NULL);
 
 	//Actually run the core
 	main_menu::gbe_plus->run_core();
@@ -755,46 +748,7 @@ void main_menu::paintEvent(QPaintEvent* event)
 /****** Closes the main window ******/
 void main_menu::closeEvent(QCloseEvent* event)
 {
-	//Close the core
-	if(main_menu::gbe_plus != NULL) 
-	{
-		main_menu::gbe_plus->shutdown();
-		main_menu::gbe_plus->core_emu::~core_emu();
-	}
-
-	//Save .ini options
-	config::use_cheats = (settings->cheats->isChecked()) ? true : false;
-	config::mute = (settings->sound_on->isChecked()) ? false : true;
-	config::use_stereo = (settings->stereo_enable->isChecked()) ? true : false;
-	config::volume = settings->volume->value();
-	config::use_opengl = (settings->ogl->isChecked()) ? true : false;
-	config::use_haptics = (settings->rumble_on->isChecked()) ? true : false;
-	
-	config::dmg_bios_path = settings->dmg_bios->text().toStdString();
-	config::gbc_bios_path = settings->gbc_bios->text().toStdString();
-	cgfx::manifest_file = settings->manifest->text().toStdString();
-	config::ss_path = settings->screenshot->text().toStdString();
-	cgfx::dump_bg_path = settings->dump_bg->text().toStdString();
-	cgfx::dump_obj_path = settings->dump_obj->text().toStdString();
-	config::save_path = settings->game_saves->text().toStdString();
-	config::cheats_path = settings->cheats_path->text().toStdString();
-
-	switch(settings->freq->currentIndex())
-	{
-		case 0: config::sample_rate = 48000.0; break;
-		case 1: config::sample_rate = 44100.0; break;
-		case 2: config::sample_rate = 22050.0; break;
-		case 3: config::sample_rate = 11025.0; break;
-	}
-
-	save_ini_file();
-	save_cheats_file();
-
-	//Close SDL
-	SDL_Quit();
-
-	//Exit the application
-	exit(0);
+	quit();
 }
 
 /****** Handle keypress input ******/
@@ -939,37 +893,6 @@ void main_menu::reset()
 			return;
 		}
 
-		main_menu::gbe_plus->shutdown();
-		main_menu::gbe_plus->core_emu::~core_emu();
-
-		QFile test_file;
-		std::string test_bios_path = "";
-		u8 system_type = get_system_type_from_file(config::rom_file);
-
-		switch(system_type)
-		{
-			case 0x1: test_bios_path = config::dmg_bios_path; break;
-			case 0x2: test_bios_path = config::gbc_bios_path; break;
-		}
-
-		test_file.setFileName(QString::fromStdString(test_bios_path));
-
-		if(!test_file.exists() && config::use_bios)
-		{
-			std::string mesg_text;
-
-			if(!test_bios_path.empty()) { mesg_text = "The BIOS file: '" + test_bios_path + "' could not be loaded"; }
-		
-			else
-			{
-				mesg_text = "No BIOS file specified for this system.\nPlease check your Paths settings or disable the 'Use BIOS/Boot ROM' option";
-			} 
-
-			warning_box->setText(QString::fromStdString(mesg_text));
-			warning_box->show();
-			return;
-		}
-
 		boot_game();
 	}
 }	
@@ -1103,26 +1026,12 @@ void main_menu::show_cgfx()
 		else { main_menu::gbe_plus->step(); }
 	}
 
-	//Draw DMG layers
-	if(config::gb_type < 2)
+	//Draw layers
+	switch (cgfx->layer_select->currentIndex())
 	{
-		switch(cgfx->layer_select->currentIndex())
-		{
-			case 0: cgfx->draw_gb_layer(0); break;
-			case 1: cgfx->draw_gb_layer(1); break;
-			case 2: cgfx->draw_gb_layer(2); break;
-		}
-	}
-
-	//Draw GBC layers
-	else
-	{
-		switch(cgfx->layer_select->currentIndex())
-		{
-			case 0: cgfx->draw_gb_layer(3); break;
-			case 1: cgfx->draw_gb_layer(4); break;
-			case 2: cgfx->draw_gb_layer(5); break;
-		}
+	case 0: cgfx->draw_gb_layer(0); break;
+	case 1: cgfx->draw_gb_layer(1); break;
+	case 2: cgfx->draw_gb_layer(2); break;
 	}
 
 	//Setup OBJ meta tile tab
@@ -1158,53 +1067,7 @@ void main_menu::show_about()
 /****** Loads recent file from list ******/
 void main_menu::load_recent(int file_id)
 {
-	//Check to see if the file actually exists
-	QFile test_file(QString::fromStdString(config::recent_files[file_id]));
-
-	if(!test_file.exists())
-	{
-		std::string mesg_text = "The specified file: '" + config::recent_files[file_id] + "' could not be loaded"; 
-		warning_box->setText(QString::fromStdString(mesg_text));
-		warning_box->show();
-		return;
-	}
-
-	std::string test_bios_path = "";
-	u8 system_type = get_system_type_from_file(config::recent_files[file_id]);
-
-	switch(system_type)
-	{
-		case 0x1: test_bios_path = config::dmg_bios_path; break;
-		case 0x2: test_bios_path = config::gbc_bios_path; break;
-	}
-
-	test_file.setFileName(QString::fromStdString(test_bios_path));
-
-	if(!test_file.exists() && config::use_bios)
-	{
-		std::string mesg_text;
-
-		if(!test_bios_path.empty()) { mesg_text = "The BIOS file: '" + test_bios_path + "' could not be loaded"; }
-		
-		else
-		{
-			mesg_text = "No BIOS file specified for this system.\nPlease check your Paths settings or disable the 'Use BIOS/Boot ROM' option";
-		} 
-
-		warning_box->setText(QString::fromStdString(mesg_text));
-		warning_box->show();
-		return;
-	}
-
-	//Close the core
-	if(main_menu::gbe_plus != NULL) 
-	{
-		main_menu::gbe_plus->shutdown();
-		main_menu::gbe_plus->core_emu::~core_emu();
-	}
-
-	config::rom_file = config::recent_files[file_id];
-	config::save_file = config::rom_file + ".sav";
+	set_rom_file(config::recent_files[file_id]);
 
 	//Resort recent files list
 	std::string first_entry = config::recent_files[file_id];
@@ -1228,14 +1091,6 @@ void main_menu::load_recent(int file_id)
 	}
 
 	connect(list_mapper, SIGNAL(mapped(int)), this, SLOT(load_recent(int)));
-
-	config::sdl_render = false;
-	config::render_external_sw = render_screen_sw;
-	config::render_external_hw = render_screen_hw;
-	config::sample_rate = settings->sample_rate;
-
-	if(qt_gui::screen != NULL) { delete qt_gui::screen; }
-	qt_gui::screen = NULL;
 
 	boot_game();
 }
@@ -1286,37 +1141,6 @@ void main_menu::start_special_comm()
 	}
 }
 
-/****** Calculates the NDS screen size + offsets when maintaining proper aspect ratio ******/
-void main_menu::get_nds_ar_size(u32 &width, u32 &height, u32 &offset_x, u32 &offset_y)
-{
-	float w_ratio = 256.0 / width;
-	float h_ratio = 384.0 / height;
-
-	u32 original_w = width;
-	u32 original_h = height;
-
-	offset_x = 0;
-	offset_y = 0;
-
-	//Calculate height to maintain aspect ratio
-	if(w_ratio > h_ratio)
-	{
-		height = (384 * (width / 256.0)) ;
-
-		//Calculate offsets
-		offset_x = 0;
-		offset_y = (original_h - height) / 2;
-	}
-
-	else if(h_ratio > w_ratio)
-	{
-		width = (256 * (height / 384.0)) ;
-
-		//Calculate offsets
-		offset_x = (original_w - width) / 2;
-		offset_y = 0;
-	}
-}
 
 /****** Static definitions ******/
 core_emu* main_menu::gbe_plus = NULL;

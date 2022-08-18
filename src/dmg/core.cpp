@@ -148,7 +148,7 @@ void GB_core::reset()
 	core_cpu->mem->g_pad = &core_pad;
 
 	//Re-read specified ROM file
-	if(!core_mmu->read_file(config::rom_file)) { can_reset = false; }
+	if(!core_mmu->read_file(get_rom_file())) { can_reset = false; }
 
 	//Re-read BIOS file
 	if((config::use_bios) && (!read_bios(config::bios_file))) { can_reset = false; }
@@ -163,7 +163,7 @@ void GB_core::load_state(u8 slot)
 {
 	std::string id = (slot > 0) ? util::to_str(slot) : "";
 
-	std::string state_file = config::rom_file + ".ss";
+	std::string state_file = get_rom_state();
 	state_file += id;
 
 	u32 offset = 0;
@@ -208,7 +208,7 @@ void GB_core::save_state(u8 slot)
 {
 	std::string id = (slot > 0) ? util::to_str(slot) : "";
 
-	std::string state_file = config::rom_file + ".ss";
+	std::string state_file = get_rom_state();
 	state_file += id;
 
 	if(!core_cpu->cpu_write(state_file)) { return; }
@@ -869,7 +869,7 @@ void GB_core::handle_hotkey(SDL_Event& event)
 		save_stream << rand() % 1024 << rand() % 1024 << rand() % 1024;
 		save_name += save_stream.str() + ".bmp";
 	
-		SDL_SaveBMP(core_cpu->controllers.video->final_screen, save_name.c_str());
+		SDL_SaveBMP(core_cpu->controllers.video->original_screen, save_name.c_str());
 
 		//OSD
 		config::osd_message = "SAVED SCREENSHOT";
@@ -1211,6 +1211,8 @@ u8 GB_core::ex_read_u8(u16 address) { return core_mmu->read_u8(address); }
 
 /****** Writes a byte to core memory ******/
 void GB_core::ex_write_u8(u16 address, u8 value) { core_mmu->write_u8(address, value); }
+
+void GB_core::read_cgfx() {	cgfx::loaded = core_cpu->controllers.video->load_manifest(get_manifest_file());}
 
 /****** Dumps selected OBJ to a file ******/
 void GB_core::dump_obj(int obj_index)

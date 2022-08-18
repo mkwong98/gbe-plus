@@ -60,7 +60,6 @@ class gen_settings : public QDialog
 
 	//Display tab widgets
 	QComboBox* screen_scale;
-	QComboBox* cgfx_scale;
 	QComboBox* dmg_gbc_pal;
 	QComboBox* ogl_frag_shader;
 	QComboBox* ogl_vert_shader;
@@ -95,18 +94,14 @@ class gen_settings : public QDialog
 	//Paths tab widgets
 	QLineEdit* dmg_bios;
 	QLineEdit* gbc_bios;
-	QLineEdit* manifest;
-	QLineEdit* dump_bg;
-	QLineEdit* dump_obj;
+	QLineEdit* cgfx_path;
 	QLineEdit* screenshot;
 	QLineEdit* game_saves;
 	QLineEdit* cheats_path;
 
 	QLabel* dmg_bios_label;
 	QLabel* gbc_bios_label;
-	QLabel* manifest_label;
-	QLabel* dump_bg_label;
-	QLabel* dump_obj_label;
+	QLabel* cgfx_path_label;
 	QLabel* screenshot_label;
 	QLabel* game_saves_label;
 	QLabel* cheats_path_label;

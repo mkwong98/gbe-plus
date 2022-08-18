@@ -15,6 +15,9 @@
 
 #include "common.h"
 
+std::string get_game_cgfx_folder();
+std::string get_manifest_file();
+
 namespace cgfx
 { 
 	extern u8 gbc_bg_color_pal;
@@ -31,7 +34,7 @@ namespace cgfx
 	extern u8 scaling_factor;
 	extern u8 scale_squared;
 
-	extern std::string manifest_file;
+	extern std::string cgfx_path;
 	extern std::string dump_bg_path;
 	extern std::string dump_obj_path;
 	extern std::string dump_name;

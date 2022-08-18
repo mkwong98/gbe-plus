@@ -107,9 +107,9 @@ bool GB_LCD::opengl_init()
 	//Define indices for the screen texture's triangles
 	GLuint indices[] =
 	{
-        	0, 1, 3,
+		0, 1, 3,
 		1, 2, 3
-    	};
+	};
 
 	//Generate a vertex array object for the screen texture + generate vertex and element buffer
 	glGenVertexArrays(1, &vertex_array_object);
@@ -139,7 +139,6 @@ bool GB_LCD::opengl_init()
 	//Generate the screen texture
 	glGenTextures(1, &lcd_texture);
 
-	final_screen = SDL_CreateRGBSurface(SDL_SWSURFACE, config::sys_width, config::sys_height, 32, 0, 0, 0, 0);
 	external_data_usage = 0;
 
 	//Load the shader
@@ -199,8 +198,8 @@ void GB_LCD::opengl_blit()
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-    	glClearColor(0,0,0,0);
-    	glClear(GL_COLOR_BUFFER_BIT);
+	glClearColor(0,0,0,0);
+	glClear(GL_COLOR_BUFFER_BIT);
 
 	//Use shader
 	glUseProgram(program_id);
@@ -210,18 +209,18 @@ void GB_LCD::opengl_blit()
 	glUniform1f(glGetUniformLocation(program_id, "y_scale"), ogl_y_scale);
 
 	glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, lcd_texture);
-        glUniform1i(glGetUniformLocation(program_id, "screen_texture"), 0);
-        glUniform1i(glGetUniformLocation(program_id, "screen_x_size"), config::sys_width);
-        glUniform1i(glGetUniformLocation(program_id, "screen_y_size"), config::sys_height);
-        glUniform1f(glGetUniformLocation(program_id, "ext_data_1"), ext_data_1);
-        glUniform1f(glGetUniformLocation(program_id, "ext_data_2"), ext_data_2);
+	glBindTexture(GL_TEXTURE_2D, lcd_texture);
+	glUniform1i(glGetUniformLocation(program_id, "screen_texture"), 0);
+	glUniform1i(glGetUniformLocation(program_id, "screen_x_size"), config::sys_width);
+	glUniform1i(glGetUniformLocation(program_id, "screen_y_size"), config::sys_height);
+	glUniform1f(glGetUniformLocation(program_id, "ext_data_1"), ext_data_1);
+	glUniform1f(glGetUniformLocation(program_id, "ext_data_2"), ext_data_2);
 	
         
-        //Draw vertex array object
-        glBindVertexArray(vertex_array_object);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        glBindVertexArray(0);	
+	//Draw vertex array object
+	glBindVertexArray(vertex_array_object);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);	
 
 	glUseProgram(0);
 
