@@ -1419,7 +1419,7 @@ void DMG_MMU::write_u8(u16 address, u8 value)
 	}
 
 	//CGFX processing - Check for BG updates
-	if ((cgfx::load_cgfx) && (address >= 0x8000) && (address <= 0x9FFF))
+	if ((address >= 0x8000) && (address <= 0x9FFF))
 	{
 		//If the last VRAM value is the same, do not update
 		//Some games GBC games will spam VRAM addresses with the same data
@@ -1428,9 +1428,20 @@ void DMG_MMU::write_u8(u16 address, u8 value)
 		//DMG BG Tile data update
 		if (address <= 0x97FF)
 		{
-			cgfx_stat->update_bg = true;
+			if (cgfx::load_cgfx)
+			{
+				cgfx_stat->update_bg = true;
+				cgfx_stat->bg_update_list[(address & ~0x8000) >> 4] = true;
+			}
 
-			cgfx_stat->bg_update_list[(address & ~0x8000) >> 4] = true;
+			//mark as unused, cut tie to tile list
+			u16 idx = (address & ~0x8000) >> 4;
+			if (cgfx_stat->vram_tile_used[idx] && (cgfx_stat->vram_tile_idx[idx] != 0xFFFF))
+			{
+				cgfx_stat->screen_data.rendered_tile[cgfx_stat->vram_tile_idx[idx]].address = 0xFFFF;
+				cgfx_stat->vram_tile_idx[idx] = 0xFFFF;
+			}
+			cgfx_stat->vram_tile_used[idx] = false;
 		}
 	}
 }
@@ -1531,7 +1542,7 @@ void GBC_MMU::write_u8(u16 address, u8 value)
 		GB_MMU::write_u8(address, value);
 	}
 	//CGFX processing - Check for BG updates
-	if ((cgfx::load_cgfx) && (address >= 0x8000) && (address <= 0x9FFF))
+	if ((address >= 0x8000) && (address <= 0x9FFF))
 	{
 		//If the last VRAM value is the same, do not update
 		//Some games GBC games will spam VRAM addresses with the same data
@@ -1540,22 +1551,39 @@ void GBC_MMU::write_u8(u16 address, u8 value)
 		//GBC BG Tile Data update
 		if (address <= 0x97FF)
 		{
-			cgfx_stat->update_bg = true;
+			if (cgfx::load_cgfx)
+			{
+				cgfx_stat->update_bg = true;
 
-			u8 tile_number = (address - lcd_stat->bg_tile_addr) >> 4;
+				u8 tile_number = (address - lcd_stat->bg_tile_addr) >> 4;
 
-			//Convert tile number to signed if necessary
-			if (lcd_stat->bg_tile_addr == 0x8800) { tile_number = lcd_stat->signed_tile_lut[tile_number]; }
-			cgfx_stat->bg_tile_update_list[tile_number] = true;
+				//Convert tile number to signed if necessary
+				if (lcd_stat->bg_tile_addr == 0x8800) { tile_number = lcd_stat->signed_tile_lut[tile_number]; }
+				cgfx_stat->bg_tile_update_list[tile_number] = true;
+			}
+
+
+			//mark as unused, cut tie to tile list
+			u16 idx = (address & ~0x8000) >> 4;
+			if (vram_bank) idx += 384;
+			cgfx_stat->vram_tile_used[idx] = false;
+			if (cgfx_stat->vram_tile_idx[idx] != 0xFFFF)
+			{
+				cgfx_stat->screen_data.rendered_tile[cgfx_stat->vram_tile_idx[idx]].address = 0xFFFF;
+				cgfx_stat->vram_tile_idx[idx] = 0xFFFF;
+			}
 		}
 
 		//GBC BG Map Data update
 		else if (address >= 0x9800)
 		{
-			cgfx_stat->update_map = true;
+			if (cgfx::load_cgfx)
+			{
+				cgfx_stat->update_map = true;
 
-			u16 map_number = address - 0x9800;
-			cgfx_stat->bg_map_update_list[map_number] = true;
+				u16 map_number = address - 0x9800;
+				cgfx_stat->bg_map_update_list[map_number] = true;
+			}
 		}
 	}
 }

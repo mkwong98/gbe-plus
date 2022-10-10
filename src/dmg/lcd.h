@@ -17,6 +17,7 @@
 #include "mmu.h"
 #include "custom_graphics_data.h"
 
+
 class GB_LCD
 {
 	public:
@@ -55,6 +56,10 @@ class GB_LCD
 	virtual std::string get_hash(u16 addr, u8 gfx_type) = 0;
 	u32 adjust_pixel_brightness(u32 color, u8 palette_id, u8 gfx_type);
 	void invalidate_cgfx();
+
+	void new_rendered_screen_data();
+	void new_rendered_scanline_data(u8 lineNo);
+	u16 getUsedTileIdx(u16 tile_head);
 
 	//Serialize data for save state loading/saving
 	bool lcd_read(u32 offset, std::string filename);
@@ -132,7 +137,14 @@ class GB_LCD
 	virtual void update_obj_render_list() = 0;
 
 	//Per-scanline rendering
-	virtual void run_render_scanline() = 0;
+	void collect_scanline_data();
+	virtual void collect_bg_scanline() = 0;
+	virtual void collect_win_scanline() = 0;
+	virtual void collect_obj_scanline() = 0;
+	void render_full_screen();
+	virtual void render_scanline() = 0;
+
+	void run_render_scanline();
 	virtual void render_bg_scanline() = 0;
 	virtual void render_win_scanline() = 0;
 	virtual void render_obj_scanline() = 0;
@@ -157,6 +169,12 @@ public:
 
 protected:
 	void update_obj_render_list();
+
+	void collect_bg_scanline();
+	void collect_win_scanline();
+	void collect_obj_scanline();
+	void render_scanline();
+
 	void run_render_scanline();
 	void render_bg_scanline();
 	void render_win_scanline();
@@ -182,6 +200,11 @@ protected:
 	//GBC color palette updates
 	void update_bg_colors();
 	void update_obj_colors();
+
+	void collect_bg_scanline();
+	void collect_win_scanline();
+	void collect_obj_scanline();
+	void render_scanline();
 
 	void run_render_scanline();
 	void render_bg_scanline();

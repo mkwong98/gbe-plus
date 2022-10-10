@@ -1137,6 +1137,8 @@ void gbe_cgfx::draw_gb_layer(u8 layer)
 	bool is_obj = (layer == 2);
 
 	std::vector<u32> pixels;
+
+
 	layer += 4;
 
 	u8 target_scanline = 0;

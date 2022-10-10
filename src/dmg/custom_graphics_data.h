@@ -81,6 +81,12 @@ struct dmg_cgfx_data
 	u8 bg_pal_min[8];
 	u8 obj_pal_max[8];
 	u8 obj_pal_min[8];
+
+	//record how the screen is generated
+	u8 vram_tile_used[768];
+	u16 vram_tile_idx[768];
+	rendered_screen screen_data;
+
 };
 
 #endif // GB_CGFX_DATA

@@ -71,4 +71,53 @@ struct dmg_lcd_data
 	u8 frame_delay;
 };
 
+struct tile_pattern
+{
+	u16 line[8];
+};
+
+struct tile_used
+{
+	tile_pattern tile;
+	u16 address;
+	bool isOld;
+};
+
+struct palette
+{
+	u16 colour[4];
+};
+
+struct palette_used
+{
+	palette pal;
+	u8 idx;
+	bool isOld;
+};
+
+struct tile_strip
+{
+	u8 x;
+	bool hflip;
+	bool vflip;
+	u8 priority;
+	u16 pattern_id;
+	u8 palette_id;
+	u8 line;
+	u16 pattern_data;
+};
+
+struct rendered_screen
+{
+	std::vector <tile_used> rendered_tile;
+	std::vector <palette_used> rendered_palette;
+	struct rendered_line
+	{
+		u8 lcdc;
+		std::vector <tile_strip> rendered_bg;
+		std::vector <tile_strip> rendered_win;
+		std::vector <tile_strip> rendered_obj;
+	}scanline[144];
+};
+
 #endif // GB_LCD_DATA

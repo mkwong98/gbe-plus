@@ -1506,3 +1506,44 @@ void GB_LCD::invalidate_cgfx()
 	}
 
 }
+
+void GB_LCD::new_rendered_screen_data() {
+
+	//remove old, set new to old, update list id in vram list
+	u16 i = 0;
+	while (i < cgfx_stat.screen_data.rendered_tile.size())
+	{
+		if (cgfx_stat.screen_data.rendered_tile[i].isOld)
+		{
+			cgfx_stat.vram_tile_used[cgfx_stat.screen_data.rendered_tile[i].address] = 0;
+			cgfx_stat.screen_data.rendered_tile.erase(cgfx_stat.screen_data.rendered_tile.begin() + i);
+		}
+		else
+		{
+			cgfx_stat.screen_data.rendered_tile[i].isOld = true;
+			cgfx_stat.vram_tile_idx[cgfx_stat.screen_data.rendered_tile[i].address] = i;
+			i++;
+		}
+	}
+
+	while (i < cgfx_stat.screen_data.rendered_palette.size())
+	{
+		if (cgfx_stat.screen_data.rendered_palette[i].isOld)
+		{
+			cgfx_stat.screen_data.rendered_palette.erase(cgfx_stat.screen_data.rendered_palette.begin() + i);
+		}
+		else
+		{
+			cgfx_stat.screen_data.rendered_palette[i].isOld = true;
+			i++;
+		}
+	}
+}
+
+void GB_LCD::new_rendered_scanline_data(u8 lineNo)
+{
+	cgfx_stat.screen_data.scanline[lineNo].lcdc = mem->read_u8(REG_LCDC);
+	cgfx_stat.screen_data.scanline[lineNo].rendered_bg.clear();
+	cgfx_stat.screen_data.scanline[lineNo].rendered_win.clear();
+	cgfx_stat.screen_data.scanline[lineNo].rendered_obj.clear();
+}
