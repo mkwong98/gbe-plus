@@ -1526,18 +1526,7 @@ void GB_LCD::new_rendered_screen_data() {
 		}
 	}
 
-	while (i < cgfx_stat.screen_data.rendered_palette.size())
-	{
-		if (cgfx_stat.screen_data.rendered_palette[i].isOld)
-		{
-			cgfx_stat.screen_data.rendered_palette.erase(cgfx_stat.screen_data.rendered_palette.begin() + i);
-		}
-		else
-		{
-			cgfx_stat.screen_data.rendered_palette[i].isOld = true;
-			i++;
-		}
-	}
+	cgfx_stat.screen_data.rendered_palette.clear();
 }
 
 void GB_LCD::new_rendered_scanline_data(u8 lineNo)

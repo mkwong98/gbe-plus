@@ -138,6 +138,7 @@ class GB_LCD
 
 	//Per-scanline rendering
 	void collect_scanline_data();
+	virtual void collect_palette() = 0;
 	virtual void collect_bg_scanline() = 0;
 	virtual void collect_win_scanline() = 0;
 	virtual void collect_obj_scanline() = 0;
@@ -170,8 +171,11 @@ public:
 protected:
 	void update_obj_render_list();
 
+	u16 getUsedPaletteIdx(u8 p);
+	void collect_palette();
 	void collect_bg_scanline();
 	void collect_win_scanline();
+	void collect_scanline_tiles(u16 map_addr, u16 tile_lower_range, u16 tile_upper_range, u8 tile_line, std::vector <tile_strip>* strips);
 	void collect_obj_scanline();
 	void render_scanline();
 
@@ -181,6 +185,11 @@ protected:
 	void render_obj_scanline();
 	void render_cgfx_obj_scanline(u8 sprite_id);
 	void render_cgfx_bg_scanline(u16 bg_id, bool is_bg);
+
+private:
+	u16 bgId;
+	u16 objId1;
+	u16 objId2;
 };
 
 class GBC_LCD : public GB_LCD
@@ -201,6 +210,7 @@ protected:
 	void update_bg_colors();
 	void update_obj_colors();
 
+	void collect_palette();
 	void collect_bg_scanline();
 	void collect_win_scanline();
 	void collect_obj_scanline();
