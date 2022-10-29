@@ -1814,6 +1814,10 @@ u16 DMG_LCD::getUsedPaletteIdx(u8 pCode) {
 	return idx;
 }
 
+void GBC_LCD::collect_palette() {
+
+}
+
 
 void DMG_LCD::collect_bg_scanline() {
 	if (!lcd_stat.bg_enable) return;
@@ -1959,8 +1963,7 @@ void DMG_LCD::collect_obj_scanline() {
 	}
 }
 
-void GBC_LCD::collect_palette() {
-}
+
 
 void GBC_LCD::collect_obj_scanline() {
 }
