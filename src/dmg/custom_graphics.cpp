@@ -1516,6 +1516,7 @@ void GB_LCD::new_rendered_screen_data() {
 		if (cgfx_stat.screen_data.rendered_tile[i].isOld)
 		{
 			cgfx_stat.vram_tile_used[cgfx_stat.screen_data.rendered_tile[i].address] = 0;
+			cgfx_stat.vram_tile_idx[cgfx_stat.screen_data.rendered_tile[i].address] = 0xFFFF;
 			cgfx_stat.screen_data.rendered_tile.erase(cgfx_stat.screen_data.rendered_tile.begin() + i);
 		}
 		else

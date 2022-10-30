@@ -87,6 +87,7 @@ struct palette
 {
 	u8 code;
 	u16 colour[4];
+	u32 renderColour[4];
 };
 
 struct tile_strip
@@ -94,10 +95,11 @@ struct tile_strip
 	u8 x;
 	u16 pattern_id;
 	u16 palette_id;
+	u8 palette_sel;
 	u8 line;
 	u16 pattern_data;
 
-	//obj tiles
+	//obj tiles, gbc tiles
 	bool hflip;
 	bool vflip;
 	u16 priority;

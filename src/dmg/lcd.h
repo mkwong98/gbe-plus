@@ -59,7 +59,6 @@ class GB_LCD
 
 	void new_rendered_screen_data();
 	void new_rendered_scanline_data(u8 lineNo);
-	u16 getUsedTileIdx(u16 tile_head);
 
 	//Serialize data for save state loading/saving
 	bool lcd_read(u32 offset, std::string filename);
@@ -137,10 +136,11 @@ class GB_LCD
 	virtual void update_obj_render_list() = 0;
 
 	//Per-scanline rendering
-	void collect_scanline_data();
+	virtual void collect_scanline_data() = 0;
 	virtual void collect_palette() = 0;
-	virtual void collect_bg_scanline() = 0;
-	virtual void collect_win_scanline() = 0;
+	void collect_bg_scanline();
+	void collect_win_scanline();
+	virtual void collect_scanline_tiles(u16 map_addr, u16 tile_lower_range, u16 tile_upper_range, u8 tile_line, std::vector <tile_strip>* strips) = 0;
 	virtual void collect_obj_scanline() = 0;
 	void render_full_screen();
 	virtual void render_scanline() = 0;
@@ -149,9 +149,6 @@ class GB_LCD
 	virtual void render_bg_scanline() = 0;
 	virtual void render_win_scanline() = 0;
 	virtual void render_obj_scanline() = 0;
-
-	//Per-scanline rendering (CGFX)
-	virtual void render_cgfx_obj_scanline(u8 sprite_id) = 0;
 
 	void scanline_compare();
 
@@ -171,20 +168,18 @@ public:
 protected:
 	void update_obj_render_list();
 
+	void collect_scanline_data();
 	u16 getUsedPaletteIdx(u8 p);
 	void collect_palette();
-	void collect_bg_scanline();
-	void collect_win_scanline();
 	void collect_scanline_tiles(u16 map_addr, u16 tile_lower_range, u16 tile_upper_range, u8 tile_line, std::vector <tile_strip>* strips);
 	void collect_obj_scanline();
+	u16 getUsedTileIdx(u16 tile_head);
 	void render_scanline();
 
 	void run_render_scanline();
 	void render_bg_scanline();
 	void render_win_scanline();
 	void render_obj_scanline();
-	void render_cgfx_obj_scanline(u8 sprite_id);
-	void render_cgfx_bg_scanline(u16 bg_id, bool is_bg);
 
 private:
 	u16 bgId;
@@ -210,10 +205,12 @@ protected:
 	void update_bg_colors();
 	void update_obj_colors();
 
+	void collect_scanline_data();
 	void collect_palette();
-	void collect_bg_scanline();
-	void collect_win_scanline();
+	u16 getUsedPaletteIdx(u16* pal, u32* dcolor);
+	void collect_scanline_tiles(u16 map_addr, u16 tile_lower_range, u16 tile_upper_range, u8 tile_line, std::vector <tile_strip>* strips);
 	void collect_obj_scanline();
+	u16 getUsedTileIdx(u16 tile_head, u8 vbank);
 	void render_scanline();
 
 	void run_render_scanline();
@@ -222,6 +219,11 @@ protected:
 	void render_obj_scanline();
 	void render_cgfx_obj_scanline(u8 sprite_id);
 	void render_cgfx_bg_scanline(u16 tile_data, u8 bg_map_attribute, bool is_bg);
+
+private:
+	u16 bgId[8];
+	u16 objId[8];
+	bool scanlinePaletteUpdated;
 };
 
 #endif // GB_DISPLAY 
