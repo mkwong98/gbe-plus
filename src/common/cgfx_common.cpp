@@ -27,7 +27,7 @@ namespace cgfx
 	u8 scale_squared = 1;
 	u32 transparency_color = 0x00000000;
 
-	std::string cgfx_path = "cgfx/";
+	std::string cgfx_path = "HdPacks/";
 	std::string dump_bg_path = "";
 	std::string dump_obj_path = "";
 	std::string dump_name = "";
@@ -49,5 +49,5 @@ std::string get_game_cgfx_folder()
 
 std::string get_manifest_file() 
 {
-	return get_game_cgfx_folder() + "manifest.txt";
+	return get_game_cgfx_folder() + "hires.txt";
 }

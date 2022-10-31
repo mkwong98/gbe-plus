@@ -18,8 +18,98 @@
 
 #include "common/common.h"
 
+struct pack_img
+{
+	u32* pixels;
+	u16 width;
+	u16 height;
+};
+
+
+struct pack_condition
+{
+	const u8 HMIRROR = 0;
+	const u8 VMIRROR = 1;
+	const u8 BGPRIORITY = 2;
+	const u8 PALETTE0 = 3;
+	const u8 PALETTE1 = 4;
+	const u8 PALETTE2 = 5;
+	const u8 PALETTE3 = 6;
+	const u8 PALETTE4 = 7;
+	const u8 PALETTE5 = 8;
+	const u8 PALETTE6 = 9;
+	const u8 PALETTE7 = 10;
+	const u8 TILENEARBY = 11;
+	const u8 SPRITENEARBY = 12;
+	const u8 TILEATPOSITION = 13;
+	const u8 SPRITEATPOSITION = 14;
+	const u8 MEMORYCHECK = 15;
+	const u8 MEMORYBANKCHECK = 16;
+	const u8 FRAMERANGE = 17;
+
+	std::string name;
+	u8 type;
+
+	//find tile
+	s16 x;
+	s16 y;
+	u16 tileData[8];
+	u16 palette[4];
+
+	//mem compare
+	u16 address1;
+	u16 address2;
+	u8 bank;
+	u8 opType;
+	u8 value;
+	u8 mask;
+
+	//frame range
+	u32 divisor;
+	u32 compareVal;
+};
+
+struct pack_cond_app
+{
+	u16 condIdx;
+	bool negate;
+};
+
+struct pack_tile
+{
+	std::vector <pack_cond_app> condApps;
+	u16 imgIdx;
+	u16 tileData[8];
+	u16 palette[4];
+	u16 x;
+	u16 y;
+	float brightness;
+	bool default;
+};
+
+struct pack_background
+{
+	std::vector <pack_cond_app> condApps;
+	pack_img img;
+	float brightness;
+	float hscroll;
+	u16 offsetX;
+	u16 offsetY;
+	u8 priority;
+};
+
+
+
 struct dmg_cgfx_data
 { 
+	std::string packVersion;
+	u16 packScale;
+	std::vector <pack_img> imgs;
+	std::vector <pack_condition> conds;
+	std::vector <pack_tile> tiles;
+	std::vector <pack_background> bgs;
+
+
 	std::vector <std::string> manifest;
 	std::vector <u8> manifest_entry_size;
 	

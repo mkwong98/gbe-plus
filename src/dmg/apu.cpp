@@ -95,12 +95,12 @@ bool DMG_APU::init()
 	}
 
 	//Setup the desired audio specifications
-    	desired_spec.freq = apu_stat.sample_rate;
+	desired_spec.freq = apu_stat.sample_rate;
 	desired_spec.format = AUDIO_S16SYS;
-    	desired_spec.channels = (config::use_stereo) ? 2 : 1;
-    	desired_spec.samples = (config::sample_size) ? config::sample_size : 256;
-    	desired_spec.callback = dmg_audio_callback;
-    	desired_spec.userdata = this;
+	desired_spec.channels = (config::use_stereo) ? 2 : 1;
+	desired_spec.samples = (config::sample_size) ? config::sample_size : 256;
+	desired_spec.callback = dmg_audio_callback;
+	desired_spec.userdata = this;
 
     	//Open SDL audio for desired specifications
 	if(SDL_OpenAudio(&desired_spec, NULL) < 0) 

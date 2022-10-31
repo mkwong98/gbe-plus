@@ -18,36 +18,31 @@
 #include "lcd.h"
 #include "common/config.h"
 
+void GB_LCD::clear_manifest() {
+	cgfx_stat.packScale = 1;
+	cgfx_stat.packVersion = "";
+	pack_img img;
+	for (u16 i = 0; i < cgfx_stat.imgs.size(); i++) {
+		free(cgfx_stat.imgs[i].pixels);
+	}
+	for (u16 i = 0; i < cgfx_stat.bgs.size(); i++) {
+		free(cgfx_stat.bgs[i].img.pixels);
+	}
+	cgfx_stat.imgs.clear();
+	cgfx_stat.conds.clear();
+	cgfx_stat.tiles.clear();
+	cgfx_stat.bgs.clear();
+}
+
+
 /****** Loads the manifest file ******/
 bool GB_LCD::load_manifest(std::string filename) 
 {
-	cgfx::scaling_factor = 1;
+	clear_manifest();
+
 	std::ifstream file(filename.c_str(), std::ios::in); 
 	std::string input_line = "";
 	std::string line_char = "";
-
-	//Clear existing hash data
-	cgfx_stat.obj_hash_list.clear();
-	cgfx_stat.bg_hash_list.clear();
-
-	//Clear existing manifest data
-	cgfx_stat.manifest.clear();
-	cgfx_stat.manifest_entry_size.clear();
-	cgfx_stat.m_hashes.clear();
-	cgfx_stat.m_hashes_raw.clear();
-	cgfx_stat.m_files.clear();
-	cgfx_stat.m_types.clear();
-	cgfx_stat.m_vram_addr.clear();
-	cgfx_stat.m_auto_bright.clear();
-
-	cgfx_stat.m_meta_files.clear();
-	cgfx_stat.m_meta_names.clear();
-	cgfx_stat.m_meta_forms.clear();
-
-	//Clear existing pixel data
-	cgfx_stat.obj_pixel_data.clear();
-	cgfx_stat.bg_pixel_data.clear();
-	cgfx_stat.meta_pixel_data.clear();
 
 	if(!file.is_open())
 	{
@@ -55,17 +50,12 @@ bool GB_LCD::load_manifest(std::string filename)
 		return false; 
 	}
 
-	//Set up m_vram_addr
-	for(int x = 0; x < 512; x++)
-	{
-		std::map<std::string, u32> temp;
-		cgfx_stat.m_vram_addr.push_back(temp);
-	}
-
 	//Cycle through whole file, line-by-line
 	while(getline(file, input_line))
 	{
 		line_char = input_line[0];
+
+
 		bool ignore = false;	
 		u8 item_count = 0;	
 

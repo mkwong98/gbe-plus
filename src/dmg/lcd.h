@@ -38,6 +38,8 @@ class GB_LCD
 
 	//Custom GFX functions
 	bool load_manifest(std::string filename);
+	void clear_manifest();
+
 	bool load_image_data();
 	bool load_meta_data();
 	bool find_meta_data();
