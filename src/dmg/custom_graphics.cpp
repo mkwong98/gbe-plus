@@ -42,7 +42,7 @@ bool GB_LCD::load_manifest(std::string filename)
 
 	std::ifstream file(filename.c_str(), std::ios::in); 
 	std::string input_line = "";
-	std::string line_char = "";
+	std::string tagName = "";
 
 	if(!file.is_open())
 	{
@@ -53,177 +53,31 @@ bool GB_LCD::load_manifest(std::string filename)
 	//Cycle through whole file, line-by-line
 	while(getline(file, input_line))
 	{
-		line_char = input_line[0];
-
-
-		bool ignore = false;	
-		u8 item_count = 0;	
-
-		//Check if line starts with [ - if not, skip line
-		if(line_char == "[")
+		input_line = util::trimfnc(input_line);
+		//get tag content
+		std::size_t found1 = input_line.find("<");
+		std::size_t found2 = input_line.find(">");
+		std::size_t found3 = input_line.find("[");
+		std::size_t found4 = input_line.find("]");
+		if (found1 != std::string::npos && found2 != std::string::npos && (found1 == 0 || found3 == 0))
 		{
-			std::string line_item = "";
-
-			//Cycle through line, character-by-character
-			for(int x = 0; ++x < input_line.length();)
+			if (found2 > found1)
 			{
-				line_char = input_line[x];
-
-				//Check for single-quotes, don't parse ":" or "]" within them
-				if((line_char == "'") && (!ignore)) { ignore = true; }
-				else if((line_char == "'") && (ignore)) { ignore = false; }
-
-				//Check the character for item limiter : or ] - Push to Vector
-				else if(((line_char == ":") || (line_char == "]")) && (!ignore)) 
-				{
-					cgfx_stat.manifest.push_back(line_item);
-					line_item = "";
-					item_count++;
-				}
-
-				else { line_item += line_char; }
+				tagName = input_line.substr(found1 + 1, found2 - found1 - 1);
+			}
+			if (tagName == "ver") cgfx_stat.packVersion = util::trimfnc(input_line.substr(found2 + 1));
+			if (tagName == "scale") cgfx_stat.packScale = stoi(util::trimfnc(input_line.substr(found2 + 1)));
+			if (tagName == "img")
+			{
+				pack_img i;
+				std::string imgname = util::trimfnc(input_line.substr(found2 + 1));
+				
+				cgfx_stat.imgs.push_back(i);
 			}
 		}
-		else if (input_line.substr(0, 6) == "SCALE=")
-		{
-			cgfx::scaling_factor = std::stoi(input_line.substr(6));
-		}
-
-		//Determine if manifest is properly formed (roughly)
-		//Each manifest normal entry should have 5 parameters
-		//Each metatile entry should have 3 parameters
-		if((item_count != 5) && (item_count != 3) && (item_count != 0))
-		{
-			std::cout<<"CGFX::Manifest file " << filename << " has some missing parameters for some entries. \n";
-			std::cout<<"CGFX::Entry -> " << input_line << "\n";
-			file.close();
-			return false;
-		}
-
-		else if(item_count != 0) { cgfx_stat.manifest_entry_size.push_back(item_count); }
 	}
 	
 	file.close();
-
-	u32 hash_id = 0;
-
-	//Parse entries
-	for(int x = 0, y = 0; y < cgfx_stat.manifest_entry_size.size(); y++)
-	{
-		//Parse regular entries
-		if(cgfx_stat.manifest_entry_size[y] == 5)
-		{
-			//Grab hashes
-			std::string hash = cgfx_stat.manifest[x++];
-			std::string sub_hash = "";
-			std::string vram_hash = cgfx_stat.manifest[x + 2];
-
-			//Test for EXT_VRAM_ADDR
-			u32 vram_test = 0;
-			if(cgfx_stat.manifest[x + 2].length() == 6) { util::from_hex_str(cgfx_stat.manifest[x + 2].substr(2), vram_test); }
-			bool use_vram = false;
-
-			//Only add hash from manifest if it is new. Otherwise, ignore duplicate entries
-			if((cgfx_stat.m_hashes.find(hash) == cgfx_stat.m_hashes.end()) || (vram_test))
-			{
-				//Grab file associated with hash
-				cgfx_stat.m_files.push_back(cgfx_stat.manifest[x++]);
-
-				//Grab the type
-				u32 type_byte = 0;
-				util::from_str(cgfx_stat.manifest[x++], type_byte);
-				cgfx_stat.m_types.push_back(type_byte);
-
-				switch(type_byte)
-				{
-					//OBJ
-					case 1:
-						sub_hash = config::gb_type < 2 ? hash.substr(4) : hash.substr(5);
-						cgfx_stat.m_id.push_back(cgfx_stat.obj_hash_list.size());
-						cgfx_stat.obj_hash_list.push_back(hash);
-						cgfx_stat.m_hashes.insert(std::make_pair(hash, hash_id));
-						cgfx_stat.m_hashes_raw.insert(std::make_pair(sub_hash, hash_id));
-						break;
-
-					case 2:
-						sub_hash = config::gb_type < 2 ? hash.substr(4) : hash.substr(5);
-						cgfx_stat.m_id.push_back(cgfx_stat.bg_hash_list.size());
-						cgfx_stat.bg_hash_list.push_back(hash);
-						cgfx_stat.m_hashes.insert(std::make_pair(hash, hash_id));
-						cgfx_stat.m_hashes_raw.insert(std::make_pair(sub_hash, hash_id));
-						break;
-		
-					//Undefined type
-					default:
-						std::cout<<"CGFX::Undefined hash type " << (int)type_byte << "\n";
-						return false;
-				}
-
-				//Load image based on filename and hash type
-				if(!load_image_data()) { return false; }
-
-				//EXT_VRAM_ADDR
-				if(vram_test)
-				{
-					use_vram = true;
-					vram_hash = (sub_hash + vram_hash);
-
-					vram_test = ((vram_test & 0x1FFF) >> 4);
-					cgfx_stat.m_vram_addr[vram_test].insert(std::make_pair(hash, hash_id));
-
-				}
-
-				x++;
-
-				//EXT_AUTO_BRIGHT
-				u32 bright_value = 0;
-				util::from_str(cgfx_stat.manifest[x++], bright_value);
-				cgfx_stat.m_auto_bright.push_back(bright_value);
-
-				//Enable EXT_AUTO_BRIGHT for all matching raw hashes if necessary
-				if((bright_value) && (cgfx_stat.m_hashes_raw.find(sub_hash) != cgfx_stat.m_hashes_raw.end()))
-				{
-					u32 bright_id = cgfx_stat.m_hashes_raw[sub_hash];
-					cgfx_stat.m_auto_bright[bright_id] = 1;
-				}
-
-				//If EXT_VRAM_ADDR and EXT_AUTO_BRIGHT both enabled, use a secondary hash for VRAM addr
-				if((bright_value) && (use_vram))
-				{
-					cgfx_stat.m_hashes_raw.insert(std::make_pair(vram_hash, hash_id));
-					u32 bright_id = cgfx_stat.m_hashes_raw[vram_hash];
-					cgfx_stat.m_auto_bright[bright_id] = 1;
-				}
-
-				hash_id++;
-			}
-
-			else
-			{
-				std::cout<<"CGFX::Warning - Duplicate hash detected. Only the 1st entry that uses this hash will properly render \n";
-				x += 4;
-			}
-		}
-
-		//Parse metatile entries
-		else
-		{
-			//Grab metafile
-			cgfx_stat.m_meta_files.push_back(cgfx_stat.manifest[x++]);
-
-			//Load image based on filename and hash type
-			if(!load_meta_data()) { return false; }
-
-			//Grab base pattern name
-			cgfx_stat.m_meta_names.push_back(cgfx_stat.manifest[x++]);
-
-			//Grab metatile form
-			u32 form_value = 0;
-			util::from_str(cgfx_stat.manifest[x++], form_value);
-			cgfx_stat.m_meta_forms.push_back(form_value);
-		}
-	}
-
 
 	//Initialize HD buffer for CGFX greater that 1:1
 	config::sys_width *= cgfx::scaling_factor;

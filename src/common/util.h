@@ -102,6 +102,8 @@ namespace util
 
 	extern u32 crc32_table[256];
 	extern u32 poly32;
+
+	std::string trimfnc(std::string str);
 }
 
 #endif // GBE_UTIL 
