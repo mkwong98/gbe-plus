@@ -69,10 +69,8 @@ bool GB_LCD::load_manifest(std::string filename)
 			if (tagName == "scale") cgfx_stat.packScale = stoi(util::trimfnc(input_line.substr(found2 + 1)));
 			if (tagName == "img")
 			{
-				pack_img i;
 				std::string imgname = util::trimfnc(input_line.substr(found2 + 1));
-				
-				cgfx_stat.imgs.push_back(i);
+				cgfx_stat.imgs.push_back(load_pack_image(imgname));
 			}
 		}
 	}
@@ -91,6 +89,15 @@ bool GB_LCD::load_manifest(std::string filename)
 
 	return true;
 }
+
+pack_img GB_LCD::load_pack_image(std::string filename)
+{
+	pack_img i;
+	std::string path = get_game_cgfx_folder() + filename;
+	SDL_Surface* s = IMG_Load(path.c_str());
+	
+}
+
 
 /****** Loads 24-bit data from source and converts it to 32-bit ARGB ******/
 bool GB_LCD::load_image_data() 
