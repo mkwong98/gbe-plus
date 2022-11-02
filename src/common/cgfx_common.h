@@ -32,7 +32,6 @@ namespace cgfx
 
 	extern u32 transparency_color;
 	extern u8 scaling_factor;
-	extern u8 scale_squared;
 
 	extern std::string cgfx_path;
 	extern std::string dump_bg_path;
