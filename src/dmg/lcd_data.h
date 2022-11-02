@@ -81,6 +81,7 @@ struct tile_used
 	tile_pattern tile;
 	u16 address;
 	bool isOld;
+	std::vector<u16> pack_tile_match;
 };
 
 struct palette

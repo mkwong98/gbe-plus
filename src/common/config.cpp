@@ -186,7 +186,7 @@ namespace config
 
 	bool use_external_interfaces = false;
 
-	void (*render_external_sw)(std::vector<u32>&);
+	void (*render_external_sw)(u32*);
 	void (*render_external_hw)(SDL_Surface*);
 
 	//Default Gameboy BG palettes

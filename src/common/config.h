@@ -38,8 +38,7 @@ bool save_ini_file();
 bool save_cheats_file();
 
 bool load_osd_font();
-void draw_osd_msg(std::string osd_text, std::vector <u32> &osd_surface, u8 x_offset, u8 y_offset);
-void draw_osd_msg(std::string osd_text, std::vector <u32> &osd_surface, u8 x_offset, u8 y_offset, u32 width);
+void draw_osd_msg(std::string osd_text, u32* osd_surface, u8 x_offset, u8 y_offset);
 
 enum special_cart_types
 {
@@ -176,7 +175,7 @@ namespace config
 
 	//Function pointer for external software rendering
 	//This function is provided by frontends that will not rely on SDL
-	extern void (*render_external_sw)(std::vector<u32>&);
+	extern void (*render_external_sw)(u32*);
 
 	//Function pointer for external rendering
 	//This function is provided by frontends that will not rely on SDL+OGL

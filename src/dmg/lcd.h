@@ -39,7 +39,7 @@ class GB_LCD
 	//Custom GFX functions
 	bool load_manifest(std::string filename);
 	void clear_manifest();
-	pack_img load_pack_image(std::string filename);
+	SDL_Surface* load_pack_image(std::string filename);
 
 	bool load_image_data();
 	bool load_meta_data();
@@ -51,9 +51,6 @@ class GB_LCD
 	virtual void update_obj_hash(u8 obj_index) = 0;
 	virtual void update_all_bg_hash() = 0;
 	virtual void update_bg_hash(u16 bg_index) = 0;
-
-	void render_scanline(u8 line, u8 type);
-	u32 get_scanline_pixel(u8 pixel);
 
 	bool has_hash(u16 addr, std::string hash);
 	virtual std::string get_hash(u16 addr, u8 gfx_type) = 0;
@@ -121,12 +118,10 @@ class GB_LCD
 	int obj_render_length;
 
 	//Screen pixel buffer
-	std::vector<u32> scanline_buffer;
-	std::vector<u32> screen_buffer;
-	std::vector<u32> hd_screen_buffer;
-	std::vector<u8> scanline_raw;
-	std::vector<u8> scanline_priority;
-	std::vector<u32> stretched_buffer;
+	//layers: white or low bg, low obj, bg, obj, high bg
+	SDL_Surface* buffers[5];
+	void clear_buffers();
+	SDL_Rect srcrect;
 
 	int frame_start_time;
 	int frame_current_time;
@@ -179,7 +174,6 @@ protected:
 	u16 getUsedTileIdx(u16 tile_head);
 	void render_scanline();
 
-	void run_render_scanline();
 	void render_bg_scanline();
 	void render_win_scanline();
 	void render_obj_scanline();
@@ -216,12 +210,9 @@ protected:
 	u16 getUsedTileIdx(u16 tile_head, u8 vbank);
 	void render_scanline();
 
-	void run_render_scanline();
 	void render_bg_scanline();
 	void render_win_scanline();
 	void render_obj_scanline();
-	void render_cgfx_obj_scanline(u8 sprite_id);
-	void render_cgfx_bg_scanline(u16 tile_data, u8 bg_map_attribute, bool is_bg);
 
 private:
 	u16 bgId[8];

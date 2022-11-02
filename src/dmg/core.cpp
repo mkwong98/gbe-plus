@@ -770,32 +770,6 @@ u32 GB_core::get_core_data(u32 core_index)
 			result = 1;
 			break;
 
-		//Grab current scanline pixel
-		case 0x3:
-			//Use bits 8-15 as index
-			result = core_cpu->controllers.video->get_scanline_pixel((core_index >> 8) & 0xFF);
-			break;
-
-		//Render BG Scanline
-		case 0x4:
-			//Use bits 8-15 as index
-			core_cpu->controllers.video->render_scanline(((core_index >> 8) & 0xFF), 0);
-			result = 1;
-			break;
-
-		//Render Window Scanline
-		case 0x5:
-			//Use bits 8-15 as index
-			core_cpu->controllers.video->render_scanline(((core_index >> 8) & 0xFF), 1);
-			result = 1;
-			break;
-
-		//Render OBJ Scanline
-		case 0x6:
-			//Use bits 8-15 as index
-			core_cpu->controllers.video->render_scanline(((core_index >> 8) & 0xFF), 2);
-			result = 1;
-			break;
 	}
 
 	return result;

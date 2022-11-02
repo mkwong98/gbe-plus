@@ -18,14 +18,6 @@
 
 #include "common/common.h"
 
-struct pack_img
-{
-	u32* pixels;
-	u16 width;
-	u16 height;
-};
-
-
 struct pack_condition
 {
 	const u8 HMIRROR = 0;
@@ -79,7 +71,7 @@ struct pack_tile
 {
 	std::vector <pack_cond_app> condApps;
 	u16 imgIdx;
-	u16 tileData[8];
+	tile_pattern tileData;
 	u16 palette[4];
 	u16 x;
 	u16 y;
@@ -90,7 +82,7 @@ struct pack_tile
 struct pack_background
 {
 	std::vector <pack_cond_app> condApps;
-	pack_img img;
+	SDL_Surface* img;
 	float brightness;
 	float hscroll;
 	u16 offsetX;
@@ -104,7 +96,7 @@ struct dmg_cgfx_data
 { 
 	std::string packVersion;
 	u16 packScale;
-	std::vector <pack_img> imgs;
+	std::vector <SDL_Surface*> imgs;
 	std::vector <pack_condition> conds;
 	std::vector <pack_tile> tiles;
 	std::vector <pack_background> bgs;

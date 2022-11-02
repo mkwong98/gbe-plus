@@ -17,7 +17,7 @@
 
 #include "common/common.h"
 
-void render_screen_sw(std::vector<u32>& image);
+void render_screen_sw(u32* image);
 void render_screen_hw(SDL_Surface* image);
 
 namespace qt_gui

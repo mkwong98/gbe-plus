@@ -21,37 +21,38 @@
 void GB_LCD::clear_manifest() {
 	cgfx_stat.packScale = 1;
 	cgfx_stat.packVersion = "";
-	pack_img img;
-	for (u16 i = 0; i < cgfx_stat.imgs.size(); i++) {
-		free(cgfx_stat.imgs[i].pixels);
-	}
-	for (u16 i = 0; i < cgfx_stat.bgs.size(); i++) {
-		free(cgfx_stat.bgs[i].img.pixels);
+	for (u16 i = 0; i < cgfx_stat.imgs.size(); i++)
+	{
+		SDL_FreeSurface(cgfx_stat.imgs[i]);
 	}
 	cgfx_stat.imgs.clear();
 	cgfx_stat.conds.clear();
 	cgfx_stat.tiles.clear();
+	for (u16 i = 0; i < cgfx_stat.bgs.size(); i++)
+	{
+		SDL_FreeSurface(cgfx_stat.bgs[i].img);
+	}
 	cgfx_stat.bgs.clear();
 }
 
 
 /****** Loads the manifest file ******/
-bool GB_LCD::load_manifest(std::string filename) 
+bool GB_LCD::load_manifest(std::string filename)
 {
 	clear_manifest();
 
-	std::ifstream file(filename.c_str(), std::ios::in); 
+	std::ifstream file(filename.c_str(), std::ios::in);
 	std::string input_line = "";
 	std::string tagName = "";
 
-	if(!file.is_open())
+	if (!file.is_open())
 	{
-		std::cout<<"CGFX::Could not open manifest file " << filename << ". Check file path or permissions. \n";
-		return false; 
+		std::cout << "CGFX::Could not open manifest file " << filename << ". Check file path or permissions. \n";
+		return false;
 	}
 
 	//Cycle through whole file, line-by-line
-	while(getline(file, input_line))
+	while (getline(file, input_line))
 	{
 		input_line = util::trimfnc(input_line);
 		//get tag content
@@ -65,37 +66,106 @@ bool GB_LCD::load_manifest(std::string filename)
 			{
 				tagName = input_line.substr(found1 + 1, found2 - found1 - 1);
 			}
-			if (tagName == "ver") cgfx_stat.packVersion = util::trimfnc(input_line.substr(found2 + 1));
-			if (tagName == "scale") cgfx_stat.packScale = stoi(util::trimfnc(input_line.substr(found2 + 1)));
-			if (tagName == "img")
+			std::string strRest = input_line.substr(found2 + 1);
+			if (tagName == "ver") cgfx_stat.packVersion = util::trimfnc(strRest);
+			else if (tagName == "scale") cgfx::scaling_factor = stoi(util::trimfnc(strRest));
+			else if (tagName == "img")
 			{
-				std::string imgname = util::trimfnc(input_line.substr(found2 + 1));
+				std::string imgname = util::trimfnc(strRest);
 				cgfx_stat.imgs.push_back(load_pack_image(imgname));
+			}
+			else if (tagName == "tile")
+			{
+				pack_tile pt;
+				std::string token;
+				std::size_t pos;
+				u8 tokenCnt = 0;
+				while (strRest.length() > 0)
+				{
+					pos = strRest.find(",");
+					if (pos != std::string::npos)
+					{
+						token = strRest.substr(0, pos);
+						strRest = strRest.substr(pos + 1, std::string::npos);
+					}
+					else
+					{
+						token = strRest;
+						strRest = "";
+					}
+					switch (tokenCnt)
+					{
+					case 0:
+						pt.imgIdx = stoi(util::trimfnc(token));
+						break;
+					case 1:
+						for (u16 i = 0; i < 8; i++)
+						{
+							pt.tileData.line[i] = std::stoul(token.substr(i * 4, 4), nullptr, 16);
+						}
+						break;
+					case 2:
+						if (token.length() == 2)
+						{
+							pt.palette[0] = std::stoul(token, nullptr, 16);
+						}
+						else
+						{
+							for (u16 i = 0; i < 4; i++)
+							{
+								pt.palette[i] = std::stoul(token.substr(i * 4, 4), nullptr, 16);
+							}
+						}
+						break;
+					case 3:
+						pt.x = stoi(util::trimfnc(token));
+						break;
+					case 4:
+						pt.y = stoi(util::trimfnc(token));
+						break;
+					case 5:
+						pt.brightness = stof(util::trimfnc(token));
+						break;
+					case 6:
+						pt.default = (util::trimfnc(token) == "Y");
+						break;
+
+					default:
+						break;
+					}
+
+					tokenCnt++;
+				}
+				token = strRest.substr(0, pos);
 			}
 		}
 	}
-	
+
 	file.close();
 
 	//Initialize HD buffer for CGFX greater that 1:1
 	config::sys_width *= cgfx::scaling_factor;
 	config::sys_height *= cgfx::scaling_factor;
-	cgfx::scale_squared = cgfx::scaling_factor * cgfx::scaling_factor;
 
-	hd_screen_buffer.clear();
-	hd_screen_buffer.resize((config::sys_width * config::sys_height), 0);
+	for (u8 i = 0; i < 5; i++) {
+		if (buffers[i] != NULL) { SDL_FreeSurface(buffers[i]); }
+		buffers[i] = SDL_CreateRGBSurfaceWithFormat(0, config::sys_width, config::sys_height, 32, SDL_PIXELFORMAT_ARGB8888);
+	}
+	srcrect.w = cgfx::scaling_factor;
+	srcrect.h = cgfx::scaling_factor;
 
-	std::cout<<"CGFX::" << filename << " loaded successfully\n"; 
+	std::cout << "CGFX::" << filename << " loaded successfully\n";
 
 	return true;
 }
 
-pack_img GB_LCD::load_pack_image(std::string filename)
+SDL_Surface* GB_LCD::load_pack_image(std::string filename)
 {
-	pack_img i;
 	std::string path = get_game_cgfx_folder() + filename;
 	SDL_Surface* s = IMG_Load(path.c_str());
-	
+	SDL_Surface* r = SDL_ConvertSurfaceFormat(s, SDL_PIXELFORMAT_ARGB8888, 0);
+	SDL_FreeSurface(s);
+	return r;
 }
 
 
@@ -1383,6 +1453,7 @@ void GB_LCD::new_rendered_screen_data() {
 
 void GB_LCD::new_rendered_scanline_data(u8 lineNo)
 {
+	srcrect.y = cgfx::scaling_factor * lcd_stat.current_scanline;
 	cgfx_stat.screen_data.scanline[lineNo].lcdc = mem->read_u8(REG_LCDC);
 	cgfx_stat.screen_data.scanline[lineNo].rendered_bg.clear();
 	cgfx_stat.screen_data.scanline[lineNo].rendered_win.clear();

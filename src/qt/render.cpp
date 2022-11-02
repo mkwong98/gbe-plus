@@ -20,31 +20,24 @@ namespace qt_gui
 }
 
 /****** Renders an LCD's screen buffer to a QImage ******/
-void render_screen_sw(std::vector<u32>& image) 
+void render_screen_sw(u32* image)
 {
-	//Manually request screen size before PaintEvent takes effect
-	//Used for DMG/GBC games on GBA
-	if(config::request_resize)
-	{
-		if(qt_gui::screen != NULL) { delete qt_gui::screen; }
-		qt_gui::screen = new QImage(config::sys_width, config::sys_height, QImage::Format_ARGB32);
-	}
-
 	int width, height = 0;
 
 	//Determine the dimensions of the source image
 	width = config::sys_width;
 	height = config::sys_height;
 
+	u32* pt = image;
 	//Fill in image with pixels from the emulated LCD
-	for(int y = 0; y < height; y++)
+	for (int y = 0; y < height; y++)
 	{
 		u32* pixel_data = (u32*)qt_gui::screen->scanLine(y);
-
-		for(int x = 0; x < width; x++) { pixel_data[x] = image[x + (y*width)]; }
+		std::copy(pt, pt + width, pixel_data);
+		pt += width;
 	}
 
-	if(qt_gui::draw_surface != NULL) { qt_gui::draw_surface->update(); }
+	if (qt_gui::draw_surface != NULL) { qt_gui::draw_surface->update(); }
 
 	QApplication::processEvents();
 }
