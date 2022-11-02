@@ -51,10 +51,6 @@ class gen_settings : public QDialog
 	QComboBox* overclock;
 	QCheckBox* cheats;
 	QPushButton* edit_cheats;
-	QPushButton* config_sio;
-	QPushButton* config_ir;
-	QComboBox* sio_dev;
-	QComboBox* ir_dev;
 	QCheckBox* auto_patch;
 
 	//Display tab widgets
@@ -162,19 +158,6 @@ class gen_settings : public QDialog
 	QComboBox* battle_chip_3;
 	QComboBox* battle_chip_4;
 
-	//Netplay tab widgets
-	QCheckBox* enable_netplay;
-	QCheckBox* hard_sync;
-	QCheckBox* net_gate;
-	QCheckBox* real_server;
-	QSpinBox* sync_threshold;
-	QSpinBox* server_port;
-	QSpinBox* client_port;
-	QLineEdit* ip_address;
-	QPushButton* ip_update;
-	QLineEdit* gbma_address;
-	QPushButton* gbma_update;
-
 	//Misc widgets
 	cheat_menu* dmg_cheat_menu;
 	rtc_menu* real_time_clock_menu;
@@ -194,14 +177,10 @@ class gen_settings : public QDialog
 
 	private slots:
 	void set_bios();
-	void sio_dev_change();
-	void ir_dev_change();
 	void overclock_change();
 	void set_patches();
 	void show_cheats();
 	void show_rtc();
-	void show_sio_config();
-	void show_ir_config();
 	void set_ogl();
 	void screen_scale_change();
 	void aspect_ratio_change();
@@ -218,17 +197,8 @@ class gen_settings : public QDialog
 	void rebuild_input_index();
 	void input_device_change();
 	void dead_zone_change();
-	void set_netplay();
-	void set_hard_sync();
-	void set_net_gate();
-	void set_real_server();
 	void get_chip_list();
 	void set_battle_chip();
-	void update_sync_threshold();
-	void update_server_port();
-	void update_client_port();
-	void update_ip_addr();
-	void update_gbma_addr();
 	void configure_button(int button);
 	void close_input();
 	void close_settings();
@@ -241,7 +211,6 @@ class gen_settings : public QDialog
 	QDialog* display;
 	QDialog* sound;
 	QDialog* controls;
-	QDialog* netplay;
 	QDialog* paths;
 
 	QWidget* input_device_set;

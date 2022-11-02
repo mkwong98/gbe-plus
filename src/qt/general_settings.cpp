@@ -34,14 +34,12 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	display = new QDialog;
 	sound = new QDialog;
 	controls = new QDialog;
-	netplay = new QDialog;
 	paths = new QDialog;
 
 	tabs->addTab(general, tr("General"));
 	tabs->addTab(display, tr("Display"));
 	tabs->addTab(sound, tr("Sound"));
 	tabs->addTab(controls, tr("Controls"));
-	tabs->addTab(netplay, tr("Netplay"));
 	tabs->addTab(paths, tr("Paths"));
 
 	QWidget* button_set = new QWidget;
@@ -113,63 +111,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	rtc_layout->addWidget(rtc_label, 1, Qt::AlignRight);
 	rtc_set->setLayout(rtc_layout);
 
-	//General settings - Emulated SIO device
-	QWidget* sio_set = new QWidget(general);
-	QLabel* sio_label = new QLabel("Serial IO Device", sio_set);
-	sio_dev = new QComboBox(sio_set);
-	sio_dev->setToolTip("Changes the emulated Serial Input-Output device connected to the emulated Game Boy");
-	sio_dev->addItem("None");
-	sio_dev->addItem("GB Link Cable");
-	sio_dev->addItem("GB Printer");
-	sio_dev->addItem("Mobile Adapter GB");
-	sio_dev->addItem("Bardigun Barcode Scanner");
-	sio_dev->addItem("Barcode Boy");
-	sio_dev->addItem("DMG-07");
-	sio_dev->addItem("GBA Link Cable");
-	sio_dev->addItem("GB Player Rumble");
-	sio_dev->addItem("Soul Doll Adapter");
-	sio_dev->addItem("Battle Chip Gate");
-	sio_dev->addItem("Progress Chip Gate");
-	sio_dev->addItem("Beast Link Gate");
-	sio_dev->addItem("Power Antenna");
-	sio_dev->addItem("Sewing Machine");
-	sio_dev->addItem("Multi Plust On System");
-	sio_dev->addItem("Turbo File GB/Advance");
-	sio_dev->addItem("AGB-006");
-	sio_dev->addItem("V.R.S.");
-	sio_dev->addItem("Magical Watch");
-	sio_dev->addItem("GBA Wireless Adapter");
-
-	config_sio = new QPushButton("Configure");
-
-	QHBoxLayout* sio_layout = new QHBoxLayout;
-	sio_layout->addWidget(sio_label, 0, Qt::AlignLeft);
-	sio_layout->addWidget(sio_dev, 1, Qt::AlignLeft);
-	sio_layout->addWidget(config_sio, 0, Qt::AlignRight);
-	sio_set->setLayout(sio_layout);
-
-	//General settings - Emulated IR device
-	QWidget* ir_set = new QWidget(general);
-	QLabel* ir_label = new QLabel("Infrared Device", ir_set);
-	ir_dev = new QComboBox(ir_set);
-	ir_dev->setToolTip("Changes the emulated IR device that will communicate with the emulated Game Boy");
-	ir_dev->addItem("GBC IR Port");
-	ir_dev->addItem("Full Changer");
-	ir_dev->addItem("Pokemon Pikachu 2");
-	ir_dev->addItem("Pocket Sakura");
-	ir_dev->addItem("TV Remote");
-	ir_dev->addItem("Constant IR Light");
-	ir_dev->addItem("Zoids CDZ Model");
-	ir_dev->addItem("NTR-027");
-
-	config_ir = new QPushButton("Configure");
-
-	QHBoxLayout* ir_layout = new QHBoxLayout;
-	ir_layout->addWidget(ir_label, 0, Qt::AlignLeft);
-	ir_layout->addWidget(ir_dev, 1, Qt::AlignLeft);
-	ir_layout->addWidget(config_ir, 0, Qt::AlignRight);
-	ir_set->setLayout(ir_layout);
-
 	//General settings - Emulated CPU Speed
 	QWidget* overclock_set = new QWidget(general);
 	QLabel* overclock_label = new QLabel("Emulated CPU Speed", overclock_set);
@@ -200,8 +141,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 
 	QVBoxLayout* gen_layout = new QVBoxLayout;
 	gen_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	gen_layout->addWidget(sio_set);
-	gen_layout->addWidget(ir_set);
 	gen_layout->addWidget(special_cart_set);
 	gen_layout->addWidget(overclock_set);
 	gen_layout->addWidget(bios_set);
@@ -926,136 +865,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	bcg_chip_3_set->setVisible(false);
 	bcg_chip_4_set->setVisible(false);
 
-	//Netplay - Enable Netplay
-	QWidget* enable_netplay_set = new QWidget(netplay);
-	QLabel* enable_netplay_label = new QLabel("Enable netplay");
-	enable_netplay = new QCheckBox(netplay);
-	enable_netplay->setToolTip("Enables network communications for playing online.");
-
-	QHBoxLayout* enable_netplay_layout = new QHBoxLayout;
-	enable_netplay_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	enable_netplay_layout->addWidget(enable_netplay);
-	enable_netplay_layout->addWidget(enable_netplay_label);
-	enable_netplay_set->setLayout(enable_netplay_layout);
-
-	//Netplay - Enable hard syncing
-	QWidget* hard_sync_set = new QWidget(netplay);
-	QLabel* hard_sync_label = new QLabel("Use hard syncing");
-	hard_sync = new QCheckBox(netplay);
-	hard_sync->setToolTip("Forces GBE+ to pause during netplay to wait for other players.\nCauses slowdowns but necessary to avoid desyncing in some cases.");
-
-	QHBoxLayout* hard_sync_layout = new QHBoxLayout;
-	hard_sync_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	hard_sync_layout->addWidget(hard_sync);
-	hard_sync_layout->addWidget(hard_sync_label);
-	hard_sync_set->setLayout(hard_sync_layout);
-
-	//Netplay - Enable Net Gate
-	QWidget* net_gate_set = new QWidget(netplay);
-	QLabel* net_gate_label = new QLabel("Use Net Gate");
-	net_gate = new QCheckBox(netplay);
-	net_gate->setToolTip("Allows GBE+ to receive chip IDs for Battle Chip Gate via TCP");
-
-	QHBoxLayout* net_gate_layout = new QHBoxLayout;
-	net_gate_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	net_gate_layout->addWidget(net_gate);
-	net_gate_layout->addWidget(net_gate_label);
-	net_gate_set->setLayout(net_gate_layout);
-
-	//Netplay - Enable Real GBMA servers
-	QWidget* real_server_set = new QWidget(netplay);
-	QLabel* real_server_label = new QLabel("Use Real Mobile Adapter GB Servers");
-	real_server = new QCheckBox(netplay);
-	real_server->setToolTip("Allows GBE+ to connect to Mobile Adapter GB servers via TCP");
-
-	QHBoxLayout* real_server_layout = new QHBoxLayout;
-	real_server_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	real_server_layout->addWidget(real_server);
-	real_server_layout->addWidget(real_server_label);
-	real_server_set->setLayout(real_server_layout);
-
-	//Netplay - Sync Threshold
-	QWidget* sync_threshold_set = new QWidget(netplay);
-	QLabel* sync_threshold_label = new QLabel("Sync threshold");
-	sync_threshold = new QSpinBox(netplay);
-	sync_threshold->setMinimum(0);
-	sync_threshold->setToolTip("Amount of emulated CPU cycles GBE+ will pause when enabling hard sync.");
-
-	QHBoxLayout* sync_threshold_layout = new QHBoxLayout;
-	sync_threshold_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	sync_threshold_layout->addWidget(sync_threshold_label);
-	sync_threshold_layout->addWidget(sync_threshold);
-	sync_threshold_set->setLayout(sync_threshold_layout);
-
-	//Netplay - Server port
-	QWidget* server_port_set = new QWidget(netplay);
-	QLabel* server_port_label = new QLabel("Server Port : ");
-	server_port = new QSpinBox(netplay);
-	server_port->setMinimum(0);
-	server_port->setMaximum(0xFFFF);
-	server_port->setToolTip("GBE+ server port number.\nMust match the client port number of another instance of GBE+ when networking.");
-
-	QHBoxLayout* server_port_layout = new QHBoxLayout;
-	server_port_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	server_port_layout->addWidget(server_port_label);
-	server_port_layout->addWidget(server_port);
-	server_port_set->setLayout(server_port_layout);
-
-	//Netplay - Client port
-	QWidget* client_port_set = new QWidget(netplay);
-	QLabel* client_port_label = new QLabel("Client Port : ");
-	client_port = new QSpinBox(netplay);
-	client_port->setMinimum(0);
-	client_port->setMaximum(0xFFFF);
-	client_port->setToolTip("GBE+ client port number.\nMust match the server port number of another instance of GBE+ when networking.");
-
-	QHBoxLayout* client_port_layout = new QHBoxLayout;
-	client_port_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	client_port_layout->addWidget(client_port_label);
-	client_port_layout->addWidget(client_port);
-	client_port_set->setLayout(client_port_layout);
-
-	//Netplay - Client IP address
-	QWidget* ip_address_set = new QWidget(netplay);
-	QLabel* ip_address_label = new QLabel("Client IP Address : ");
-	ip_address = new QLineEdit(netplay);
-	ip_address->setToolTip("IP address GBE+ will establish a connection with.");
-	ip_update = new QPushButton("Update IP");
-
-	QHBoxLayout* ip_address_layout = new QHBoxLayout;
-	ip_address_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	ip_address_layout->addWidget(ip_address_label);
-	ip_address_layout->addWidget(ip_address);
-	ip_address_layout->addWidget(ip_update);
-	ip_address_set->setLayout(ip_address_layout);
-
-	//Netplay - Mobile Adapter GB server IP address
-	QWidget* gbma_address_set = new QWidget(netplay);
-	QLabel* gbma_address_label = new QLabel("MAGB IP Address : ");
-	gbma_address = new QLineEdit(netplay);
-	gbma_address->setToolTip("IP address of Mobile Adapter GB server");
-	gbma_update = new QPushButton("Update IP");
-
-	QHBoxLayout* gbma_address_layout = new QHBoxLayout;
-	gbma_address_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	gbma_address_layout->addWidget(gbma_address_label);
-	gbma_address_layout->addWidget(gbma_address);
-	gbma_address_layout->addWidget(gbma_update);
-	gbma_address_set->setLayout(gbma_address_layout);
-
-	QVBoxLayout* netplay_layout = new QVBoxLayout;
-	netplay_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	netplay_layout->addWidget(enable_netplay_set);
-	netplay_layout->addWidget(net_gate_set);
-	netplay_layout->addWidget(real_server_set);
-	netplay_layout->addWidget(hard_sync_set);
-	netplay_layout->addWidget(sync_threshold_set);
-	netplay_layout->addWidget(server_port_set);
-	netplay_layout->addWidget(client_port_set);
-	netplay_layout->addWidget(ip_address_set);
-	netplay_layout->addWidget(gbma_address_set);
-	netplay->setLayout(netplay_layout);
-
 	//Path settings - DMG BIOS
 	QWidget* dmg_bios_set = new QWidget(paths);
 	dmg_bios_label = new QLabel("DMG Boot ROM :  ");
@@ -1158,14 +967,10 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	connect(tabs_button, SIGNAL(rejected()), this, SLOT(reject()));
 	connect(tabs_button->button(QDialogButtonBox::Close), SIGNAL(clicked()), this, SLOT(close_settings()));
 	connect(bios, SIGNAL(stateChanged(int)), this, SLOT(set_bios()));
-	connect(sio_dev, SIGNAL(currentIndexChanged(int)), this, SLOT(sio_dev_change()));
-	connect(ir_dev, SIGNAL(currentIndexChanged(int)), this, SLOT(ir_dev_change()));
 	connect(overclock, SIGNAL(currentIndexChanged(int)), this, SLOT(overclock_change()));
 	connect(auto_patch, SIGNAL(stateChanged(int)), this, SLOT(set_patches()));
 	connect(edit_cheats, SIGNAL(clicked()), this, SLOT(show_cheats()));
 	connect(edit_rtc, SIGNAL(clicked()), this, SLOT(show_rtc()));
-	connect(config_sio, SIGNAL(clicked()), this, SLOT(show_sio_config()));
-	connect(config_ir, SIGNAL(clicked()), this, SLOT(show_ir_config()));
 	connect(ogl, SIGNAL(stateChanged(int)), this, SLOT(set_ogl()));
 	connect(screen_scale, SIGNAL(currentIndexChanged(int)), this, SLOT(screen_scale_change()));
 	connect(aspect_ratio, SIGNAL(stateChanged(int)), this, SLOT(aspect_ratio_change()));
@@ -1181,20 +986,11 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	connect(dead_zone, SIGNAL(valueChanged(int)), this, SLOT(dead_zone_change()));
 	connect(input_device, SIGNAL(currentIndexChanged(int)), this, SLOT(input_device_change()));
 	connect(controls_combo, SIGNAL(currentIndexChanged(int)), this, SLOT(switch_control_layout()));
-	connect(enable_netplay, SIGNAL(stateChanged(int)), this, SLOT(set_netplay()));
-	connect(hard_sync, SIGNAL(stateChanged(int)), this, SLOT(set_hard_sync()));
-	connect(net_gate, SIGNAL(stateChanged(int)), this, SLOT(set_net_gate()));
-	connect(real_server, SIGNAL(stateChanged(int)), this, SLOT(set_real_server()));
 	connect(chip_gate_type, SIGNAL(currentIndexChanged(int)), this, SLOT(get_chip_list()));
 	connect(battle_chip_1, SIGNAL(currentIndexChanged(int)), this, SLOT(set_battle_chip()));
 	connect(battle_chip_2, SIGNAL(currentIndexChanged(int)), this, SLOT(set_battle_chip()));
 	connect(battle_chip_3, SIGNAL(currentIndexChanged(int)), this, SLOT(set_battle_chip()));
 	connect(battle_chip_4, SIGNAL(currentIndexChanged(int)), this, SLOT(set_battle_chip()));
-	connect(sync_threshold, SIGNAL(valueChanged(int)), this, SLOT(update_sync_threshold()));
-	connect(server_port, SIGNAL(valueChanged(int)), this, SLOT(update_server_port()));
-	connect(client_port, SIGNAL(valueChanged(int)), this, SLOT(update_client_port()));
-	connect(ip_update, SIGNAL(clicked()), this, SLOT(update_ip_addr()));
-	connect(gbma_update, SIGNAL(clicked()), this, SLOT(update_gbma_addr()));
 	connect(data_folder, SIGNAL(accepted()), this, SLOT(select_folder()));
 	connect(data_folder, SIGNAL(rejected()), this, SLOT(reject_folder()));
 
@@ -1433,35 +1229,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 /****** Sets various widgets to values based on the current config paramters (from .ini file) ******/
 void gen_settings::set_ini_options()
 {
-	//Emulated SIO device
-	sio_dev->setCurrentIndex(config::sio_device);
-
-	switch(config::sio_device)
-	{
-		case 1:
-		case 4:
-		case 5:
-		case 6:
-		case 7:
-		case 9:
-		case 10:
-		case 11:
-		case 12:
-		case 15:
-		case 16:
-		case 19:
-			config_sio->setEnabled(true);
-			break;
-
-		default: config_sio->setEnabled(false);
-	}
-
-	//Emulated IR device
-	ir_dev->setCurrentIndex(config::ir_device);
-
-	if((config::ir_device == 1) || (config::ir_device == 2) || (config::ir_device == 3) || (config::ir_device == 5)) { config_ir->setEnabled(true); }
-	else { config_ir->setEnabled(false); }
-
 	//Emulated CPU speed
 	overclock->setCurrentIndex(config::oc_flags);
 
@@ -1630,30 +1397,6 @@ void gen_settings::set_ini_options()
 	if(config::use_haptics) { rumble_on->setChecked(true); }
 	else { rumble_on->setChecked(false); }
 
-	//Netplay
-	if(config::use_netplay) { enable_netplay->setChecked(true); }
-	else { enable_netplay->setChecked(false); }
-
-	if(config::netplay_hard_sync)
-	{
-		hard_sync->setChecked(true);
-		sync_threshold->setEnabled(true);
-	}
-
-	else
-	{
-		hard_sync->setChecked(false);
-		sync_threshold->setEnabled(false);
-	}
-
-	//Net Gate
-	if(config::use_net_gate) { net_gate->setChecked(true); }
-	else { net_gate->setChecked(false); }
-
-	//Real Mobile Adapter GB Server
-	if(config::use_real_gbma_server) { real_server->setChecked(true); }
-	else { real_server->setChecked(false); }
-
 	//Battle Gate Type
 	if(config::sio_device == 11) { chip_gate_type->setCurrentIndex(1); }
 	else if(config::sio_device == 12) { chip_gate_type->setCurrentIndex(2); }
@@ -1668,12 +1411,6 @@ void gen_settings::set_ini_options()
 		if(chip_list[x] == init_chip_list[3]) { battle_chip_4->setCurrentIndex(x); }
 	}
 
-	sync_threshold->setValue(config::netplay_sync_threshold);
-	server_port->setValue(config::netplay_server_port);
-	client_port->setValue(config::netplay_client_port);
-	ip_address->setText(QString::fromStdString(config::netplay_client_ip));
-	gbma_address->setText(QString::fromStdString(config::gbma_server));
-
 	dmg_bios->setText(path_1);
 	gbc_bios->setText(path_2);
 	cgfx_path->setText(path_5);
@@ -1687,50 +1424,6 @@ void gen_settings::set_bios()
 {
 	if(bios->isChecked()) { config::use_bios = true; }
 	else { config::use_bios = false; }
-}
-
-/****** Changes the emulated Serial IO device ******/
-void gen_settings::sio_dev_change()
-{
-	config::sio_device = sio_dev->currentIndex();
-
-	switch(config::sio_device)
-	{
-		case 1:
-		case 4:
-		case 5:
-		case 6:
-		case 7:
-		case 9:
-		case 10:
-		case 11:
-		case 12:
-		case 15:
-		case 16:
-		case 19:
-			config_sio->setEnabled(true);
-			break;
-
-		default: config_sio->setEnabled(false);
-	}
-}
-
-/****** Changes the emulated IR device ******/
-void gen_settings::ir_dev_change()
-{
-	//Reset IR database index when switching devices
-	if(config::ir_device != ir_dev->currentIndex())
-	{
-		config::ir_db_index = 0;
-		full_changer_menu->cosmic_character->setCurrentIndex(0);
-		pokemon_pikachu_menu->watts->setCurrentIndex(0);
-		pocket_sakura_menu->points->setCurrentIndex(0);
-	}
-
-	config::ir_device = ir_dev->currentIndex();
-
-	if((config::ir_device == 1) || (config::ir_device == 2) || (config::ir_device == 3) || config::ir_device == 5) { config_ir->setEnabled(true); }
-	else { config_ir->setEnabled(false); }
 }
 
 /****** Changes the emulated CPU speed ******/
@@ -1757,35 +1450,6 @@ void gen_settings::show_cheats()
 void gen_settings::show_rtc()
 {
 	real_time_clock_menu->show();
-}
-
-/****** Displays relevant SIO configuration window ******/
-void gen_settings::show_sio_config()
-{
-	switch(config::sio_device)
-	{
-		case 1: tabs->setCurrentIndex(4); break;
-		case 4: qt_gui::draw_surface->set_card_file(); break;
-		case 5: qt_gui::draw_surface->set_card_file(); break;
-		case 6: tabs->setCurrentIndex(4); break;
-		case 7: tabs->setCurrentIndex(4); break;
-		case 9: qt_gui::draw_surface->set_data_file(); break;
-		case 10: tabs->setCurrentIndex(3); controls_combo->setCurrentIndex(3); chip_gate_type->setCurrentIndex(0); break;
-		case 11: tabs->setCurrentIndex(3); controls_combo->setCurrentIndex(3); chip_gate_type->setCurrentIndex(1); break;
-		case 12: tabs->setCurrentIndex(3); controls_combo->setCurrentIndex(3); chip_gate_type->setCurrentIndex(2); break;
-		case 16: turbo_file_menu->show(); break;
-	}
-}
-
-/****** Displays relevant IR configuration window ******/
-void gen_settings::show_ir_config()
-{
-	switch(config::ir_device)
-	{
-		case 0x1: full_changer_menu->show(); break;
-		case 0x2: pokemon_pikachu_menu->show(); break;
-		case 0x3: pocket_sakura_menu->show(); break;
-	}	
 }
 
 /****** Toggles enabling or disabling the fragment and vertex shader widgets when setting OpenGL ******/
@@ -2139,43 +1803,6 @@ void gen_settings::input_device_change()
 /****** Dynamically changes the core pad's dead-zone ******/
 void gen_settings::dead_zone_change() { config::dead_zone = dead_zone->value(); }
 
-/****** Sets the netplay enable option ******/
-void gen_settings::set_netplay()
-{
-	if(enable_netplay->isChecked()) { config::use_netplay = true; }
-	else { config::use_netplay = false; }
-}
-
-/****** Sets the netplay hard sync option ******/
-void gen_settings::set_hard_sync()
-{
-	if(hard_sync->isChecked())
-	{
-		config::netplay_hard_sync = true;
-		sync_threshold->setEnabled(true);
-	}
-
-	else
-	{
-		config::netplay_hard_sync = false;
-		sync_threshold->setEnabled(false);
-	}
-}
-
-/****** Sets the Net Gate option ******/
-void gen_settings::set_net_gate()
-{
-	if(net_gate->isChecked()) { config::use_net_gate = true; }
-	else { config::use_net_gate = false; }
-}
-
-/****** Sets the Real Mobile Adapter GB Server option ******/
-void gen_settings::set_real_server()
-{
-	if(real_server->isChecked()) { config::use_real_gbma_server = true; }
-	else { config::use_real_gbma_server = false; }
-}
-
 /****** Updates the current Battle Chip list ******/
 void gen_settings::get_chip_list()
 {
@@ -2232,58 +1859,6 @@ void gen_settings::set_battle_chip()
 
 	index = battle_chip_4->currentIndex();
 	config::chip_list[3] = chip_list[index];
-}
-
-/****** Sets the netplay sync threshold ******/
-void gen_settings::update_sync_threshold()
-{
-	config::netplay_sync_threshold = sync_threshold->value();
-}
-
-/****** Sets the netplay server port ******/
-void gen_settings::update_server_port()
-{
-	config::netplay_server_port = server_port->value();
-}
-
-/****** Sets the netplay client port ******/
-void gen_settings::update_client_port()
-{
-	config::netplay_client_port = client_port->value();
-}
-
-/****** Sets the client IP address ******/
-void gen_settings::update_ip_addr()
-{
-	std::string temp = ip_address->text().toStdString();
-	u32 check = 0;
-
-	if(!util::ip_to_u32(temp, check))
-	{
-		ip_address->setText(QString::fromStdString(config::netplay_client_ip));
-	}
-
-	else
-	{
-		config::netplay_client_ip = temp;
-	}
-}
-
-/****** Sets the Mobile Adapter GB IP address ******/
-void gen_settings::update_gbma_addr()
-{
-	std::string temp = gbma_address->text().toStdString();
-	u32 check = 0;
-
-	if(!util::ip_to_u32(temp, check))
-	{
-		gbma_address->setText(QString::fromStdString(config::gbma_server));
-	}
-
-	else
-	{
-		config::gbma_server = temp;
-	}
 }
 
 /****** Prepares GUI to receive input for controller configuration ******/
@@ -2984,12 +2559,6 @@ void gen_settings::closeEvent(QCloseEvent* event)
 {
 	//Close any on-going input configuration
 	close_input();
-
-	//Restore old text for netplay IP address if it hasn't been updated
-	ip_address->setText(QString::fromStdString(config::netplay_client_ip));
-
-	//Restore old text for MAGB server IP address if it hasn't been updated
-	gbma_address->setText(QString::fromStdString(config::gbma_server));
 }
 
 /****** Closes the settings window - Used for the Close tab button ******/
@@ -2997,12 +2566,6 @@ void gen_settings::close_settings()
 {
 	//Close any on-going input configuration
 	close_input();
-
-	//Restore old text for netplay IP address if it hasn't been updated
-	ip_address->setText(QString::fromStdString(config::netplay_client_ip));
-
-	//Restore old text for MAGB server IP address if it hasn't been updated
-	gbma_address->setText(QString::fromStdString(config::gbma_server));
 }
 
 /****** Handle keypress input ******/
