@@ -500,7 +500,6 @@
     <None Include="src\data\pocket_sakura_db.bin" />
     <None Include="src\data\pokemon_pikachu_db.bin" />
     <None Include="src\data\zzh_db.bin" />
-    <None Include="src\docs\technical\dandocs.html" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

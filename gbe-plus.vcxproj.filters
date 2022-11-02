@@ -368,7 +368,6 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="src\data\gbma\index.html" />
-    <None Include="src\docs\technical\dandocs.html" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="src\qt\cgfx.h">
