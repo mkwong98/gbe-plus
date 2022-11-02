@@ -54,10 +54,6 @@ class GB_core : virtual public core_emu
 		u8 ex_read_u8(u16 address);
 		void ex_write_u8(u16 address, u8 value);
 
-		//Netplay interface
-		void start_netplay();
-		void stop_netplay();
-
 		//Misc
 		u32 get_core_data(u32 core_index);
 

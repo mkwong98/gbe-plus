@@ -893,14 +893,6 @@ void GB_LCD::step_sub(int cpu_clock)
 
 				//Update FPS counter + title
 				fps_count++;
-				if(((SDL_GetTicks() - fps_time) >= 1000) && (config::sdl_render)) 
-				{ 
-					fps_time = SDL_GetTicks();
-					config::title.str("");
-					config::title << "GBE+ " << fps_count << "FPS";
-					SDL_SetWindowTitle(window, config::title.str().c_str());
-					fps_count = 0; 
-				}
 
 				//Process gyroscope
 				if(mem->cart.mbc_type == GB_MMU::MBC7) { mem->g_pad->process_gyroscope(); }
@@ -908,17 +900,6 @@ void GB_LCD::step_sub(int cpu_clock)
 				//Process Gameshark cheats
 				if(config::use_cheats) { mem->set_gs_cheats(); }
 
-				//Process Constant IR Light - Interactive Mode
-				if((config::ir_device == 5) && (config::ir_db_index == 1))
-				{
-					if(mem->g_pad->ir_delay)
-					{
-						mem->memory_map[REG_RP] &= ~0x2;
-						mem->g_pad->ir_delay--;
-					}
-
-					else { mem->memory_map[REG_RP] |= 0x2; }
-				}	
 			}
 
 			//Processing VBlank

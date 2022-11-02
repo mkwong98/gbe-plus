@@ -498,7 +498,6 @@ void main_menu::boot_game()
 		main_menu::gbe_plus->core_emu::~core_emu();
 	}
 
-	config::sdl_render = false;
 	config::render_external_sw = render_screen_sw;
 	config::render_external_hw = render_screen_hw;
 	config::sample_rate = settings->sample_rate;

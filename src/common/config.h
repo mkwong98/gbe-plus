@@ -96,15 +96,12 @@ namespace config
 
 	extern special_cart_types cart_type;
 
-	extern u32 sio_device;
-	extern u32 ir_device;	
 	extern bool use_opengl;
 	extern bool turbo;
 	extern u8 scaling_factor;
 	extern u8 old_scaling_factor;
 	extern std::stringstream title;
 	extern u8 gb_type;
-	extern bool sdl_render;
 	extern u8 dmg_gbc_pal;
 	extern u32 utp_steps;
 	extern u32 magic_reader_id;
@@ -114,21 +111,6 @@ namespace config
 	extern std::vector <std::string> gg_cheats;
 	extern std::vector <std::string> cheats_info;
 	extern bool use_patches;
-
-	extern bool use_netplay;
-	extern bool netplay_hard_sync;
-	extern bool use_net_gate;
-	extern bool use_real_gbma_server;
-	extern u32 netplay_sync_threshold;
-	extern u16 netplay_server_port;
-	extern u16 netplay_client_port;
-	extern u8 netplay_id;
-	extern std::string netplay_client_ip;
-
-
-	extern std::string gbma_server;
-	extern bool use_real_gbma_server;
-	extern u16 gbma_server_http_port;
 
 	extern u8 volume;
 	extern u8 old_volume;

@@ -1398,9 +1398,7 @@ void gen_settings::set_ini_options()
 	else { rumble_on->setChecked(false); }
 
 	//Battle Gate Type
-	if(config::sio_device == 11) { chip_gate_type->setCurrentIndex(1); }
-	else if(config::sio_device == 12) { chip_gate_type->setCurrentIndex(2); }
-	else { chip_gate_type->setCurrentIndex(0); }
+	chip_gate_type->setCurrentIndex(0);
 
 	//Battle Chips 1-4
 	for(u32 x = 0; x < 512; x++)
