@@ -34,7 +34,6 @@ namespace config
 	std::string data_path = "";
 	std::string cheats_path = "";
 	std::string external_camera_file = "";
-	std::string external_card_file = "";
 	std::string external_image_file = "";
 	std::string external_data_file = "";
 	std::vector <std::string> recent_files;
@@ -1074,24 +1073,6 @@ bool parse_ini_file()
 			else { config::external_camera_file = ""; }
 		}
 
-		//External card file
-		else if(ini_item == "#card_file")
-		{
-			if((x + 1) < size) 
-			{
-				ini_item = ini_opts[++x];
-				std::string first_char = "";
-				first_char = ini_item[0];
-				
-				//When left blank, don't parse the next line item
-				if(first_char != "#") { config::external_card_file = ini_item; }
-				else { config::external_card_file = ""; x--;}
- 
-			}
-
-			else { config::external_card_file = ""; }
-		}
-
 		//External image file
 		else if(ini_item == "#image_file")
 		{
@@ -2002,10 +1983,6 @@ bool save_ini_file()
 	//External camera file
 	val = (config::external_camera_file == "") ? "" : (":'" + config::external_camera_file + "'");
 	output_lines.push_back("[#camera_file" + val + "]");
-
-	//External card file
-	val = (config::external_card_file == "") ? "" : (":'" + config::external_card_file + "'");
-	output_lines.push_back("[#card_file" + val + "]");
 
 	//External image file
 	val = (config::external_image_file == "") ? "" : (":'" + config::external_image_file + "'");

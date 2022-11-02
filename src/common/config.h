@@ -61,7 +61,6 @@ namespace config
 	extern std::string data_path;
 	extern std::string cheats_path;
 	extern std::string external_camera_file;
-	extern std::string external_card_file;
 	extern std::string external_image_file;
 	extern std::string external_data_file;
 	extern std::vector <std::string> recent_files;

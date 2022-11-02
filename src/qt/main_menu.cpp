@@ -23,7 +23,6 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 	//Setup actions
 	QAction* open = new QAction("Open...", this);
 	QAction* boot_no_cart = new QAction("Boot Empty Slot", this);
-	QAction* select_card = new QAction("Select Card File", this);
 	QAction* select_cam = new QAction("Select GB Camera Photo", this);
 	QAction* select_img = new QAction("Select Image File", this);
 	QAction* select_data = new QAction("Select Data File", this);
@@ -71,7 +70,6 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 	file->addAction(boot_no_cart);
 	file->addSeparator();
 	recent_list = file->addMenu(tr("Recent Files"));
-	file->addAction(select_card);
 	file->addAction(select_cam);
 	file->addAction(select_img);
 	file->addAction(select_data);
@@ -123,7 +121,6 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 	connect(quit, SIGNAL(triggered()), this, SLOT(quit()));
 	connect(open, SIGNAL(triggered()), this, SLOT(open_file()));
 	connect(boot_no_cart, SIGNAL(triggered()), this, SLOT(open_no_cart()));
-	connect(select_card, SIGNAL(triggered()), this, SLOT(select_card_file()));
 	connect(select_cam, SIGNAL(triggered()), this, SLOT(select_cam_file()));
 	connect(select_img, SIGNAL(triggered()), this, SLOT(select_img_file()));
 	connect(select_data, SIGNAL(triggered()), this, SLOT(select_data_file()));
@@ -376,35 +373,9 @@ void main_menu::open_no_cart()
 	boot_game();
 }
 
-/****** Public function for setting card file ******/
-void main_menu::set_card_file() { select_card_file(); }
-
 /****** Public function for setting data file ******/
 void main_menu::set_data_file() { select_data_file(); }
 
-/****** Opens card file ******/
-void main_menu::select_card_file()
-{
-	SDL_PauseAudio(1);
-
-	QString filename = QFileDialog::getOpenFileName(this, tr("Open"), "", tr("Binary card data (*.bin)"));
-	if(filename.isNull()) { SDL_PauseAudio(0); return; }
-
-	config::external_card_file = filename.toStdString();
-
-	//Tell DMG-GBC core to update data
-	if((config::gb_type >= 0) && (config::gb_type <= 2) && (main_menu::gbe_plus != NULL))
-	{
-		if(main_menu::gbe_plus->get_core_data(1) == 0)
-		{
-			std::string mesg_text = "The card file: '" + config::external_card_file + "' could not be loaded"; 
-			warning_box->setText(QString::fromStdString(mesg_text));
-			warning_box->show();
-		}
-	}
-
-	SDL_PauseAudio(0);
-}
 
 /****** Opens GB Camera image file ******/
 void main_menu::select_cam_file()

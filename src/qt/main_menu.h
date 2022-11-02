@@ -66,7 +66,6 @@ class main_menu : public QWidget
 	private slots:
 	void open_file();
 	void open_no_cart();
-	void select_card_file();
 	void select_cam_file();
 	void select_img_file();
 	void select_data_file();
