@@ -86,8 +86,6 @@ class main_menu : public QWidget
 	void load_recent(int file_id);
 	void save_state(int slot);
 	void load_state(int slot);
-	void start_netplay();
-	void stop_netplay();
 	void start_special_comm();
 
 	private:

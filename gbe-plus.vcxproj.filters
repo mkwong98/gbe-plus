@@ -51,9 +51,6 @@
     <ClCompile Include="src\dmg\custom_graphics.cpp">
       <Filter>Source Files\dmg</Filter>
     </ClCompile>
-    <ClCompile Include="src\dmg\dmg07.cpp">
-      <Filter>Source Files\dmg</Filter>
-    </ClCompile>
     <ClCompile Include="src\dmg\gamepad.cpp">
       <Filter>Source Files\dmg</Filter>
     </ClCompile>
@@ -108,9 +105,6 @@
     <ClCompile Include="src\common\osd.cpp">
       <Filter>Source Files\common</Filter>
     </ClCompile>
-    <ClCompile Include="src\dmg\sio.cpp">
-      <Filter>Source Files\dmg</Filter>
-    </ClCompile>
     <ClCompile Include="src\dmg\tama5.cpp">
       <Filter>Source Files\dmg</Filter>
     </ClCompile>
@@ -124,9 +118,6 @@
       <Filter>Source Files\qt</Filter>
     </ClCompile>
     <ClCompile Include="src\qt\cheat_menu.cpp">
-      <Filter>Source Files\qt</Filter>
-    </ClCompile>
-    <ClCompile Include="src\qt\con_ir_menu.cpp">
       <Filter>Source Files\qt</Filter>
     </ClCompile>
     <ClCompile Include="src\qt\data_dialog.cpp">
@@ -226,12 +217,6 @@
     </ClInclude>
     <ClInclude Include="src\qt\render.h">
       <Filter>Header Files\qt</Filter>
-    </ClInclude>
-    <ClInclude Include="src\dmg\sio.h">
-      <Filter>Header Files\dmg</Filter>
-    </ClInclude>
-    <ClInclude Include="src\dmg\sio_data.h">
-      <Filter>Header Files\dmg</Filter>
     </ClInclude>
     <ClInclude Include="src\common\util.h">
       <Filter>Header Files\common</Filter>
@@ -396,9 +381,6 @@
       <Filter>Header Files\qt</Filter>
     </CustomBuild>
     <CustomBuild Include="src\qt\cheat_menu.h">
-      <Filter>Header Files\qt</Filter>
-    </CustomBuild>
-    <CustomBuild Include="src\qt\con_ir_menu.h">
       <Filter>Header Files\qt</Filter>
     </CustomBuild>
     <CustomBuild Include="src\qt\data_dialog.h">

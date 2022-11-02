@@ -347,9 +347,6 @@ u8 GBC_MMU::read_u8(u16 address)
 			if (!ir_signal && (ir_trigger == 1))
 			{
 				ir_trigger++;
-				sio_stat->shift_counter = 0;
-				sio_stat->shift_clock = 0;
-				sio_stat->shifts_left = 1;
 			}
 
 			//If Bits 6 and 7 are not set, treat Bit 1 as HIGH
@@ -1270,58 +1267,6 @@ void GB_MMU::write_u8(u16 address, u8 value)
 	else if(address == REG_SC)
 	{
 		value &= 0x83;
-		sio_stat->internal_clock = (value & 0x1) ? true : false;
-
-		set_sio_shift_clock(value);
-
-		//Start serial transfer
-		if(value & 0x80)
-		{
-			sio_stat->transfer_byte = memory_map[REG_SB];
-
-			if(sio_stat->internal_clock)
-			{
-				sio_stat->active_transfer = true;
-				sio_stat->shifts_left = 8;
-				sio_stat->shift_counter = 0;
-
-				//Keep track of internal transfers for sewing machines
-				if(config::sio_device == 14) { sio_stat->ping_count = 0; }
-			}
-
-			//Special handling for 4 Player Adapter - Player 1
-			else if((!sio_stat->internal_clock) && (sio_stat->sio_type == 6) && (sio_stat->network_id & 0x80))
-			{
-				sio_stat->active_transfer = true;
-				sio_stat->shifts_left = 8;
-				sio_stat->shift_counter = 0;
-				sio_stat->shift_clock = sio_stat->dmg07_clock;
-			}
-
-			//Special handling for 4 Player Adapter - Players 2-4
-			else if((!sio_stat->internal_clock) && (sio_stat->sio_type == 6)) { sio_stat->send_data = true; }
-
-			//Special handling for Singer IZEK 1500
-			else if(config::sio_device == 14)
-			{
-				sio_stat->active_transfer = true;
-				sio_stat->shifts_left = 8;
-				sio_stat->shift_counter = 0;
-				sio_stat->last_transfer = sio_stat->transfer_byte;
-
-				//Keep track of external transfers for sewing machines
-				sio_stat->ping_count++;
-			}
-
-			//Special handling for Turbo File GB
-			else if(config::sio_device == 16)
-			{
-				sio_stat->active_transfer = true;
-				sio_stat->shifts_left = 8;
-				sio_stat->shift_counter = 0;
-			}
-		}
-
 		memory_map[address] = value | 0x7C;
 	}
 
@@ -1332,28 +1277,6 @@ void GB_MMU::write_u8(u16 address, u8 value)
 	}
 
 	else if(address > 0x7FFF) { memory_map[address] = value; }
-}
-
-void DMG_MMU::set_sio_shift_clock(u8 value)
-{
-	//DMG uses 8192Hz clock only (512 cycles)
-	sio_stat->shift_clock = 512;
-}
-
-void GBC_MMU::set_sio_shift_clock(u8 value)
-{
-	//GBC has 4 selectable speeds
-	//8192Hz - Bit 1 cleared, Normal Speed
-	if (((value & 0x2) == 0) && ((memory_map[REG_KEY1] & 0x80) == 0)) { sio_stat->shift_clock = 512; }
-
-	//16384Hz - Bit 1 cleared, Double Speed
-	else if (((value & 0x2) == 0) && (memory_map[REG_KEY1] & 0x80)) { sio_stat->shift_clock = 256; }
-
-	//262144Hz - Bit 1 set, Normal Speed
-	else if ((value & 0x2) && ((memory_map[REG_KEY1] & 0x80) == 0)) { sio_stat->shift_clock = 16; }
-
-	//524288Hz - Bit 1 set, Double Speed
-	else { sio_stat->shift_clock = 8; }
 }
 
 
@@ -1530,11 +1453,6 @@ void GBC_MMU::write_u8(u16 address, u8 value)
 		//Send IR signal to another GBC
 		if (ir_signal != old_ir_stat) { ir_send = true; }
 
-		//Emulate constant IR light source - Static Mode
-		if ((sio_stat->ir_type == 5) && (value & 0xC0) && (config::ir_db_index == 0))
-		{
-			memory_map[address] &= ~0x2;
-		}
 	}
 
 	else
@@ -3028,5 +2946,3 @@ void GB_MMU::set_cgfx_data(dmg_cgfx_data* ex_cgfx_stat) { cgfx_stat = ex_cgfx_st
 /****** Points the MMU to an apu_data structure (FROM THE APU ITSELF) ******/
 void GB_MMU::set_apu_data(dmg_apu_data* ex_apu_stat) { apu_stat = ex_apu_stat; }
 
-/****** Points the MMU to an sio_data structure (FROM SIO ITSELF) ******/
-void GB_MMU::set_sio_data(dmg_sio_data* ex_sio_stat) { sio_stat = ex_sio_stat; }

@@ -70,10 +70,6 @@ void GB_core::init_cpu()
 	core_cpu->controllers.audio.mem = core_mmu;
 	core_mmu->set_apu_data(&core_cpu->controllers.audio.apu_stat);
 
-	//Link SIO and MMU
-	core_cpu->controllers.serial_io.mem = core_mmu;
-	core_mmu->set_sio_data(&core_cpu->controllers.serial_io.sio_stat);
-
 	//Link MMU and GamePad
 	core_cpu->mem->g_pad = &core_pad;
 }
@@ -99,9 +95,6 @@ void GB_core::start()
 		running = false;
 		core_cpu->running = false;
 	}
-
-	//Initialize SIO
-	core_cpu->controllers.serial_io.init();
 
 	//Initialize the GamePad
 	core_pad.init();
@@ -129,7 +122,6 @@ void GB_core::reset()
 	core_cpu->reset();
 	core_cpu->controllers.video->reset();
 	core_cpu->controllers.audio.reset();
-	core_cpu->controllers.serial_io.reset();
 	core_mmu->reset();
 
 	//Link CPU and MMU
@@ -140,9 +132,6 @@ void GB_core::reset()
 
 	//Link APU and MMU
 	core_cpu->controllers.audio.mem = core_mmu;
-
-	//Link SIO and MMU
-	core_cpu->controllers.serial_io.mem = core_mmu;
 
 	//Link MMU and GamePad
 	core_cpu->mem->g_pad = &core_pad;
@@ -253,9 +242,6 @@ void GB_core::run_core()
 				else if((event.type == SDL_JOYDEVICEADDED) && (!core_pad.joy_init)) { core_pad.init(); }
 			}
 			
-			//Update subscreen if necessary
-			if((core_pad.con_update) && (config::sio_device == 14)) { core_cpu->controllers.serial_io.singer_izek_update(); }
-
 			//Perform reset for GB Memory Cartridge
 			if((config::cart_type == DMG_GBMEM) && (core_mmu->cart.flash_stat == 0xF0)) { reset(); }
 		}
@@ -263,56 +249,6 @@ void GB_core::run_core()
 		//Run the CPU
 		if(core_cpu->running)
 		{
-			//Receive byte from another instance of GBE+ via netplay
-			if(core_cpu->controllers.serial_io.sio_stat.connected)
-			{
-				//Perform syncing operations when hard sync is enabled
-				if(config::netplay_hard_sync)
-				{
-					core_cpu->controllers.serial_io.sio_stat.sync_counter += core_cpu->get_cycles();
-
-					//Once this Game Boy has reached a specified amount of cycles, freeze until the other Game Boy finished that many cycles
-					if(core_cpu->controllers.serial_io.sio_stat.sync_counter >= core_cpu->controllers.serial_io.sio_stat.sync_clock)
-					{
-						core_cpu->controllers.serial_io.request_sync();
-						u32 current_time = SDL_GetTicks();
-						u32 timeout = 0;
-
-						while(core_cpu->controllers.serial_io.sio_stat.sync)
-						{
-							core_cpu->controllers.serial_io.receive_byte();
-							if(core_cpu->controllers.serial_io.is_master) { core_cpu->controllers.serial_io.four_player_request_sync(); }
-
-							//Timeout if 10 seconds passes
-							timeout = SDL_GetTicks();
-							
-							if((timeout - current_time) >= 10000)
-							{
-								core_cpu->controllers.serial_io.reset();
-							}						
-						}
-					}
-				}
-
-				//Send IR signal for GBC games
-				if(core_mmu->ir_send) { core_cpu->controllers.serial_io.send_ir_signal(); }
-
-				//Receive bytes normally
-				core_cpu->controllers.serial_io.receive_byte();
-
-				//Fade IR signal after a certain amount of time
-				if(core_mmu->ir_counter > 0)
-				{
-					core_mmu->ir_counter -= core_cpu->cycles;
-
-					if(core_mmu->ir_counter <= 0)
-					{
-						core_mmu->ir_counter = 0;
-						core_mmu->memory_map[REG_RP] &= ~0x2;
-					}
-				}
-			}
-
 			core_cpu->cycles = 0;
 
 			//Handle Interrupts
@@ -389,143 +325,6 @@ void GB_core::run_core()
 				}
 			}
 
-			//Update serial input-output operations
-			if(core_cpu->controllers.serial_io.sio_stat.shifts_left != 0)
-			{
-				core_cpu->controllers.serial_io.sio_stat.shift_counter += core_cpu->get_cycles();
-
-				if((core_cpu->controllers.serial_io.barcode_boy.send_data) && ((core_mmu->memory_map[REG_SC] & 0x80) == 0))
-				{
-					core_cpu->controllers.serial_io.sio_stat.shifts_left = 8;
-					core_cpu->controllers.serial_io.sio_stat.shift_counter = 0;
-				}	
-
-				//After SIO clocks, perform SIO operations now
-				if(core_cpu->controllers.serial_io.sio_stat.shift_counter >= core_cpu->controllers.serial_io.sio_stat.shift_clock)
-				{
-					//Shift bit out from SB, transfer it
-					core_mmu->memory_map[REG_SB] <<= 1;
-
-					core_cpu->controllers.serial_io.sio_stat.shift_counter -= core_cpu->controllers.serial_io.sio_stat.shift_clock;
-					core_cpu->controllers.serial_io.sio_stat.shifts_left--;
-
-					//Complete the transfer
-					if(core_cpu->controllers.serial_io.sio_stat.shifts_left == 0)
-					{
-						//Reset Bit 7 in SC
-						core_mmu->memory_map[REG_SC] &= ~0x80;
-
-						core_cpu->controllers.serial_io.sio_stat.active_transfer = false;
-
-						switch(core_cpu->controllers.serial_io.sio_stat.sio_type)
-						{
-							//Process normal SIO communications
-							case NO_GB_DEVICE:
-							case GB_LINK:
-								//Emulate disconnected link cable (on an internal clock) with no netplay
-								if((core_cpu->controllers.serial_io.sio_stat.internal_clock)
-								&& (!config::use_netplay || !core_cpu->controllers.serial_io.sio_stat.connected))
-								{
-									core_mmu->memory_map[REG_SB] = 0xFF;
-									core_mmu->memory_map[IF_FLAG] |= 0x08;
-								}
-
-								//Send byte to another instance of GBE+ via netplay
-								if(core_cpu->controllers.serial_io.sio_stat.connected) { core_cpu->controllers.serial_io.send_byte(); }
-						
-								break;
-
-							//Process GB Printer communications
-							case GB_PRINTER:
-								core_cpu->controllers.serial_io.printer_process();
-								break;
-
-							//Process GB Mobile Adapter communications
-							case GB_MOBILE_ADAPTER:
-								core_cpu->controllers.serial_io.mobile_adapter_process();
-								break;
-
-							//Process Bardigun card scanner communications
-							case GB_BARDIGUN_SCANNER:
-								core_cpu->controllers.serial_io.bardigun_process();
-								break;
-
-							//Process Barcode Boy communications
-							case GB_BARCODE_BOY:
-								core_cpu->controllers.serial_io.barcode_boy_process();
-
-								if(core_cpu->controllers.serial_io.barcode_boy.send_data)
-								{
-									core_mmu->memory_map[REG_SB] = core_cpu->controllers.serial_io.barcode_boy.byte;
-									core_mmu->memory_map[IF_FLAG] |= 0x08;
-								}
-									
-								break;
-
-							//Process 4 Player communications
-							case GB_FOUR_PLAYER_ADAPTER:
-								core_cpu->controllers.serial_io.four_player_process();
-								break;
-
-							//Process Power Antenna communications
-							case GB_POWER_ANTENNA:
-								if(core_cpu->controllers.serial_io.sio_stat.transfer_byte & 0x1)
-								{
-									core_cpu->controllers.serial_io.power_antenna_on = true;
-									core_cpu->controllers.video->power_antenna_osd = true;
-									core_mmu->memory_map[REG_SB] = 0xF2;
-									core_mmu->memory_map[IF_FLAG] |= 0x08;
-								}
-								
-								else if(core_cpu->controllers.serial_io.sio_stat.transfer_byte == 0)
-								{
-									core_cpu->controllers.serial_io.power_antenna_on = false;
-									core_cpu->controllers.video->power_antenna_osd = false;
-									core_mmu->memory_map[REG_SB] = 0xF3;
-									core_mmu->memory_map[IF_FLAG] |= 0x08;
-								}
-
-								break;
-
-							//Process Singer IZEK communications
-							case GB_SINGER_IZEK:
-								core_cpu->controllers.serial_io.singer_izek_process();
-								break;
-
-							//Process Turbo File GB communications
-							case GB_ASCII_TURBO_FILE:
-								core_cpu->controllers.serial_io.turbo_file_process();
-								break;
-						}
-
-						switch(core_cpu->controllers.serial_io.sio_stat.ir_type)
-						{
-							//Process Full Changer communications
-							case GBC_FULL_CHANGER:
-								core_cpu->controllers.serial_io.full_changer_process();
-								break;
-
-							//Process Pokemon Pikachu 2 communications
-							//Process Pocket Sakura communications
-							case GBC_POKEMON_PIKACHU_2:
-							case GBC_POCKET_SAKURA:
-								core_cpu->controllers.serial_io.pocket_ir_process();
-								break;
-
-							//Process TV Remote commnications
-							case GBC_TV_REMOTE:
-								core_cpu->controllers.serial_io.tv_remote_process();
-								break;
-						}
-					}
-				}
-
-				//Process Singer IZEK data communications on external transfers
-				if((core_cpu->controllers.serial_io.sio_stat.sio_type == GB_SINGER_IZEK) && (core_cpu->controllers.serial_io.sio_stat.ping_count == 0x02))
-				{
-					core_cpu->controllers.serial_io.singer_izek_data_process();
-				}
-			}
 		}
 
 		//Stop emulation
@@ -549,56 +348,6 @@ void GB_core::step()
 	//Run the CPU
 	if(core_cpu->running)
 	{
-		//Receive byte from another instance of GBE+ via netplay
-		if(core_cpu->controllers.serial_io.sio_stat.connected)
-		{
-			//Perform syncing operations when hard sync is enabled
-			if(config::netplay_hard_sync)
-			{
-				core_cpu->controllers.serial_io.sio_stat.sync_counter += core_cpu->get_cycles();
-
-				//Once this Game Boy has reached a specified amount of cycles, freeze until the other Game Boy finished that many cycles
-				if(core_cpu->controllers.serial_io.sio_stat.sync_counter >= core_cpu->controllers.serial_io.sio_stat.sync_clock)
-				{
-					core_cpu->controllers.serial_io.request_sync();
-					u32 current_time = SDL_GetTicks();
-					u32 timeout = 0;
-
-					while(core_cpu->controllers.serial_io.sio_stat.sync)
-					{
-						core_cpu->controllers.serial_io.receive_byte();
-						if(core_cpu->controllers.serial_io.is_master) { core_cpu->controllers.serial_io.four_player_request_sync(); }
-
-						//Timeout if 10 seconds passes
-						timeout = SDL_GetTicks();
-							
-						if((timeout - current_time) >= 10000)
-						{
-							core_cpu->controllers.serial_io.reset();
-						}						
-					}
-				}
-			}
-
-			//Send IR signal for GBC games
-			if(core_mmu->ir_send) { core_cpu->controllers.serial_io.send_ir_signal(); }
-
-			//Receive bytes normally
-			core_cpu->controllers.serial_io.receive_byte();
-
-			//Fade IR signal after a certain amount of time
-			if(core_mmu->ir_counter > 0)
-			{
-				core_mmu->ir_counter -= core_cpu->cycles;
-
-				if(core_mmu->ir_counter <= 0)
-				{
-					core_mmu->ir_counter = 0;
-					core_mmu->memory_map[REG_RP] &= ~0x2;
-				}
-			}
-		}
-
 		core_cpu->cycles = 0;
 
 		//Handle Interrupts
@@ -669,135 +418,6 @@ void GB_core::step()
 			}
 		}
 
-		//Update serial input-output operations
-		if(core_cpu->controllers.serial_io.sio_stat.shifts_left != 0)
-		{
-			core_cpu->controllers.serial_io.sio_stat.shift_counter += core_cpu->get_cycles();
-
-			if((core_cpu->controllers.serial_io.barcode_boy.send_data) && ((core_mmu->memory_map[REG_SC] & 0x80) == 0))
-			{
-				core_cpu->controllers.serial_io.sio_stat.shifts_left = 8;
-				core_cpu->controllers.serial_io.sio_stat.shift_counter = 0;
-			}	
-
-			//After SIO clocks, perform SIO operations now
-			if(core_cpu->controllers.serial_io.sio_stat.shift_counter >= core_cpu->controllers.serial_io.sio_stat.shift_clock)
-			{
-				//Shift bit out from SB, transfer it
-				core_mmu->memory_map[REG_SB] <<= 1;
-
-				core_cpu->controllers.serial_io.sio_stat.shift_counter -= core_cpu->controllers.serial_io.sio_stat.shift_clock;
-				core_cpu->controllers.serial_io.sio_stat.shifts_left--;
-
-				//Complete the transfer
-				if(core_cpu->controllers.serial_io.sio_stat.shifts_left == 0)
-				{
-					//Reset Bit 7 in SC
-					core_mmu->memory_map[REG_SC] &= ~0x80;
-
-					core_cpu->controllers.serial_io.sio_stat.active_transfer = false;
-
-					switch(core_cpu->controllers.serial_io.sio_stat.sio_type)
-					{
-						//Process normal SIO communications
-						case NO_GB_DEVICE:
-						case GB_LINK:
-							//Emulate disconnected link cable (on an internal clock) with no netplay
-							if((core_cpu->controllers.serial_io.sio_stat.internal_clock)
-							&& (!config::use_netplay || !core_cpu->controllers.serial_io.sio_stat.connected))
-							{
-								core_mmu->memory_map[REG_SB] = 0xFF;
-								core_mmu->memory_map[IF_FLAG] |= 0x08;
-							}
-
-							//Send byte to another instance of GBE+ via netplay
-							if(core_cpu->controllers.serial_io.sio_stat.connected) { core_cpu->controllers.serial_io.send_byte(); }
-						
-							break;
-
-						//Process GB Printer communications
-						case GB_PRINTER:
-							core_cpu->controllers.serial_io.printer_process();
-							break;
-
-						//Process GB Mobile Adapter communications
-						case GB_MOBILE_ADAPTER:
-							core_cpu->controllers.serial_io.mobile_adapter_process();
-							break;
-
-						//Process Bardigun card scanner communications
-						case GB_BARDIGUN_SCANNER:
-							core_cpu->controllers.serial_io.bardigun_process();
-							break;
-
-						//Process Barcode Boy communications
-						case GB_BARCODE_BOY:
-							core_cpu->controllers.serial_io.barcode_boy_process();
-
-							if(core_cpu->controllers.serial_io.barcode_boy.send_data)
-							{
-								core_mmu->memory_map[REG_SB] = core_cpu->controllers.serial_io.barcode_boy.byte;
-								core_mmu->memory_map[IF_FLAG] |= 0x08;
-							}
-								
-							break;
-
-						//Process 4 Player communications
-						case GB_FOUR_PLAYER_ADAPTER:
-							core_cpu->controllers.serial_io.four_player_process();
-							break;
-
-						//Process Power Antenna communications
-						case GB_POWER_ANTENNA:
-							if(core_cpu->controllers.serial_io.sio_stat.transfer_byte & 0x1)
-							{
-								core_cpu->controllers.serial_io.power_antenna_on = true;
-								core_cpu->controllers.video->power_antenna_osd = true;
-								core_mmu->memory_map[REG_SB] = 0xF2;
-								core_mmu->memory_map[IF_FLAG] |= 0x08;
-							}
-								
-							else if(core_cpu->controllers.serial_io.sio_stat.transfer_byte == 0)
-							{
-								core_cpu->controllers.serial_io.power_antenna_on = false;
-								core_cpu->controllers.video->power_antenna_osd = false;
-								core_mmu->memory_map[REG_SB] = 0xF3;
-								core_mmu->memory_map[IF_FLAG] |= 0x08;
-							}
-
-						//Process Singer IZEK communications
-						case GB_SINGER_IZEK:
-							core_cpu->controllers.serial_io.singer_izek_process();
-							break;
-
-						//Process Turbo File GB communications
-						case GB_ASCII_TURBO_FILE:
-							core_cpu->controllers.serial_io.turbo_file_process();
-							break;
-					}
-
-					switch(core_cpu->controllers.serial_io.sio_stat.ir_type)
-					{
-						//Process Full Changer communications
-						case GBC_FULL_CHANGER:
-							core_cpu->controllers.serial_io.full_changer_process();
-							break;
-
-						//Process Pokemon Pikachu 2 communications
-						//Process Pocket Sakura communications
-						case GBC_POKEMON_PIKACHU_2:
-						case GBC_POCKET_SAKURA:
-							core_cpu->controllers.serial_io.pocket_ir_process();
-							break;
-
-						//Process TV Remote commnications
-						case GBC_TV_REMOTE:
-							core_cpu->controllers.serial_io.tv_remote_process();
-							break;
-					}
-				}
-			}
-		}
 	}
 }
 	
@@ -839,18 +459,6 @@ void GB_core::handle_hotkey(SDL_Event& event)
 	else if((event.type == SDL_KEYDOWN) && (event.key.keysym.sym == SDLK_F2)) 
 	{
 		load_state(0);
-	}
-
-	//Pause and wait for netplay connection on F5
-	else if((event.type == SDL_KEYDOWN) && (event.key.keysym.sym == SDLK_F5))
-	{
-		start_netplay();	
-	}
-
-	//Disconnect netplay connection on F6
-	else if((event.type == SDL_KEYDOWN) && (event.key.keysym.sym == SDLK_F6))
-	{
-		stop_netplay();
 	}
 
 	//Screenshot on F9
@@ -1004,57 +612,7 @@ void GB_core::handle_hotkey(SDL_Event& event)
 		}
 	}
 
-	//Initiate various communication functions
-	//Bardigun + Barcode Boy - Reswipe card
-	//Full Changer - Draw Cosmic Character
-	//TV Remote - Send signal
-	else if((event.type == SDL_KEYDOWN) && (event.key.keysym.sym == SDLK_F3))
-	{
-		switch(core_cpu->controllers.serial_io.sio_stat.sio_type)
-		{
 
-			//Bardigun reswipe card
-			case GB_BARDIGUN_SCANNER:
-				core_cpu->controllers.serial_io.bardigun_scanner.current_state = BARDIGUN_INACTIVE;
-				core_cpu->controllers.serial_io.bardigun_scanner.inactive_counter = 0x500;
-				core_cpu->controllers.serial_io.bardigun_scanner.barcode_pointer = 0;
-				break;
-
-			//Barcode Boy reswipe card
-			case GB_BARCODE_BOY:
-				if(core_cpu->controllers.serial_io.barcode_boy.current_state == BARCODE_BOY_ACTIVE)
-				{
-					core_cpu->controllers.serial_io.barcode_boy.current_state = BARCODE_BOY_SEND_BARCODE;
-					core_cpu->controllers.serial_io.barcode_boy.send_data = true;
-
-					core_cpu->controllers.serial_io.sio_stat.shifts_left = 8;
-					core_cpu->controllers.serial_io.sio_stat.shift_counter = 0;
-				}
-
-				break;
-		}
-
-		switch(core_cpu->controllers.serial_io.sio_stat.ir_type)
-		{
-			//Full Changer - Draw Cosmic Character
-			case GBC_FULL_CHANGER:
-				core_cpu->controllers.serial_io.full_changer.delay_counter = (core_cpu->controllers.serial_io.full_changer.current_character * 72);
-				core_mmu->ir_trigger = 1;
-				break;
-
-			//Pokemon Pikachu 2 - Send Watts
-			//Pocket Sakura - Send Points
-			case GBC_POKEMON_PIKACHU_2:
-			case GBC_POCKET_SAKURA:
-				core_mmu->ir_trigger = 1;
-				break;
-
-			//TV Remote - Send signal
-			case GBC_TV_REMOTE:
-				core_mmu->ir_trigger = 1;
-				break;
-		}
-	}
 }
 
 /****** Process hotkey input - Use exsternally when not using SDL ******/
@@ -1094,58 +652,6 @@ void GB_core::handle_hotkey(int input, bool pressed)
 			std::cout<<"GBE::Erased external camera file from VRAM\n";
 
 			core_mmu->cart.cam_lock = false;
-		}
-	}
-
-	//Initiate various communication functions
-	//Bardigun + Barcode Boy - Reswipe card
-	//Full Changer - Draw Cosmic Character
-	//TV Remote - Send Signal
-	else if((input == SDLK_F3) && (pressed))
-	{
-		switch(core_cpu->controllers.serial_io.sio_stat.sio_type)
-		{
-
-			//Bardigun reswipe card
-			case GB_BARDIGUN_SCANNER:
-				core_cpu->controllers.serial_io.bardigun_scanner.current_state = BARDIGUN_INACTIVE;
-				core_cpu->controllers.serial_io.bardigun_scanner.inactive_counter = 0x500;
-				core_cpu->controllers.serial_io.bardigun_scanner.barcode_pointer = 0;
-				break;
-
-			//Barcode Boy reswipe card
-			case GB_BARCODE_BOY:
-				if(core_cpu->controllers.serial_io.barcode_boy.current_state == BARCODE_BOY_ACTIVE)
-				{
-					core_cpu->controllers.serial_io.barcode_boy.current_state = BARCODE_BOY_SEND_BARCODE;
-					core_cpu->controllers.serial_io.barcode_boy.send_data = true;
-
-					core_cpu->controllers.serial_io.sio_stat.shifts_left = 8;
-					core_cpu->controllers.serial_io.sio_stat.shift_counter = 0;
-				}
-
-				break;
-		}
-
-		switch(core_cpu->controllers.serial_io.sio_stat.ir_type)
-		{
-			//Full Changer draw Cosmic Character
-			case GBC_FULL_CHANGER:
-				core_cpu->controllers.serial_io.full_changer.delay_counter = (core_cpu->controllers.serial_io.full_changer.current_character * 72);
-				core_mmu->ir_trigger = 1;
-				break;
-
-			//Pokemon Pikachu 2 - Send Watts
-			//Pocket Sakura - Send Points
-			case GBC_POKEMON_PIKACHU_2:
-			case GBC_POCKET_SAKURA:
-				core_mmu->ir_trigger = 1;
-				break;
-
-			//TV Remote - Send signal
-			case GBC_TV_REMOTE:
-				core_mmu->ir_trigger = 1;
-				break;
 		}
 	}
 
@@ -1244,43 +750,6 @@ std::string GB_core::get_hash(u32 addr, u8 gfx_type)
 	return core_cpu->controllers.video->get_hash(addr, gfx_type);
 }
 
-/****** Starts netplay connection ******/
-void GB_core::start_netplay()
-{
-	//Do nothing if netplay is not enabled
-	if(!config::use_netplay) { return; }
-
-	//Wait 10 seconds before timing out
-	u32 time_out = 0;
-
-	while(time_out < 10000)
-	{
-		time_out += 100;
-		if((time_out % 1000) == 0) { std::cout<<"SIO::Netplay is waiting to establish remote connection...\n"; }
-
-		SDL_Delay(100);
-
-		//Process network connections
-		core_cpu->controllers.serial_io.process_network_communication();
-
-		//Check again if the GBE+ instances connected, exit waiting if not the 4-Player adapter
-		if((core_cpu->controllers.serial_io.sio_stat.connected) && (core_cpu->controllers.serial_io.sio_stat.sio_type != GB_FOUR_PLAYER_ADAPTER)) { break; }
-	}
-
-	if(!core_cpu->controllers.serial_io.sio_stat.connected) { std::cout<<"SIO::No netplay connection established\n"; }
-	else { std::cout<<"SIO::Netplay connection established\n"; }
-}
-
-/****** Stops netplay connection ******/
-void GB_core::stop_netplay()
-{
-	//Only attempt to disconnect if connected at all
-	if(core_cpu->controllers.serial_io.sio_stat.connected)
-	{
-		core_cpu->controllers.serial_io.reset();
-		std::cout<<"SIO::Netplay connection terminated. Restart to reconnect.\n";
-	}
-}
 
 /****** Returns miscellaneous data from the core ******/
 u32 GB_core::get_core_data(u32 core_index)
@@ -1293,22 +762,6 @@ u32 GB_core::get_core_data(u32 core_index)
 		case 0x0:
 			result = ~((core_pad.p15 << 4) | core_pad.p14);
 			result &= 0xFF;
-			break;
-
-		//Load card data
-		case 0x1:
-			if(core_cpu->controllers.serial_io.sio_stat.sio_type == GB_BARDIGUN_SCANNER)
-			{
-				bool card_result = core_cpu->controllers.serial_io.bardigun_load_barcode(config::external_card_file);
-				result = card_result ? 1 : 0;
-			}
-
-			else if(core_cpu->controllers.serial_io.sio_stat.sio_type == GB_BARCODE_BOY)
-			{
-				bool card_result = core_cpu->controllers.serial_io.barcode_boy_load_barcode(config::external_card_file);
-				result = card_result ? 1 : 0;
-			}
-
 			break;
 
 		//Invalidate CGFX

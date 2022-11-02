@@ -1421,7 +1421,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	pokemon_pikachu_menu = new pp2_menu;
 	pocket_sakura_menu = new ps_menu;
 	full_changer_menu = new zzh_menu;
-	chalien_menu = new con_ir_menu;
 
 	turbo_file_menu = new tbf_menu;
 
@@ -1495,10 +1494,6 @@ void gen_settings::set_ini_options()
 	//Pocket Sakura
 	if(config::ir_db_index < 4) { pocket_sakura_menu->points->setCurrentIndex(config::ir_db_index); }
 	else { pocket_sakura_menu->points->setCurrentIndex(0); }
-
-	//Constant IR Light
-	if(config::ir_db_index < 2) { chalien_menu->ir_mode->setCurrentIndex(config::ir_db_index); }
-	else { chalien_menu->ir_mode->setCurrentIndex(0); }
 
 	//Screen scale options
 	screen_scale->setCurrentIndex(config::scaling_factor - 1);
@@ -1730,7 +1725,6 @@ void gen_settings::ir_dev_change()
 		full_changer_menu->cosmic_character->setCurrentIndex(0);
 		pokemon_pikachu_menu->watts->setCurrentIndex(0);
 		pocket_sakura_menu->points->setCurrentIndex(0);
-		chalien_menu->ir_mode->setCurrentIndex(0);
 	}
 
 	config::ir_device = ir_dev->currentIndex();
@@ -1791,7 +1785,6 @@ void gen_settings::show_ir_config()
 		case 0x1: full_changer_menu->show(); break;
 		case 0x2: pokemon_pikachu_menu->show(); break;
 		case 0x3: pocket_sakura_menu->show(); break;
-		case 0x5: chalien_menu->show(); break;
 	}	
 }
 

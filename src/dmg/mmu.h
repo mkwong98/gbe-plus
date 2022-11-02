@@ -22,7 +22,6 @@
 #include "lcd_data.h"
 #include "custom_graphics_data.h"
 #include "apu_data.h"
-#include "sio_data.h"
 
 class GB_MMU
 {
@@ -153,7 +152,6 @@ class GB_MMU
 	s8 read_s8(u16 address);
 
 	virtual void write_u8(u16 address, u8 value);
-	virtual void set_sio_shift_clock(u8 value) = 0;
 	void write_u16(u16 address, u16 value);
 
 	//GBC DMAs
@@ -226,7 +224,6 @@ class GB_MMU
 	void set_lcd_data(dmg_lcd_data* ex_lcd_stat);
 	void set_cgfx_data(dmg_cgfx_data* ex_cgfx_stat);
 	void set_apu_data(dmg_apu_data* ex_apu_stat);
-	void set_sio_data(dmg_sio_data* ex_sio_stat);
 
 	//Serialize data for save state loading/saving
 	bool mmu_read(u32 offset, std::string filename);
@@ -246,9 +243,6 @@ class GB_MMU
 
 	//Only the MMU and APU should communicate through this structure
 	dmg_apu_data* apu_stat;
-
-	//Only the MMU and SIO should communicate through this structure
-	dmg_sio_data* sio_stat;
 };
 
 class DMG_MMU : public GB_MMU
@@ -256,7 +250,6 @@ class DMG_MMU : public GB_MMU
 public:
 	u8 read_u8(u16 address);
 	void write_u8(u16 address, u8 value);
-	void set_sio_shift_clock(u8 value);
 	void init_io_reg();
 };
 
@@ -275,7 +268,6 @@ public:
 
 	u8 read_u8(u16 address);
 	void write_u8(u16 address, u8 value);
-	void set_sio_shift_clock(u8 value);
 	void init_io_reg();
 
 	void mmu_read_content(std::ifstream* file);

@@ -2426,12 +2426,6 @@ void GBC_Z80::exec_op(u8 opcode)
 		{
 			double_speed = true;
 			mem->memory_map[REG_KEY1] = 0x80;
-
-			//Set SIO clock - 16384Hz - Bit 1 cleared, Double Speed
-			if ((mem->memory_map[REG_SC] & 0x2) == 0) { controllers.serial_io.sio_stat.shift_clock = 256; }
-
-			//Set SIO clock - 524288Hz - Bit 1 set, Double Speed
-			else { controllers.serial_io.sio_stat.shift_clock = 8; }
 		}
 
 		//GBC - Double to normal speed mode
@@ -2439,12 +2433,6 @@ void GBC_Z80::exec_op(u8 opcode)
 		{
 			double_speed = false;
 			mem->memory_map[REG_KEY1] = 0;
-
-			//Set SIO clock - 8192Hz - Bit 1 cleared, Normal Speed
-			if ((mem->memory_map[REG_SC] & 0x2) == 0) { controllers.serial_io.sio_stat.shift_clock = 512; }
-
-			//Set SIO clock - 262144Hz - Bit 1 set, Normal Speed
-			else { controllers.serial_io.sio_stat.shift_clock = 16; }
 		}
 		break;
 	default:

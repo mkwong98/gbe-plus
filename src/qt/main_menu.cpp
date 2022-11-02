@@ -762,16 +762,6 @@ void main_menu::keyPressEvent(QKeyEvent* event)
 					save_state(0);
 					break;
 
-				//Netplay start
-				case SDLK_F5:
-					start_netplay();
-					break;
-
-				//Netplay stop
-				case SDLK_F6:
-					stop_netplay();
-					break;
-
 				//Reset
 				case SDLK_F8:
 					reset();
@@ -1098,24 +1088,6 @@ void main_menu::load_state(int slot)
 
 		//Apply current volume settings
 		settings->update_volume();
-	}
-}
-
-/****** Starts the core's netplay features ******/
-void main_menu::start_netplay()
-{
-	if(main_menu::gbe_plus != NULL)
-	{
-		main_menu::gbe_plus->start_netplay();
-	}
-}
-
-/****** Stops the core's netplay features ******/
-void main_menu::stop_netplay()
-{
-	if(main_menu::gbe_plus != NULL)
-	{
-		main_menu::gbe_plus->stop_netplay();
 	}
 }
 
