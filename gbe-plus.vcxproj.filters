@@ -54,9 +54,6 @@
     <ClCompile Include="src\dmg\gamepad.cpp">
       <Filter>Source Files\dmg</Filter>
     </ClCompile>
-    <ClCompile Include="src\dmg\gbma.cpp">
-      <Filter>Source Files\dmg</Filter>
-    </ClCompile>
     <ClCompile Include="src\common\gx_util.cpp">
       <Filter>Source Files\common</Filter>
     </ClCompile>
@@ -67,9 +64,6 @@
       <Filter>Source Files\dmg</Filter>
     </ClCompile>
     <ClCompile Include="src\dmg\huc3.cpp">
-      <Filter>Source Files\dmg</Filter>
-    </ClCompile>
-    <ClCompile Include="src\dmg\infrared.cpp">
       <Filter>Source Files\dmg</Filter>
     </ClCompile>
     <ClCompile Include="src\dmg\lcd.cpp">
