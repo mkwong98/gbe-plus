@@ -713,23 +713,6 @@ void main_menu::paintEvent(QPaintEvent* event)
 			else { sw_screen->resize((base_width * config::scaling_factor), (base_height * config::scaling_factor)); }
 		}
 
-		else if(config::request_resize)
-		{
-			if((config::resize_mode > 0) && (config::sys_width != 240) && (config::sys_width != 256) && (config::sys_width != 512)) { return; }
-
-			base_width = config::sys_width;
-			base_height = config::sys_height;
-
-			if(qt_gui::screen != NULL) { delete qt_gui::screen; }
-			qt_gui::screen = new QImage(config::sys_width, config::sys_height, QImage::Format_ARGB32);
-
-			resize((base_width * config::scaling_factor), (base_height * config::scaling_factor) + menu_height);
-			config::request_resize = false;
-
-			//Resize drawing screens
-			if(config::use_opengl) { hw_screen->resize((base_width * config::scaling_factor), (base_height * config::scaling_factor)); }
-			else { sw_screen->resize((base_width * config::scaling_factor), (base_height * config::scaling_factor)); }
-		}
 	}
 }
 

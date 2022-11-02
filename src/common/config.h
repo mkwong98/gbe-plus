@@ -146,8 +146,6 @@ namespace config
 	extern std::string vertex_shader;
 	extern std::string fragment_shader;
 
-	extern bool request_resize;
-	extern s8 resize_mode;
 	extern bool maintain_aspect_ratio;
 	extern u8 lcd_config;
 	extern u16 max_fps;

@@ -141,13 +141,6 @@ namespace config
 	//0 - DMG, 1 - DMG on GBC, 2 - GBC
 	u8 gb_type = 0;
 
-	//Boolean dictating whether this is a DMG/GBC game on a GBA
-	bool gba_enhance = false;
-
-	//Variables dictating whether or not to stretch DMG/GBC games when playing on a GBA
-	bool request_resize = false;
-	s8 resize_mode = 0;
-
 	//Aspect ratio
 	bool maintain_aspect_ratio = false;
 
