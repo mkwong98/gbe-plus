@@ -33,15 +33,11 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 	QAction* reset = new QAction("Reset", this);
 	QAction* fullscreen = new QAction("Fullscreen", this);
 	QAction* screenshot = new QAction("Screenshot", this);
-	QAction* nplay_start = new QAction("Start Netplay", this);
-	QAction* nplay_stop = new QAction("Stop Netplay", this);
-	QAction* special_comm = new QAction("Start IR/SIO Device", this);
 
 	QAction* general = new QAction("General Settings...", this);
 	QAction* display = new QAction("Display", this);
 	QAction* sound = new QAction("Sound", this);
 	QAction* controls = new QAction("Controls", this);
-	QAction* netplay = new QAction("Netplay", this);
 	QAction* paths = new QAction("Paths", this);
 
 	QAction* custom_gfx = new QAction("Custom Graphics...", this);
@@ -56,9 +52,6 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 	reset->setShortcut(tr("F8"));
 	fullscreen->setShortcut(tr("F12"));
 	screenshot->setShortcut(tr("F9"));
-	nplay_start->setShortcut(tr("F5"));
-	nplay_stop->setShortcut(tr("F6"));
-	special_comm->setShortcut(tr("F3"));
 
 	pause->setCheckable(true);
 	pause->setObjectName("pause_action");
@@ -98,11 +91,6 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 	emulation->addSeparator();
 	emulation->addAction(fullscreen);
 	emulation->addAction(screenshot);
-	emulation->addSeparator();
-	emulation->addAction(nplay_start);
-	emulation->addAction(nplay_stop);
-	emulation->addSeparator();
-	emulation->addAction(special_comm);
 	menu_bar->addMenu(emulation);
 
 	//Setup Options menu
@@ -114,7 +102,6 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 	options->addAction(display);
 	options->addAction(sound);
 	options->addAction(controls);
-	options->addAction(netplay);
 	options->addAction(paths);
 	menu_bar->addMenu(options);
 
@@ -143,15 +130,11 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 	connect(pause, SIGNAL(triggered()), this, SLOT(pause()));
 	connect(fullscreen, SIGNAL(triggered()), this, SLOT(fullscreen()));
 	connect(screenshot, SIGNAL(triggered()), this, SLOT(screenshot()));
-	connect(nplay_start, SIGNAL(triggered()), this, SLOT(start_netplay()));
-	connect(nplay_stop, SIGNAL(triggered()), this, SLOT(stop_netplay()));
-	connect(special_comm, SIGNAL(triggered()), this, SLOT(start_special_comm()));
 	connect(reset, SIGNAL(triggered()), this, SLOT(reset()));
 	connect(general, SIGNAL(triggered()), this, SLOT(show_settings()));
 	connect(display, SIGNAL(triggered()), this, SLOT(show_display_settings()));
 	connect(sound, SIGNAL(triggered()), this, SLOT(show_sound_settings()));
 	connect(controls, SIGNAL(triggered()), this, SLOT(show_control_settings()));
-	connect(netplay, SIGNAL(triggered()), this, SLOT(show_netplay_settings()));
 	connect(paths, SIGNAL(triggered()), this, SLOT(show_paths_settings()));
 	connect(custom_gfx, SIGNAL(triggered()), this, SLOT(show_cgfx()));
 	connect(about, SIGNAL(triggered()), this, SLOT(show_about()));
@@ -951,14 +934,6 @@ void main_menu::show_control_settings()
 	settings->controls_combo->setVisible(true);
 }
 
-/****** Shows the Netplay settings dialog ******/
-void main_menu::show_netplay_settings()
-{
-	settings->show();
-	settings->tabs->setCurrentIndex(4);
-	settings->controls_combo->setVisible(false);
-}
-
 /****** Shows the Paths settings dialog ******/
 void main_menu::show_paths_settings()
 {
@@ -1074,15 +1049,7 @@ void main_menu::load_state(int slot)
 	}
 }
 
-/****** Starts special communications (IR or SIO device) ******/
-void main_menu::start_special_comm()
-{
-	if(main_menu::gbe_plus != NULL)
-	{
-		//This just feeds a simulated F3 keypress to the core
-		gbe_plus->feed_key_input(SDLK_F3, true);
-	}
-}
+
 
 
 /****** Static definitions ******/

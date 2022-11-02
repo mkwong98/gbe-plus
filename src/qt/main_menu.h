@@ -79,14 +79,12 @@ class main_menu : public QWidget
 	void show_display_settings();
 	void show_sound_settings();
 	void show_control_settings();
-	void show_netplay_settings();
 	void show_paths_settings();
 	void show_cgfx();
 	void show_about();
 	void load_recent(int file_id);
 	void save_state(int slot);
 	void load_state(int slot);
-	void start_special_comm();
 
 	private:
 	QWidget* about_box;
