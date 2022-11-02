@@ -55,7 +55,7 @@ class GB_core : virtual public core_emu
 		void ex_write_u8(u16 address, u8 value);
 
 		//Misc
-		u32 get_core_data(u32 core_index);
+		void* get_core_data(u32 core_index);
 
 		GB_MMU* core_mmu;
 		Z80* core_cpu;

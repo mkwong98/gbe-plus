@@ -33,7 +33,6 @@ class GB_LCD
 	virtual void step_sub(int cpu_clock);
 
 	void reset();
-	bool init();
 	bool opengl_init();
 
 	//Custom GFX functions
@@ -60,14 +59,14 @@ class GB_LCD
 	void new_rendered_screen_data();
 	void new_rendered_scanline_data(u8 lineNo);
 
+	SDL_Surface* render_raw_layer(u8 layer);
 	//Serialize data for save state loading/saving
 	bool lcd_read(u32 offset, std::string filename);
 	bool lcd_write(std::string filename);
 
 	//Screen data
 	SDL_Window *window;
-	SDL_Surface* final_screen;
-	SDL_Surface* original_screen;
+	SDL_Surface* finalscreen;
 
 	//OpenGL data
 	#ifdef GBE_OGL
@@ -86,8 +85,6 @@ class GB_LCD
 	dmg_cgfx_data cgfx_stat;
 
 	int max_fullscreen_ratio;
-
-	bool power_antenna_osd;
 
 	protected:
 
@@ -121,7 +118,10 @@ class GB_LCD
 	//layers: white or low bg, low obj, bg, obj, high bg
 	SDL_Surface* buffers[5];
 	void clear_buffers();
+	void reset_buffers();
 	SDL_Rect srcrect;
+	SDL_Rect rawrect;
+	SDL_Surface* tempscreen;
 
 	int frame_start_time;
 	int frame_current_time;
@@ -141,16 +141,14 @@ class GB_LCD
 	virtual void collect_scanline_tiles(u16 map_addr, u16 tile_lower_range, u16 tile_upper_range, u8 tile_line, std::vector <tile_strip>* strips) = 0;
 	virtual void collect_obj_scanline() = 0;
 	void render_full_screen();
-	virtual void render_scanline() = 0;
 
 	void run_render_scanline();
-	virtual void render_bg_scanline() = 0;
-	virtual void render_win_scanline() = 0;
-	virtual void render_obj_scanline() = 0;
+	virtual void render_bg_scanline(bool raw) = 0;
+	virtual void render_win_scanline(bool raw) = 0;
+	virtual void render_obj_scanline(bool raw) = 0;
 
 	void scanline_compare();
 
-	void opengl_blit();
 };
 
 class DMG_LCD : public GB_LCD
@@ -172,11 +170,10 @@ protected:
 	void collect_scanline_tiles(u16 map_addr, u16 tile_lower_range, u16 tile_upper_range, u8 tile_line, std::vector <tile_strip>* strips);
 	void collect_obj_scanline();
 	u16 getUsedTileIdx(u16 tile_head);
-	void render_scanline();
 
-	void render_bg_scanline();
-	void render_win_scanline();
-	void render_obj_scanline();
+	void render_bg_scanline(bool raw);
+	void render_win_scanline(bool raw);
+	void render_obj_scanline(bool raw);
 
 private:
 	u16 bgId;
@@ -208,11 +205,10 @@ protected:
 	void collect_scanline_tiles(u16 map_addr, u16 tile_lower_range, u16 tile_upper_range, u8 tile_line, std::vector <tile_strip>* strips);
 	void collect_obj_scanline();
 	u16 getUsedTileIdx(u16 tile_head, u8 vbank);
-	void render_scanline();
 
-	void render_bg_scanline();
-	void render_win_scanline();
-	void render_obj_scanline();
+	void render_bg_scanline(bool raw);
+	void render_win_scanline(bool raw);
+	void render_obj_scanline(bool raw);
 
 private:
 	u16 bgId[8];

@@ -82,13 +82,6 @@ void GB_core::start()
 	running = true;
 	core_cpu->running = true;
 
-	//Initialize video output
-	if(!core_cpu->controllers.video->init())
-	{
-		running = false;
-		core_cpu->running = false;
-	}
-
 	//Initialize audio output
 	if(!core_cpu->controllers.audio.init())
 	{
@@ -477,7 +470,7 @@ void GB_core::handle_hotkey(SDL_Event& event)
 		save_stream << rand() % 1024 << rand() % 1024 << rand() % 1024;
 		save_name += save_stream.str() + ".bmp";
 	
-		SDL_SaveBMP(core_cpu->controllers.video->original_screen, save_name.c_str());
+		SDL_SaveBMP(core_cpu->controllers.video->finalscreen, save_name.c_str());
 
 		//OSD
 		config::osd_message = "SAVED SCREENSHOT";
@@ -504,33 +497,7 @@ void GB_core::handle_hotkey(SDL_Event& event)
 		//Destroy old window
 		SDL_DestroyWindow(core_cpu->controllers.video->window);
 
-		//Initialize new window - SDL
-		if(!config::use_opengl)
-		{
-			core_cpu->controllers.video->window = SDL_CreateWindow("GBE+", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, config::sys_width, config::sys_height, config::flags);
-			core_cpu->controllers.video->final_screen = SDL_GetWindowSurface(core_cpu->controllers.video->window);
-			SDL_GetWindowSize(core_cpu->controllers.video->window, &config::win_width, &config::win_height);
-
-			//Find the maximum fullscreen dimensions that maintain the original aspect ratio
-			if(config::flags & SDL_WINDOW_FULLSCREEN_DESKTOP)
-			{
-				double max_width, max_height, ratio = 0.0;
-
-				max_width = (double)config::win_width / config::sys_width;
-				max_height = (double)config::win_height / config::sys_height;
-
-				if(max_width <= max_height) { ratio = max_width; }
-				else { ratio = max_height; }
-
-				core_cpu->controllers.video->max_fullscreen_ratio = ratio;
-			}
-		}
-
-		//Initialize new window - OpenGL
-		else
-		{
-			core_cpu->controllers.video->opengl_init();
-		}
+		core_cpu->controllers.video->opengl_init();
 	}
 
 	//Pause emulation
@@ -750,25 +717,17 @@ std::string GB_core::get_hash(u32 addr, u8 gfx_type)
 
 
 /****** Returns miscellaneous data from the core ******/
-u32 GB_core::get_core_data(u32 core_index)
+void* GB_core::get_core_data(u32 core_index)
 {
-	u32 result = 0;
-
-	switch(core_index & 0xFF)
+	switch(core_index)
 	{
-		//Joypad state
-		case 0x0:
-			result = ~((core_pad.p15 << 4) | core_pad.p14);
-			result &= 0xFF;
-			break;
-
-		//Invalidate CGFX
-		case 0x2:
-			core_cpu->controllers.video->invalidate_cgfx();
-			result = 1;
-			break;
-
+	case 0: //bg layer
+	case 1: // win layer
+	case 2: // obj layer
+		return core_cpu->controllers.video->render_raw_layer(core_index);
+		break;
+	case 3: // screen composition
+		return &(core_cpu->controllers.video->cgfx_stat.screen_data);
+		break;
 	}
-
-	return result;
 }

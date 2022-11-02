@@ -1132,61 +1132,21 @@ void gbe_cgfx::layer_change()
 void gbe_cgfx::draw_gb_layer(u8 layer)
 {
 	if(main_menu::gbe_plus == NULL) { return; }
+	SDL_Surface* s = (SDL_Surface*)(main_menu::gbe_plus->get_core_data(layer));
 
-	bool is_win = (layer == 1);
-	bool is_obj = (layer == 2);
+	QImage raw_image(160, 144, QImage::Format_ARGB32);
 
-	std::vector<u32> pixels;
+	SDL_LockSurface(s);
+	u32* pt = (u32*)(s->pixels);
 
-
-	layer += 4;
-
-	u8 target_scanline = 0;
-	u8 target_pixel = 0;
-
-	for(u8 current_scanline = 0; current_scanline < 144; current_scanline++)
+	//Fill in image with pixels from the emulated LCD
+	for (int y = 0; y < 144; y++)
 	{
-		//Render a given scanline on the core
-		u16 core_line = (current_scanline << 8) | layer;
-		main_menu::gbe_plus->get_core_data(core_line);
-
-		//Copy scanline buffer to BG buffer
-		for(u8 pixel_counter = 0; pixel_counter < 160; pixel_counter++)
-		{
-			u16 core_pixel = (pixel_counter << 8) | 0x3;
-			u32 pix_data = main_menu::gbe_plus->get_core_data(core_pixel);
-
-			//Handle highlighting
-			if(is_win)
-			{
-				target_scanline = current_scanline + main_menu::gbe_plus->ex_read_u8(REG_WY);
-				target_pixel = pixel_counter + main_menu::gbe_plus->ex_read_u8(REG_WX);
-			}
-
-			else if(!is_win && !is_obj)
-			{
-				target_scanline = current_scanline + (main_menu::gbe_plus->ex_read_u8(REG_SY) % 8);
-				target_pixel = pixel_counter + (main_menu::gbe_plus->ex_read_u8(REG_SX) % 8);
-			}
-
-			if(((target_pixel / 8) >= min_x_rect) && ((target_pixel / 8) <= max_x_rect)
-			&& ((target_scanline / 8) >= min_y_rect) && ((target_scanline / 8) <= max_y_rect)
-			&& (!is_obj))
-			{
-				pix_data += 0x00808080;
-			}
-
-			pixels.push_back(pix_data);
-		}
+		u32* pixel_data = (u32*)(raw_image.scanLine(y));
+		std::copy(pt, pt + 160, pixel_data);
+		pt += 160;
 	}
-
-	QImage raw_image(160, 144, QImage::Format_ARGB32);	
-
-	//Copy raw pixels to QImage
-	for(int x = 0; x < pixels.size(); x++)
-	{
-		raw_image.setPixel((x % 160), (x / 160), pixels[x]);
-	}
+	SDL_UnlockSurface(s);
 
 	raw_image = raw_image.scaled(320, 288);
 

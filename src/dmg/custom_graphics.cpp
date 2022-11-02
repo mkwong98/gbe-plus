@@ -147,10 +147,8 @@ bool GB_LCD::load_manifest(std::string filename)
 	config::sys_width *= cgfx::scaling_factor;
 	config::sys_height *= cgfx::scaling_factor;
 
-	for (u8 i = 0; i < 5; i++) {
-		if (buffers[i] != NULL) { SDL_FreeSurface(buffers[i]); }
-		buffers[i] = SDL_CreateRGBSurfaceWithFormat(0, config::sys_width, config::sys_height, 32, SDL_PIXELFORMAT_ARGB8888);
-	}
+	reset_buffers();
+
 	srcrect.w = cgfx::scaling_factor;
 	srcrect.h = cgfx::scaling_factor;
 

@@ -58,7 +58,7 @@ class core_emu
 	virtual std::string get_hash(u32 addr, u8 gfx_type) = 0;
 
 	//Misc
-	virtual u32 get_core_data(u32 core_index) = 0;
+	virtual void* get_core_data(u32 core_index) = 0;
 
 	bool running;
 	SDL_Event event;

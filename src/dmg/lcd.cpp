@@ -20,6 +20,8 @@ GB_LCD::GB_LCD()
 {
 	window = NULL;
 	for (u8 i = 0; i < 5; i++) { buffers[i] = NULL; }
+	finalscreen = NULL;
+	tempscreen = NULL;
 	reset();
 }
 
@@ -29,6 +31,9 @@ GB_LCD::~GB_LCD()
 	for (u8 i = 0; i < 5; i++) {
 		if (buffers[i] != NULL) { SDL_FreeSurface(buffers[i]); }
 	}
+	if (finalscreen != NULL) { SDL_FreeSurface(finalscreen); }
+	if (tempscreen != NULL) { SDL_FreeSurface(tempscreen); }
+
 	SDL_DestroyWindow(window);
 	std::cout<<"LCD::Shutdown\n";
 }
@@ -36,7 +41,6 @@ GB_LCD::~GB_LCD()
 /****** Reset LCD ******/
 void GB_LCD::reset()
 {
-	final_screen = NULL;
 	mem = NULL;
 
 	window = NULL;
@@ -193,17 +197,26 @@ void GB_LCD::reset()
 
 	max_fullscreen_ratio = 2;
 
-	power_antenna_osd = false;
+	reset_buffers();
+	srcrect.w = cgfx::scaling_factor;
+	srcrect.h = cgfx::scaling_factor;
+	rawrect.w = 1;
+	rawrect.h = 1;
+	clear_buffers();
+}
 
+void GB_LCD::reset_buffers()
+{
 	for (u8 i = 0; i < 5; i++) {
 		if (buffers[i] != NULL) { SDL_FreeSurface(buffers[i]); }
 		buffers[i] = SDL_CreateRGBSurfaceWithFormat(0, config::sys_width, config::sys_height, 32, SDL_PIXELFORMAT_ARGB8888);
 	}
-	srcrect.w = cgfx::scaling_factor;
-	srcrect.h = cgfx::scaling_factor;
-
-	clear_buffers();
+	if (finalscreen != NULL) { SDL_FreeSurface(finalscreen); }
+	finalscreen = SDL_CreateRGBSurfaceWithFormat(0, config::sys_width, config::sys_height, 32, SDL_PIXELFORMAT_ARGB8888);
+	if (tempscreen != NULL) { SDL_FreeSurface(tempscreen); }
+	tempscreen = SDL_CreateRGBSurfaceWithFormat(0, 160, 144, 32, SDL_PIXELFORMAT_ARGB8888);
 }
+
 
 void GB_LCD::clear_buffers()
 {
@@ -211,22 +224,9 @@ void GB_LCD::clear_buffers()
 	for (u8 i = 1; i < 5; i++) {
 		SDL_FillRect(buffers[i], NULL, 0x00000000);
 	}
+	SDL_FillRect(tempscreen, NULL, 0x00000000);
 }
 
-/****** Initialize LCD with SDL ******/
-bool GB_LCD::init()
-{
-	//Initialize with SDL rendering software or hardware
-	if (config::use_opengl)
-	{
-		original_screen = SDL_CreateRGBSurface(SDL_SWSURFACE, config::sys_width, config::sys_height, 32, 0, 0, 0, 0);
-		if (original_screen == NULL) { return false; }
-	}
-
-	std::cout << "LCD::Initialized\n";
-
-	return true;
-}
 
 /****** Read LCD data from save state ******/
 bool GB_LCD::lcd_read(u32 offset, std::string filename)
@@ -370,25 +370,60 @@ void GBC_LCD::update_obj_render_list()
 	}
 }
 
+
+SDL_Surface* GB_LCD::render_raw_layer(u8 layer)
+{
+	clear_buffers();
+	for (u16 y = 0; y < 144; y++) {
+		rawrect.y = y;
+		switch (layer)
+		{
+		case 0:
+			render_bg_scanline(true);
+			break;
+		case 1:
+			render_win_scanline(true);
+			break;
+		case 2:
+			render_obj_scanline(true);
+			break;
+		}
+	}
+	SDL_Rect r;
+	r.x = 0;
+	r.y = 0;
+	r.w = 160;
+	r.h = 144;
+	for (u8 i = 0; i < 5; i++)
+	{
+		SDL_BlitSurface(buffers[i], &r, tempscreen, NULL);
+	}
+	return tempscreen;
+}
+
+
 /****** Render pixels for a given scanline (per-scanline) ******/
 void GB_LCD::run_render_scanline() 
 {
 	//Draw background pixel data
-	render_bg_scanline();
+	render_bg_scanline(false);
 	//Draw window pixel data
-	render_win_scanline();
+	render_win_scanline(false);
 	//Draw sprite pixel data
-	render_obj_scanline();
+	render_obj_scanline(false);
 }
 
 /****** Renders pixels for the BG (per-scanline) - DMG version ******/
-void DMG_LCD::render_bg_scanline()
+void DMG_LCD::render_bg_scanline(bool raw)
 {
-	for (u8 i = 0; i < cgfx_stat.screen_data.scanline[lcd_stat.current_scanline].rendered_bg.size(); i++) {
+	u16 scanline = raw ? rawrect.y : lcd_stat.current_scanline;
+	SDL_Rect* r = raw ? &rawrect : &srcrect;
+	for (u8 i = 0; i < cgfx_stat.screen_data.scanline[scanline].rendered_bg.size(); i++) {
 		u8 tile_pixel = 0;
-		tile_strip p = cgfx_stat.screen_data.scanline[lcd_stat.current_scanline].rendered_bg[i];
+		tile_strip p = cgfx_stat.screen_data.scanline[scanline].rendered_bg[i];
 		u8 pixel_counter = p.x;
 		srcrect.x = cgfx::scaling_factor * pixel_counter;
+		rawrect.x = pixel_counter;
 
 		for (int y = 7; y >= 0; y--)
 		{
@@ -399,26 +434,29 @@ void DMG_LCD::render_bg_scanline()
 			if (pixel_counter < 160)
 			{
 				if (tile_pixel != 0) {
-					SDL_FillRect(buffers[2], &srcrect, config::DMG_BG_PAL[cgfx_stat.screen_data.rendered_palette[p.palette_id].colour[tile_pixel]]);
+					SDL_FillRect(buffers[2], r, config::DMG_BG_PAL[cgfx_stat.screen_data.rendered_palette[p.palette_id].colour[tile_pixel]]);
 				}
 				else {
-					SDL_FillRect(buffers[0], &srcrect, config::DMG_BG_PAL[cgfx_stat.screen_data.rendered_palette[p.palette_id].colour[tile_pixel]]);
+					SDL_FillRect(buffers[0], r, config::DMG_BG_PAL[cgfx_stat.screen_data.rendered_palette[p.palette_id].colour[tile_pixel]]);
 				}
 			}
 			pixel_counter++;
 			srcrect.x += cgfx::scaling_factor;
+			rawrect.x++;
 		}
 	}
 }
 
 /****** Renders pixels for the BG (per-scanline) - GBC version ******/
-void GBC_LCD::render_bg_scanline()
+void GBC_LCD::render_bg_scanline(bool raw)
 {
-	bool lowP = (cgfx_stat.screen_data.scanline[lcd_stat.current_scanline].lcdc & 0x01) == 0;
+	u16 scanline = raw ? rawrect.y : lcd_stat.current_scanline;
+	SDL_Rect* r = raw ? &rawrect : &srcrect;
+	bool lowP = (cgfx_stat.screen_data.scanline[scanline].lcdc & 0x01) == 0;
 	u8 layer;
-	for (u8 i = 0; i < cgfx_stat.screen_data.scanline[lcd_stat.current_scanline].rendered_bg.size(); i++) {
+	for (u8 i = 0; i < cgfx_stat.screen_data.scanline[scanline].rendered_bg.size(); i++) {
 		u8 tile_pixel = 0;
-		tile_strip p = cgfx_stat.screen_data.scanline[lcd_stat.current_scanline].rendered_bg[i];
+		tile_strip p = cgfx_stat.screen_data.scanline[scanline].rendered_bg[i];
 		u8 pixel_counter;
 
 		for (int y = 7; y >= 0; y--)
@@ -430,23 +468,27 @@ void GBC_LCD::render_bg_scanline()
 			if (pixel_counter < 160)
 			{
 				srcrect.x = pixel_counter * cgfx::scaling_factor;
+				rawrect.x = pixel_counter;
 				if (lowP || tile_pixel == 0) layer = 0;
 				else if (p.priority) layer = 4;
 				else layer = 2;
-				SDL_FillRect(buffers[layer], &srcrect, cgfx_stat.screen_data.rendered_palette[p.palette_id].renderColour[tile_pixel]);
+				SDL_FillRect(buffers[layer], r, cgfx_stat.screen_data.rendered_palette[p.palette_id].renderColour[tile_pixel]);
 			}
 		}
 	}
 }
 
 //****** Renders pixels for the Window (per-scanline) - DMG version ******/
-void DMG_LCD::render_win_scanline()
+void DMG_LCD::render_win_scanline(bool raw)
 {
-	for (u8 i = 0; i < cgfx_stat.screen_data.scanline[lcd_stat.current_scanline].rendered_win.size(); i++) {
+	u16 scanline = raw ? rawrect.y : lcd_stat.current_scanline;
+	SDL_Rect* r = raw ? &rawrect : &srcrect;
+	for (u8 i = 0; i < cgfx_stat.screen_data.scanline[scanline].rendered_win.size(); i++) {
 		u8 tile_pixel = 0;
-		tile_strip p = cgfx_stat.screen_data.scanline[lcd_stat.current_scanline].rendered_win[i];
+		tile_strip p = cgfx_stat.screen_data.scanline[scanline].rendered_win[i];
 		u8 pixel_counter = p.x;
 		srcrect.x = cgfx::scaling_factor * pixel_counter;
+		rawrect.x = pixel_counter;
 
 		for (int y = 7; y >= 0; y--)
 		{
@@ -456,29 +498,33 @@ void DMG_LCD::render_win_scanline()
 
 			if (pixel_counter < 160)
 			{
-				SDL_FillRect(buffers[2], &srcrect, 0x00000000);
+				//clear bg pixels
+				SDL_FillRect(buffers[2], r, 0x00000000);
 				if (tile_pixel != 0) {
-					SDL_FillRect(buffers[2], &srcrect, config::DMG_BG_PAL[cgfx_stat.screen_data.rendered_palette[p.palette_id].colour[tile_pixel]]);
+					SDL_FillRect(buffers[2], r, config::DMG_BG_PAL[cgfx_stat.screen_data.rendered_palette[p.palette_id].colour[tile_pixel]]);
 				}
 				else {
-					SDL_FillRect(buffers[0], &srcrect, config::DMG_BG_PAL[cgfx_stat.screen_data.rendered_palette[p.palette_id].colour[tile_pixel]]);
+					SDL_FillRect(buffers[0], r, config::DMG_BG_PAL[cgfx_stat.screen_data.rendered_palette[p.palette_id].colour[tile_pixel]]);
 				}
 			}
 			pixel_counter++;
 			srcrect.x += cgfx::scaling_factor;
+			rawrect.x++;
 			if (pixel_counter == 160) return;
 		}
 	}
 }
 
 /****** Renders pixels for the Window (per-scanline) - GBC version ******/
-void GBC_LCD::render_win_scanline()
+void GBC_LCD::render_win_scanline(bool raw)
 {
-	bool lowP = (cgfx_stat.screen_data.scanline[lcd_stat.current_scanline].lcdc & 0x01) == 0;
+	u16 scanline = raw ? rawrect.y : lcd_stat.current_scanline;
+	SDL_Rect* r = raw ? &rawrect : &srcrect;
+	bool lowP = (cgfx_stat.screen_data.scanline[scanline].lcdc & 0x01) == 0;
 	u8 layer;
-	for (u8 i = 0; i < cgfx_stat.screen_data.scanline[lcd_stat.current_scanline].rendered_win.size(); i++) {
+	for (u8 i = 0; i < cgfx_stat.screen_data.scanline[scanline].rendered_win.size(); i++) {
 		u8 tile_pixel = 0;
-		tile_strip p = cgfx_stat.screen_data.scanline[lcd_stat.current_scanline].rendered_win[i];
+		tile_strip p = cgfx_stat.screen_data.scanline[scanline].rendered_win[i];
 		u8 pixel_counter;
 
 		for (int y = 7; y >= 0; y--)
@@ -490,14 +536,17 @@ void GBC_LCD::render_win_scanline()
 			if (pixel_counter < 160)
 			{
 				srcrect.x = pixel_counter * cgfx::scaling_factor;
-				SDL_FillRect(buffers[0], &srcrect, 0xFFFFFFFF);
-				SDL_FillRect(buffers[2], &srcrect, 0x00000000);
-				SDL_FillRect(buffers[4], &srcrect, 0x00000000);
+				rawrect.x = pixel_counter;
+
+				//clear bg pixels
+				SDL_FillRect(buffers[0], r, 0xFFFFFFFF);
+				SDL_FillRect(buffers[2], r, 0x00000000);
+				SDL_FillRect(buffers[4], r, 0x00000000);
 
 				if (lowP || tile_pixel == 0) layer = 0;
 				else if (p.priority) layer = 4;
 				else layer = 2;
-				SDL_FillRect(buffers[layer], &srcrect, cgfx_stat.screen_data.rendered_palette[p.palette_id].renderColour[tile_pixel]);
+				SDL_FillRect(buffers[layer], r, cgfx_stat.screen_data.rendered_palette[p.palette_id].renderColour[tile_pixel]);
 			}
 		}
 		if (p.x + 8 >= 160) return;
@@ -505,9 +554,11 @@ void GBC_LCD::render_win_scanline()
 }
 
 /****** Renders pixels for OBJs (per-scanline) - DMG version ******/
-void DMG_LCD::render_obj_scanline()
+void DMG_LCD::render_obj_scanline(bool raw)
 {
-	rendered_screen::rendered_line* l = &(cgfx_stat.screen_data.scanline[lcd_stat.current_scanline]);
+	u16 scanline = raw ? rawrect.y : lcd_stat.current_scanline;
+	SDL_Rect* r = raw ? &rawrect : &srcrect;
+	rendered_screen::rendered_line* l = &(cgfx_stat.screen_data.scanline[scanline]);
 
 	for (u8 i = 0; i < l->rendered_obj.size(); i++) {
 		u8 tile_pixel = 0;
@@ -524,15 +575,17 @@ void DMG_LCD::render_obj_scanline()
 			{
 				if (tile_pixel != 0) {
 					srcrect.x = pixel_counter * cgfx::scaling_factor;
-					SDL_FillRect(buffers[1], &srcrect, 0x00000000);
-					SDL_FillRect(buffers[3], &srcrect, 0x00000000);
+					rawrect.x = pixel_counter;
+
+					SDL_FillRect(buffers[1], r, 0x00000000);
+					SDL_FillRect(buffers[3], r, 0x00000000);
 					if (p.bg_priority == 0)
 					{
-						SDL_FillRect(buffers[3], &srcrect, config::DMG_BG_PAL[cgfx_stat.screen_data.rendered_palette[p.palette_id].colour[tile_pixel]]);
+						SDL_FillRect(buffers[3], r, config::DMG_BG_PAL[cgfx_stat.screen_data.rendered_palette[p.palette_id].colour[tile_pixel]]);
 					}
 					else
 					{
-						SDL_FillRect(buffers[1], &srcrect, config::DMG_BG_PAL[cgfx_stat.screen_data.rendered_palette[p.palette_id].colour[tile_pixel]]);
+						SDL_FillRect(buffers[1], r, config::DMG_BG_PAL[cgfx_stat.screen_data.rendered_palette[p.palette_id].colour[tile_pixel]]);
 					}
 				}
 			}
@@ -543,12 +596,12 @@ void DMG_LCD::render_obj_scanline()
 }
 
 /****** Renders pixels for OBJs (per-scanline) - GBC version ******/
-void GBC_LCD::render_obj_scanline()
+void GBC_LCD::render_obj_scanline(bool raw)
 {
-	u32 line[160];
-	for (u8 x = 0; x < 160; x++) line[x] = 0;
+	u16 scanline = raw ? rawrect.y : lcd_stat.current_scanline;
+	SDL_Rect* r = raw ? &rawrect : &srcrect;
 
-	rendered_screen::rendered_line* l = &(cgfx_stat.screen_data.scanline[lcd_stat.current_scanline]);
+	rendered_screen::rendered_line* l = &(cgfx_stat.screen_data.scanline[scanline]);
 	for (u8 i = 0; i < l->rendered_obj.size(); i++) {
 		u8 tile_pixel = 0;
 		tile_strip p = l->rendered_obj[i];
@@ -564,15 +617,17 @@ void GBC_LCD::render_obj_scanline()
 			{
 				if (tile_pixel != 0) {
 					srcrect.x = pixel_counter * cgfx::scaling_factor;
-					SDL_FillRect(buffers[1], &srcrect, 0x00000000);
-					SDL_FillRect(buffers[3], &srcrect, 0x00000000);
+					rawrect.x = pixel_counter;
+
+					SDL_FillRect(buffers[1], r, 0x00000000);
+					SDL_FillRect(buffers[3], r, 0x00000000);
 					if (p.bg_priority == 0)
 					{
-						SDL_FillRect(buffers[3], &srcrect, cgfx_stat.screen_data.rendered_palette[p.palette_id].renderColour[tile_pixel]);
+						SDL_FillRect(buffers[3], r, cgfx_stat.screen_data.rendered_palette[p.palette_id].renderColour[tile_pixel]);
 					}
 					else
 					{
-						SDL_FillRect(buffers[1], &srcrect, cgfx_stat.screen_data.rendered_palette[p.palette_id].renderColour[tile_pixel]);
+						SDL_FillRect(buffers[1], r, cgfx_stat.screen_data.rendered_palette[p.palette_id].renderColour[tile_pixel]);
 					}
 				}
 			}
@@ -861,10 +916,10 @@ void GB_LCD::step_sub(int cpu_clock)
 				if(config::osd_count)
 				{
 					config::osd_count--;
-					SDL_LockSurface(buffers[0]);
-					if (!cgfx::loaded) { draw_osd_msg(config::osd_message, (u32*)(buffers[0]->pixels), 0, 0); }
-					else { draw_osd_msg(config::osd_message, (u32*)(buffers[0]->pixels), 0, 0); }
-					SDL_UnlockSurface(buffers[0]);
+					SDL_LockSurface(finalscreen);
+					if (!cgfx::loaded) { draw_osd_msg(config::osd_message, (u32*)(finalscreen->pixels), 0, 0); }
+					else { draw_osd_msg(config::osd_message, (u32*)(finalscreen->pixels), 0, 0); }
+					SDL_UnlockSurface(finalscreen);
 				}
 
 				//Render final screen buffer
@@ -872,13 +927,13 @@ void GB_LCD::step_sub(int cpu_clock)
 				{
 					if (config::use_opengl)
 					{
-						config::render_external_hw(buffers[0]);
+						config::render_external_hw(finalscreen);
 					}
 					else
 					{
-						SDL_LockSurface(buffers[0]);
-						config::render_external_sw((u32*)(buffers[0]->pixels));
-						SDL_UnlockSurface(buffers[0]);
+						SDL_LockSurface(finalscreen);
+						config::render_external_sw((u32*)(finalscreen->pixels));
+						SDL_UnlockSurface(finalscreen);
 					}
 				}
 
@@ -1357,16 +1412,12 @@ void GB_LCD::render_full_screen() {
 	}
 	else
 	{
-		for (u8 i = 1; i < 5; i++)
+		for (u8 i = 0; i < 5; i++)
 		{
-			SDL_BlitSurface(buffers[i], NULL, buffers[0], NULL);
+			SDL_BlitSurface(buffers[i], NULL, finalscreen, NULL);
 		}
 	}
 }
 
-void DMG_LCD::render_scanline() {
-}
 
-void GBC_LCD::render_scanline() {
-}
 
