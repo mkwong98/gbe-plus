@@ -13,6 +13,7 @@
 #define GB_LCD_DATA
 
 #include <vector>
+#include <array>
 
 #include "common.h" 
 
@@ -73,7 +74,7 @@ struct dmg_lcd_data
 
 struct tile_pattern
 {
-	u16 line[8];
+	std::array<u16, 8> line;
 };
 
 struct tile_used
@@ -87,8 +88,8 @@ struct tile_used
 struct palette
 {
 	u8 code;
-	u16 colour[4];
-	u32 renderColour[4];
+	std::array<u16, 4> colour;
+	std::array<u32, 4> renderColour;
 };
 
 struct tile_strip
@@ -98,7 +99,9 @@ struct tile_strip
 	u16 palette_id;
 	u8 palette_sel;
 	u8 line;
+	u8 graphicsLine;
 	u16 pattern_data;
+	u16 entity_id;
 
 	//obj tiles, gbc tiles
 	bool hflip;

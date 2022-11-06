@@ -131,7 +131,6 @@ class GB_LCD
 
 	//OAM updates
 	void update_oam();
-	virtual void update_obj_render_list() = 0;
 
 	//Per-scanline rendering
 	virtual void collect_scanline_data() = 0;
@@ -162,8 +161,6 @@ public:
 	std::string get_hash(u16 addr, u8 gfx_type);
 
 protected:
-	void update_obj_render_list();
-
 	void collect_scanline_data();
 	u16 getUsedPaletteIdx(u8 p);
 	void collect_palette();
@@ -193,8 +190,6 @@ public:
 	std::string get_hash(u16 addr, u8 gfx_type);
 
 protected:
-	void update_obj_render_list();
-
 	//GBC color palette updates
 	void update_bg_colors();
 	void update_obj_colors();

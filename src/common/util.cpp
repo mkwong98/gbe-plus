@@ -455,6 +455,31 @@ u32 switch_endian32(u32 input)
 	return ((byte_4 << 24) | (byte_3 << 16) | (byte_2 << 8) | byte_1);
 }
 
+/****** Convert a number into 2 digit hex as a C++ string ******/
+std::string to_hex_strXX(u16 input)
+{
+	std::stringstream temp;
+
+	//Auto fill with '0's
+	if (input < 0x10) { temp << "0" << std::hex << std::uppercase << input; }
+	else { temp << std::hex << std::uppercase << input; }
+	return temp.str();
+}
+
+/****** Convert a number into 4 digit hex as a C++ string ******/
+std::string to_hex_strXXXX(u16 input)
+{
+	std::stringstream temp;
+
+	//Auto fill with '0's
+	if (input < 0x10) { temp << "000" << std::hex << std::uppercase << input; }
+	else if (input < 0x100) { temp << "00" << std::hex << std::uppercase << input; }
+	else if (input < 0x1000) { temp << "0" << std::hex << std::uppercase << input; }
+	else { temp << std::hex << std::uppercase << input; }
+
+	return temp.str();
+}
+
 /****** Convert a number into hex as a C++ string ******/
 std::string to_hex_str(u32 input)
 {

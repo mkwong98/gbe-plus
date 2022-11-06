@@ -25,6 +25,7 @@
 
 #include "common/common.h"
 #include "data_dialog.h"
+#include "dmg/lcd_data.h"
 
 class gbe_cgfx : public QDialog
 {
@@ -71,8 +72,6 @@ class gbe_cgfx : public QDialog
 	QComboBox* layer_select;
 	QSpinBox* render_stop_line;
 	QLabel* tile_id;
-	QLabel* tile_addr;
-	QLabel* tile_size;
 	QLabel* h_v_flip;
 	QLabel* tile_palette;
 	QLabel* hash_text;
@@ -121,6 +120,9 @@ class gbe_cgfx : public QDialog
 	bool enable_manifest_critical;
 	bool redump;
 
+	u32 rawImageData[160 * 144];
+	rendered_screen screenInfo;
+
 	virtual QImage grab_obj_data(int obj_index) = 0;
 	virtual QImage grab_bg_data(int bg_index) = 0;
 
@@ -150,7 +152,10 @@ class gbe_cgfx : public QDialog
 	QLabel* current_layer;
 	QLabel* current_tile;
 
-	virtual void update_preview(u32 x, u32 y) = 0;
+	void update_preview(u32 x, u32 y);
+	virtual void update_palette_code(u16 p) = 0;
+	virtual QImage renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer) = 0;
+
 	virtual void dump_layer_tile(u32 x, u32 y) = 0;
 	void dump_obj_layer_tile(u32 x, u32 y);
 	virtual std::string hash_tile(u8 x, u8 y) = 0;
@@ -166,6 +171,7 @@ class gbe_cgfx : public QDialog
 	u32 mouse_start_x, mouse_start_y;
 	bool mouse_drag;
 	bool meta_highlight;
+
 
 	protected slots:
 	void close_cgfx();
@@ -202,7 +208,8 @@ public:
 	QImage grab_bg_data(int bg_index);
 
 protected:
-	void update_preview(u32 x, u32 y);
+	void update_palette_code(u16 p);
+	QImage renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer);
 	void dump_layer_tile(u32 x, u32 y);
 	std::string hash_tile(u8 x, u8 y);
 };
@@ -214,7 +221,8 @@ public:
 	QImage grab_bg_data(int bg_index);
 
 protected:
-	void update_preview(u32 x, u32 y);
+	void update_palette_code(u16 p);
+	QImage renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer);
 	void dump_layer_tile(u32 x, u32 y);
 	std::string hash_tile(u8 x, u8 y);
 };

@@ -75,6 +75,8 @@ namespace util
 
 	u32 switch_endian32(u32 input);
 
+	std::string to_hex_strXX(u16 input);
+	std::string to_hex_strXXXX(u16 input);
 	std::string to_hex_str(u32 input);
 	std::string to_hex_str(u32 input, u8 bit_level);
 	bool from_hex_str(std::string input, u32 &result);

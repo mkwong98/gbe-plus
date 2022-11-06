@@ -339,37 +339,6 @@ void GB_LCD::update_oam()
 	}	
 }
 
-/****** Updates a list of OBJs to render on the current scanline ******/
-void DMG_LCD::update_obj_render_list()
-{
-
-}
-
-void GBC_LCD::update_obj_render_list()
-{
-	obj_render_length = -1;
-
-	u8 obj_x_sort[40];
-	u8 obj_sort_length = 0;
-
-	//Cycle through all of the sprites
-	for (int x = 0; x < 40; x++)
-	{
-		u8 test_top = ((obj[x].y + lcd_stat.obj_size) > 0x100) ? 0 : obj[x].y;
-		u8 test_bottom = (obj[x].y + lcd_stat.obj_size);
-
-		//Check to see if sprite is rendered on the current scanline
-		if ((lcd_stat.current_scanline >= test_top) && (lcd_stat.current_scanline < test_bottom))
-		{
-			obj_render_length++;
-			obj_render_list[obj_render_length] = x;
-		}
-
-		//Enforce 10 sprite-per-scanline limit
-		if (obj_render_length == 9) { break; }
-	}
-}
-
 
 SDL_Surface* GB_LCD::render_raw_layer(u8 layer)
 {
@@ -581,11 +550,11 @@ void DMG_LCD::render_obj_scanline(bool raw)
 					SDL_FillRect(buffers[3], r, 0x00000000);
 					if (p.bg_priority == 0)
 					{
-						SDL_FillRect(buffers[3], r, config::DMG_BG_PAL[cgfx_stat.screen_data.rendered_palette[p.palette_id].colour[tile_pixel]]);
+						SDL_FillRect(buffers[3], r, config::DMG_OBJ_PAL[cgfx_stat.screen_data.rendered_palette[p.palette_id].colour[tile_pixel]][p.palette_sel]);
 					}
 					else
 					{
-						SDL_FillRect(buffers[1], r, config::DMG_BG_PAL[cgfx_stat.screen_data.rendered_palette[p.palette_id].colour[tile_pixel]]);
+						SDL_FillRect(buffers[1], r, config::DMG_OBJ_PAL[cgfx_stat.screen_data.rendered_palette[p.palette_id].colour[tile_pixel]][p.palette_sel]);
 					}
 				}
 			}
@@ -844,7 +813,6 @@ void GB_LCD::step_sub(int cpu_clock)
 
 					//Update OAM
 					if(lcd_stat.oam_update) update_oam();
-					update_obj_render_list();
 
 					//CGFX - Update BG Hashes
 					if(cgfx_stat.update_bg)
@@ -1201,11 +1169,14 @@ void DMG_LCD::collect_scanline_tiles(u16 map_addr, u16 tile_lower_range, u16 til
 		{
 			//add to screen data
 			tile_strip t;
+			t.hflip = 0;
+			t.vflip = 0;
 			t.line = tile_line;
 			t.palette_id = bgId;
 			t.pattern_id = getUsedTileIdx(tile_head);
 			t.pattern_data = cgfx_stat.screen_data.rendered_tile[t.pattern_id].tile.line[tile_line];
 			t.x = lcd_stat.scanline_pixel_counter;
+			t.entity_id = x;
 			strips->push_back(t);
 		}
 		lcd_stat.scanline_pixel_counter += 8;
@@ -1226,7 +1197,7 @@ u16 DMG_LCD::getUsedTileIdx(u16 tile_head) {
 		}
 		for (u16 i = 0; i < cgfx_stat.tiles.size(); i++)
 		{
-			if (memcmp(cgfx_stat.tiles[i].tileData.line, p.tile.line, 16) == 0)
+			if (memcmp(cgfx_stat.tiles[i].tileData.line.data(), p.tile.line.data(), 16) == 0)
 			{
 				p.pack_tile_match.push_back(i);
 			}
@@ -1279,10 +1250,10 @@ void GBC_LCD::collect_scanline_tiles(u16 map_addr, u16 tile_lower_range, u16 til
 			t.hflip = (bg_map_attribute & 0x20) ? 1 : 0;
 			t.vflip = (bg_map_attribute & 0x40) ? 1 : 0;
 
-			u8 tline = ((bg_map_attribute & 0x40) ? 7 - tile_line : tile_line);
-			t.pattern_data = cgfx_stat.screen_data.rendered_tile[t.pattern_id].tile.line[tline];
+			t.graphicsLine = ((bg_map_attribute & 0x40) ? 7 - tile_line : tile_line);
+			t.pattern_data = cgfx_stat.screen_data.rendered_tile[t.pattern_id].tile.line[t.graphicsLine];
 			t.x = lcd_stat.scanline_pixel_counter;
-
+			t.entity_id = x;
 			strips->push_back(t);
 		}
 
@@ -1338,13 +1309,17 @@ void DMG_LCD::collect_obj_scanline() {
 			t.vflip = obj[x].v_flip;
 			t.bg_priority = obj[x].bg_priority;
 			t.line = (lcd_stat.current_scanline - obj[x].y);
+			t.graphicsLine = t.line;
+			if (t.line > 7) t.line -= 8;
 			if (obj[x].v_flip) {
-				t.line = lcd_stat.obj_size - 1 - t.line;
+				t.graphicsLine = lcd_stat.obj_size - 1 - t.graphicsLine;
 			}
 			t.palette_id = (obj[x].palette_number == 1 ? objId2 : objId1);
-			t.pattern_id = getUsedTileIdx(0x8000 + ((obj[x].tile_number + (t.line > 7 ? 1 : 0)) << 4));
-			t.pattern_data = cgfx_stat.screen_data.rendered_tile[t.pattern_id].tile.line[t.line - (t.line > 7 ? 8 : 0)];
+			t.palette_sel = obj[x].palette_number;
+			t.pattern_id = getUsedTileIdx(0x8000 + ((obj[x].tile_number + (t.graphicsLine > 7 ? 1 : 0)) << 4));
+			t.pattern_data = cgfx_stat.screen_data.rendered_tile[t.pattern_id].tile.line[t.graphicsLine - (t.graphicsLine > 7 ? 8 : 0)];
 			t.priority = (256 - obj[x].x) * 40 - x;
+			t.entity_id = x;
 
 			searchF = 0;
 			searchT = strips->size();
@@ -1388,14 +1363,17 @@ void GBC_LCD::collect_obj_scanline() {
 			t.vflip = obj[x].v_flip;
 			t.bg_priority = obj[x].bg_priority;
 			t.line = (lcd_stat.current_scanline - obj[x].y);
+			t.graphicsLine = t.line;
+			if (t.line > 7) t.line -= 8;
 			if (obj[x].v_flip) {
-				t.line = lcd_stat.obj_size - 1 - t.line;
+				t.graphicsLine = lcd_stat.obj_size - 1 - t.graphicsLine;
 			}
 			t.palette_sel = obj[x].color_palette_number;
 			t.palette_id = objId[obj[x].color_palette_number];
-			t.pattern_id = getUsedTileIdx(0x8000 + ((obj[x].tile_number + (t.line > 7 ? 1 : 0)) << 4), obj[x].vram_bank);
-			t.pattern_data = cgfx_stat.screen_data.rendered_tile[t.pattern_id].tile.line[t.line - (t.line > 7 ? 8 : 0)];
+			t.pattern_id = getUsedTileIdx(0x8000 + ((obj[x].tile_number + (t.graphicsLine > 7 ? 1 : 0)) << 4), obj[x].vram_bank);
+			t.pattern_data = cgfx_stat.screen_data.rendered_tile[t.pattern_id].tile.line[t.graphicsLine - (t.graphicsLine > 7 ? 8 : 0)];
 			t.priority = 40 - x;
+			t.entity_id = x;
 			strips->push_back(t);
 		}
 

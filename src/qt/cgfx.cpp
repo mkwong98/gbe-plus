@@ -69,17 +69,13 @@ gbe_cgfx::gbe_cgfx(QWidget *parent) : QDialog(parent)
 	QWidget* layer_info = new QWidget;
 
 	tile_id = new QLabel("Tile ID : ");
-	tile_addr = new QLabel("Tile Address : ");
-	tile_size = new QLabel("Tile Size : ");
 	h_v_flip = new QLabel("H-Flip :    V Flip : ");
 	tile_palette = new QLabel("Tile Palette : ");
-	hash_text = new QLabel("Tile Hash : ");
+	hash_text = new QLabel("Tile Data : ");
 
 	QVBoxLayout* layer_info_layout = new QVBoxLayout;
 	layer_info_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
 	layer_info_layout->addWidget(tile_id);
-	layer_info_layout->addWidget(tile_addr);
-	layer_info_layout->addWidget(tile_size);
 	layer_info_layout->addWidget(h_v_flip);
 	layer_info_layout->addWidget(tile_palette);
 	layer_info_layout->addWidget(hash_text);
@@ -92,6 +88,7 @@ gbe_cgfx::gbe_cgfx(QWidget *parent) : QDialog(parent)
 	layer_select->addItem("Background");
 	layer_select->addItem("Window");
 	layer_select->addItem("OBJ");
+	layer_select->setCurrentIndex(0);
 
 	QHBoxLayout* layer_select_layout = new QHBoxLayout;
 	layer_select_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
@@ -158,10 +155,10 @@ gbe_cgfx::gbe_cgfx(QWidget *parent) : QDialog(parent)
 	QLabel* section_w_label = new QLabel("Tile W :\t");
 	
 	rect_x = new QSpinBox(section_x_set);
-	rect_x->setRange(0, 31);
+	rect_x->setRange(0, 159);
 
 	rect_w = new QSpinBox(section_x_set);
-	rect_w->setRange(0, 31);
+	rect_w->setRange(0, 159);
 
 	//VRAM address section
 	QWidget* vram_addr_set = new QWidget;
@@ -204,10 +201,10 @@ gbe_cgfx::gbe_cgfx(QWidget *parent) : QDialog(parent)
 	QLabel* section_h_label = new QLabel("Tile H :\t");
 	
 	rect_y = new QSpinBox(section_y_set);
-	rect_y->setRange(0, 31);
+	rect_y->setRange(0, 143);
 
 	rect_h = new QSpinBox(section_y_set);
-	rect_h->setRange(0, 31);
+	rect_h->setRange(0, 143);
 
 	QHBoxLayout* section_y_layout = new QHBoxLayout;
 	section_y_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
@@ -1134,634 +1131,146 @@ void gbe_cgfx::draw_gb_layer(u8 layer)
 	if(main_menu::gbe_plus == NULL) { return; }
 	SDL_Surface* s = (SDL_Surface*)(main_menu::gbe_plus->get_core_data(layer));
 
-	QImage raw_image(160, 144, QImage::Format_ARGB32);
+	rendered_screen* sc = (rendered_screen*)(main_menu::gbe_plus->get_core_data(3));
+	screenInfo.rendered_palette = sc->rendered_palette;
+	screenInfo.rendered_tile = sc->rendered_tile;
+	for (u8 y = 0; y < 144; y++) {
+		screenInfo.scanline[y] = sc->scanline[y];
+	}
 
 	SDL_LockSurface(s);
 	u32* pt = (u32*)(s->pixels);
-
-	//Fill in image with pixels from the emulated LCD
-	for (int y = 0; y < 144; y++)
-	{
-		u32* pixel_data = (u32*)(raw_image.scanLine(y));
-		std::copy(pt, pt + 160, pixel_data);
-		pt += 160;
-	}
+	//keep a copy
+	std::copy(pt, pt + (160 * 144), rawImageData);
 	SDL_UnlockSurface(s);
 
-	raw_image = raw_image.scaled(320, 288);
-
-	//Set label Pixmap
-	current_layer->setPixmap(QPixmap::fromImage(raw_image));
+	update_selection();
 }
 
-/****** Update the preview for layers ******/
-void dmg_cgfx::update_preview(u32 x, u32 y)
+void gbe_cgfx::update_preview(u32 x, u32 y)
 {
 	if (main_menu::gbe_plus == NULL) { return; }
 
 	x >>= 1;
 	y >>= 1;
 
-	//8 pixel (horizontal+vertical) flipping lookup generation
-	u8 flip_8[8];
-	for (int z = 0; z < 8; z++) { flip_8[z] = (7 - z); }
-
-	//Update preview for DMG BG
-	if (layer_select->currentIndex() == 0)
+	std::vector<tile_strip> strips;
+	switch (layer_select->currentIndex())
 	{
-		//Determine BG Map & Tile address
-		u16 bg_map_addr = (main_menu::gbe_plus->ex_read_u8(REG_LCDC) & 0x8) ? 0x9C00 : 0x9800;
-		u16 bg_tile_addr = (main_menu::gbe_plus->ex_read_u8(REG_LCDC) & 0x10) ? 0x8000 : 0x8800;
-
-		//Determine the map entry from on-screen coordinates
-		u8 tile_x = main_menu::gbe_plus->ex_read_u8(REG_SX) + x;
-		u8 tile_y = main_menu::gbe_plus->ex_read_u8(REG_SY) + y;
-		u16 map_entry = (tile_x / 8) + ((tile_y / 8) * 32);
-
-		u8 map_value = main_menu::gbe_plus->ex_read_u8(bg_map_addr + map_entry);
-
-		//Convert tile number to signed if necessary
-		if (bg_tile_addr == 0x8800)
-		{
-			if (map_value <= 127) { map_value += 128; }
-			else { map_value -= 128; }
-		}
-
-		u16 bg_index = (((bg_tile_addr + (map_value << 4)) & ~0x8000) >> 4);
-
-		std::string current_hash = "Tile Hash : " + hash_tile(x, y);
-
-		QImage final_image = grab_bg_data(bg_index).scaled(128, 128);
-		current_tile->setPixmap(QPixmap::fromImage(final_image));
-
-		//Tile info - ID
-		QString id("Tile ID : ");
-		id += QString::number(bg_index);
-		tile_id->setText(id);
-
-		//Tile info - Address
-		QString addr("Tile Address : 0x");
-		addr += QString::number((bg_tile_addr + (map_value << 4)), 16).toUpper();
-		tile_addr->setText(addr);
-
-		//Tile info - Size
-		QString size("Tile Size : 8x8");
-		tile_size->setText(size);
-
-		//Tile info - H/V Flip
-		QString flip("H-Flip : N    V-Flip : N");
-		h_v_flip->setText(flip);
-
-		//Tile info - Palette
-		QString pal("Tile Palette : BGP");
-		tile_palette->setText(pal);
-
-		//Tile info - Hash
-		QString hashed = QString::fromStdString(current_hash);
-		hash_text->setText(hashed);
+	case 0: strips = screenInfo.scanline[y].rendered_bg; break;
+	case 1: strips = screenInfo.scanline[y].rendered_win; break;
+	case 2: strips = screenInfo.scanline[y].rendered_obj; break;
 	}
 
-	//Update preview for DMG Window
-	else if (layer_select->currentIndex() == 1)
+	for (int i = 0; i < strips.size(); i++)
 	{
-		//Determine BG Map & Tile address
-		u16 win_map_addr = (main_menu::gbe_plus->ex_read_u8(REG_LCDC) & 0x40) ? 0x9C00 : 0x9800;
-		u16 bg_tile_addr = (main_menu::gbe_plus->ex_read_u8(REG_LCDC) & 0x10) ? 0x8000 : 0x8800;
-
-		u8 wx = main_menu::gbe_plus->ex_read_u8(REG_WX);
-		wx = (wx < 7) ? 0 : (wx - 7);
-
-		//Determine the map entry from on-screen coordinates
-		u8 tile_x = x - wx;
-		u8 tile_y = y - main_menu::gbe_plus->ex_read_u8(REG_WY);
-		u16 map_entry = (tile_x / 8) + ((tile_y / 8) * 32);
-
-		u8 map_value = main_menu::gbe_plus->ex_read_u8(win_map_addr + map_entry);
-
-		//Convert tile number to signed if necessary
-		if (bg_tile_addr == 0x8800)
+		//test strip belongs to a tile within the selected area
+		if ((strips[i].x + 7) >= x && (strips[i].x <= x))
 		{
-			if (map_value <= 127) { map_value += 128; }
-			else { map_value -= 128; }
-		}
+			//Tile info - ID
+			QString id("Tile ID : ");
+			id += QString::number(strips[i].entity_id);
+			if (strips[i].line >= 8) id += "a";
+			tile_id->setText(id);
 
-		u16 bg_index = (((bg_tile_addr + (map_value << 4)) & ~0x8000) >> 4);
+			//Tile info - H/V Flip
+			QString flip("H-Flip : ");
+			flip += (strips[i].hflip ? "Y" : "N");
+			flip += "    V-Flip : ";
+			flip += (strips[i].vflip ? "Y" : "N");
+			h_v_flip->setText(flip);
 
-		std::string current_hash = "Tile Hash : " + hash_tile(x, y);
+			update_palette_code(strips[i].palette_id);
 
-		QImage final_image = grab_bg_data(bg_index).scaled(128, 128);
-		current_tile->setPixmap(QPixmap::fromImage(final_image));
-
-		//Tile info - ID
-		QString id("Tile ID : ");
-		id += QString::number(bg_index);
-		tile_id->setText(id);
-
-		//Tile info - Address
-		QString addr("Tile Address : 0x");
-		addr += QString::number((bg_tile_addr + (map_value << 4)), 16).toUpper();
-		tile_addr->setText(addr);
-
-		//Tile info - Size
-		QString size("Tile Size : 8x8");
-		tile_size->setText(size);
-
-		//Tile info - H/V Flip
-		QString flip("H-Flip : N    V-Flip : N");
-		h_v_flip->setText(flip);
-
-		//Tile info - Palette
-		QString pal("Tile Palette : BGP");
-		tile_palette->setText(pal);
-
-		//Tile info - Hash
-		QString hashed = QString::fromStdString(current_hash);
-		hash_text->setText(hashed);
-	}
-
-	//Update preview for DMG OBJ 
-	else if (layer_select->currentIndex() == 2)
-	{
-		//Determine if in 8x8 or 8x16 mode
-		u8 obj_height = (main_menu::gbe_plus->ex_read_u8(REG_LCDC) & 0x04) ? 16 : 8;
-
-		for (int obj_index = 0; obj_index < 40; obj_index++)
-		{
-			//Grab X-Y OBJ coordinates
-			u8 obj_x = main_menu::gbe_plus->ex_read_u8(OAM + (obj_index * 4) + 1);
-			u8 obj_y = main_menu::gbe_plus->ex_read_u8(OAM + (obj_index * 4));
-
-			obj_x -= 8;
-			obj_y -= 16;
-
-			u8 test_left = ((obj_x + 8) > 0x100) ? 0 : obj_x;
-			u8 test_right = (obj_x + 8);
-
-			u8 test_top = ((obj_y + obj_height) > 0x100) ? 0 : obj_y;
-			u8 test_bottom = (obj_y + obj_height);
-
-			bool h_flip = (main_menu::gbe_plus->ex_read_u8(OAM + (obj_index * 4) + 3) & 0x20) ? true : false;
-			bool v_flip = (main_menu::gbe_plus->ex_read_u8(OAM + (obj_index * 4) + 3) & 0x40) ? true : false;
-
-			u8 obj_tile = main_menu::gbe_plus->ex_read_u8(OAM + (obj_index * 4) + 2);
-			if (obj_height == 16) { obj_tile &= ~0x1; }
-
-			u8 obj_pal = (main_menu::gbe_plus->ex_read_u8(OAM + (obj_index * 4) + 3) & 0x10) ? 1 : 0;
-
-			if ((x >= test_left) && (x <= test_right) && (y >= test_top) && (y <= test_bottom))
-			{
-				if (obj_height == 8)
-				{
-					QImage final_image = grab_obj_data(obj_index).scaled(128, 128).mirrored(h_flip, v_flip);
-					current_tile->setPixmap(QPixmap::fromImage(final_image));
-
-					//Tile info - Size
-					QString size("Tile Size : 8x8");
-					tile_size->setText(size);
-				}
-
-				else
-				{
-					QImage final_image = grab_obj_data(obj_index).scaled(64, 128).mirrored(h_flip, v_flip);
-					current_tile->setPixmap(QPixmap::fromImage(final_image));
-
-					//Tile info - Size
-					QString size("Tile Size : 8x16");
-					tile_size->setText(size);
-				}
-
-				//Tile info - ID
-				QString id("Tile ID : ");
-				id += QString::number(obj_index);
-				tile_id->setText(id);
-
-				//Tile info - Address
-				QString addr("Tile Address : 0x");
-				addr += QString::number((0x8000 + (obj_tile << 4)), 16).toUpper();
-				tile_addr->setText(addr);
-
-				//Tile info - H/V Flip
-				QString flip;
-
-				if ((!h_flip) && (!v_flip)) { flip = "H-Flip : N    V-Flip : N"; }
-				else if ((h_flip) && (!v_flip)) { flip = "H-Flip : Y    V-Flip : N"; }
-				else if ((!h_flip) && (v_flip)) { flip = "H-Flip : N    V-Flip : Y"; }
-				else { flip = "H-Flip : Y    V-Flip : Y"; }
-
-				h_v_flip->setText(flip);
-
-				//Tile info - Palette
-				QString pal;
-				pal = (obj_pal == 0) ? "Tile Palette : OBP0" : "Tile Palette : OBP1";
-				tile_palette->setText(pal);
-
-				//Tile info - Hash
-				std::string current_hash = "Tile Hash : " + hash_tile(x, y);
-				QString hashed = QString::fromStdString(current_hash);
-				hash_text->setText(hashed);
+			//Tile info - Hash
+			QString hashed = QString("Tile Data : ");
+			for (u8 l = 0; l < 8; l++) {
+				hashed += util::to_hex_strXXXX(screenInfo.rendered_tile[strips[i].pattern_id].tile.line[l]).c_str();
 			}
+			hash_text->setText(hashed);
+
+			QImage final_image = renderTile(strips[i].pattern_id, strips[i].palette_id, strips[i].palette_sel, layer_select->currentIndex()).scaled(256, 256);
+			current_tile->setPixmap(QPixmap::fromImage(final_image));
+			return;
 		}
 	}
 }
 
-void gbc_cgfx::update_preview(u32 x, u32 y)
+void dmg_cgfx::update_palette_code(u16 p)
 {
-	if(main_menu::gbe_plus == NULL) { return; }
-
-	x >>= 1;
-	y >>= 1;
-
-	//8 pixel (horizontal+vertical) flipping lookup generation
-	u8 flip_8[8];
-	for(int z = 0; z < 8; z++) { flip_8[z] = (7 - z); }
-
-	//Update preview for GBC BG
-	if(layer_select->currentIndex() == 0) 
-	{
-		u32 bg_pixel_data[64];
-		u8 bg_pixel_counter = 0;
-		u8 tile_pixel = 0;
-
-		//Determine BG Map & Tile address
-		u16 bg_map_addr = (main_menu::gbe_plus->ex_read_u8(REG_LCDC) & 0x8) ? 0x9C00 : 0x9800;
-		u16 bg_tile_addr = (main_menu::gbe_plus->ex_read_u8(REG_LCDC) & 0x10) ? 0x8000 : 0x8800;
-
-		//Determine the map entry from on-screen coordinates
-		u8 tile_x = main_menu::gbe_plus->ex_read_u8(REG_SX) + x;
-		u8 tile_y = main_menu::gbe_plus->ex_read_u8(REG_SY) + y;
-		u16 map_entry = (tile_x / 8) + ((tile_y / 8) * 32);
-
-		u8 current_vram_bank = main_menu::gbe_plus->ex_read_u8(REG_VBK);
-			
-		//Read the BG attributes
-		main_menu::gbe_plus->ex_write_u8(REG_VBK, 1);
-		u8 bg_attribute = main_menu::gbe_plus->ex_read_u8(bg_map_addr + map_entry);
-		u8 pal_num = (bg_attribute & 0x7);
-		u8 vram_bank = (bg_attribute & 0x8) ? 1 : 0;
-		bool h_flip = (bg_attribute & 0x20) ? true : false;
-		bool v_flip = (bg_attribute & 0x40) ? true : false;
-
-		//Setup palettes
-		u32 bgp[4];
-
-		u32* color = main_menu::gbe_plus->get_bg_palette(pal_num);
-
-		bgp[0] = *color; color += 8;
-		bgp[1] = *color; color += 8;
-		bgp[2] = *color; color += 8;
-		bgp[3] = *color; color += 8;
-
-		main_menu::gbe_plus->ex_write_u8(REG_VBK, 0);
-		u8 map_value = main_menu::gbe_plus->ex_read_u8(bg_map_addr + map_entry);
-
-		//Convert tile number to signed if necessary
-		if(bg_tile_addr == 0x8800) 
-		{
-			if(map_value <= 127) { map_value += 128; }
-			else { map_value -= 128; }
-		}
-
-		u16 bg_index = (((bg_tile_addr + (map_value << 4)) & ~0x8000) >> 4);
-
-		std::string current_hash = "Tile Hash : " + hash_tile(x, y);
-
-		//Calculate the address of the BG pixel data based on map entry
-		u16 vram_tile_addr = (bg_tile_addr + (map_value << 4));
-
-		//Grab bytes from VRAM representing BG pixel data
-		main_menu::gbe_plus->ex_write_u8(REG_VBK, vram_bank);
-
-		for(int bg_x = 0; bg_x < 8; bg_x++)
-		{
-			u16 tile_data = (main_menu::gbe_plus->ex_read_u8(vram_tile_addr + 1) << 8) | main_menu::gbe_plus->ex_read_u8(vram_tile_addr);
-
-			//Account for vertical flipping
-			if(v_flip) { bg_pixel_counter = flip_8[bg_x] * 8; }
-
-			for(int bg_y = 7; bg_y >= 0; bg_y--)
-			{
-
-				//Calculate raw value of the tile's pixel
-				if(h_flip) 
-				{
-					tile_pixel = ((tile_data >> 8) & (1 << flip_8[bg_y])) ? 2 : 0;
-					tile_pixel |= (tile_data & (1 << flip_8[bg_y])) ? 1 : 0;
-				}
-
-				else
-				{
-					tile_pixel = ((tile_data >> 8) & (1 << bg_y)) ? 2 : 0;
-					tile_pixel |= (tile_data & (1 << bg_y)) ? 1 : 0;
-				}				
-
-				bg_pixel_data[bg_pixel_counter++] = bgp[tile_pixel];
-			}
-
-			vram_tile_addr += 2;
-		}
-
-		main_menu::gbe_plus->ex_write_u8(REG_VBK, current_vram_bank);
-
-		QImage final_image(8, 8, QImage::Format_ARGB32);	
-
-		//Copy raw pixels to QImage
-		for(int bg_x = 0; bg_x < 64; bg_x++)
-		{
-			final_image.setPixel((bg_x % 8), (bg_x / 8), bg_pixel_data[bg_x]);
-		}
-
-		final_image = final_image.scaled(128, 128);
-		current_tile->setPixmap(QPixmap::fromImage(final_image));
-
-		//Tile info - ID
-		QString id("Tile ID : ");
-		id += QString::number(bg_index);
-		tile_id->setText(id);
-
-		//Tile info - Address
-		QString addr("Tile Address : 0x");
-		addr += QString::number((bg_tile_addr + (map_value << 4)), 16).toUpper();
-		tile_addr->setText(addr);
-
-		//Tile info - Size
-		QString size("Tile Size : 8x8");
-		tile_size->setText(size);
-
-		//Tile info - H/V Flip
-		QString flip("H-Flip : N    V-Flip : N");
-
-		if((!h_flip) && (!v_flip)) { flip = "H-Flip : N    V-Flip : N"; }
-		else if((h_flip) && (!v_flip)) { flip = "H-Flip : Y    V-Flip : N"; }
-		else if((!h_flip) && (v_flip)) { flip = "H-Flip : N    V-Flip : Y"; }
-		else { flip = "H-Flip : Y    V-Flip : Y"; }	
-
-		h_v_flip->setText(flip);
-
-		//Tile info - Palette
-		QString pal;
-				
-		switch(pal_num)
-		{
-			case 0: pal = "Tile Palette : BCP0"; break;
-			case 1: pal = "Tile Palette : BCP1"; break;
-			case 2: pal = "Tile Palette : BCP2"; break;
-			case 3: pal = "Tile Palette : BCP3"; break;
-			case 4: pal = "Tile Palette : BCP4"; break;
-			case 5: pal = "Tile Palette : BCP5"; break;
-			case 6: pal = "Tile Palette : BCP6"; break;
-			case 7: pal = "Tile Palette : BCP7"; break;
-		}
-
-		tile_palette->setText(pal);
-
-		//Tile info - Hash
-		QString hashed = QString::fromStdString(current_hash);
-		hash_text->setText(hashed);
-	}
-
-	//Update preview for GBC Window
-	else if(layer_select->currentIndex() == 1) 
-	{
-		u32 win_pixel_data[64];
-		u8 win_pixel_counter = 0;
-		u8 tile_pixel = 0;
-
-		//Determine BG Map & Tile address
-		u16 win_map_addr = (main_menu::gbe_plus->ex_read_u8(REG_LCDC) & 0x40) ? 0x9C00 : 0x9800;
-		u16 win_tile_addr = (main_menu::gbe_plus->ex_read_u8(REG_LCDC) & 0x10) ? 0x8000 : 0x8800;
-	
-		//Determine the map entry from on-screen coordinates
-		u8 wx = main_menu::gbe_plus->ex_read_u8(REG_WX);
-		wx = (wx < 7) ? 0 : (wx - 7); 
-
-		u8 tile_x = x - wx;
-		u8 tile_y = y - main_menu::gbe_plus->ex_read_u8(REG_WY);
-		u16 map_entry = (tile_x / 8) + ((tile_y / 8) * 32);
-
-		u8 current_vram_bank = main_menu::gbe_plus->ex_read_u8(REG_VBK);
-			
-		//Read the BG attributes
-		main_menu::gbe_plus->ex_write_u8(REG_VBK, 1);
-		u8 bg_attribute = main_menu::gbe_plus->ex_read_u8(win_map_addr + map_entry);
-		u8 pal_num = (bg_attribute & 0x7);
-		u8 vram_bank = (bg_attribute & 0x8) ? 1 : 0;
-		bool h_flip = (bg_attribute & 0x20) ? true : false;
-		bool v_flip = (bg_attribute & 0x40) ? true : false;
-
-		//Setup palettes
-		u32 bgp[4];
-
-		u32* color = main_menu::gbe_plus->get_bg_palette(pal_num);
-
-		bgp[0] = *color; color += 8;
-		bgp[1] = *color; color += 8;
-		bgp[2] = *color; color += 8;
-		bgp[3] = *color; color += 8;
-
-		main_menu::gbe_plus->ex_write_u8(REG_VBK, 0);
-		u8 map_value = main_menu::gbe_plus->ex_read_u8(win_map_addr + map_entry);
-
-		//Convert tile number to signed if necessary
-		if(win_tile_addr == 0x8800) 
-		{
-			if(map_value <= 127) { map_value += 128; }
-			else { map_value -= 128; }
-		}
-
-		u16 bg_index = (((win_tile_addr + (map_value << 4)) & ~0x8000) >> 4);
-
-		std::string current_hash = "Tile Hash : " + hash_tile(x, y);
-
-		//Calculate the address of the BG pixel data based on map entry
-		u16 vram_tile_addr = (win_tile_addr + (map_value << 4));
-
-		//Grab bytes from VRAM representing BG pixel data
-		main_menu::gbe_plus->ex_write_u8(REG_VBK, vram_bank);
-
-		for(int win_x = 0; win_x < 8; win_x++)
-		{
-			u16 tile_data = (main_menu::gbe_plus->ex_read_u8(vram_tile_addr + 1) << 8) | main_menu::gbe_plus->ex_read_u8(vram_tile_addr);
-
-			//Account for vertical flipping
-			if(v_flip) { win_pixel_counter = flip_8[win_x] * 8; }
-
-			for(int win_y = 7; win_y >= 0; win_y--)
-			{
-
-				//Calculate raw value of the tile's pixel
-				if(h_flip) 
-				{
-					tile_pixel = ((tile_data >> 8) & (1 << flip_8[win_y])) ? 2 : 0;
-					tile_pixel |= (tile_data & (1 << flip_8[win_y])) ? 1 : 0;
-				}
-
-				else
-				{
-					tile_pixel = ((tile_data >> 8) & (1 << win_y)) ? 2 : 0;
-					tile_pixel |= (tile_data & (1 << win_y)) ? 1 : 0;
-				}				
-
-				win_pixel_data[win_pixel_counter++] = bgp[tile_pixel];
-			}
-
-			vram_tile_addr += 2;
-		}
-
-		main_menu::gbe_plus->ex_write_u8(REG_VBK, current_vram_bank);
-
-		QImage final_image(8, 8, QImage::Format_ARGB32);	
-
-		//Copy raw pixels to QImage
-		for(int win_x = 0; win_x < 64; win_x++)
-		{
-			final_image.setPixel((win_x % 8), (win_x / 8), win_pixel_data[win_x]);
-		}
-
-		final_image = final_image.scaled(128, 128);
-		current_tile->setPixmap(QPixmap::fromImage(final_image));
-
-		//Tile info - ID
-		QString id("Tile ID : ");
-		id += QString::number(bg_index);
-		tile_id->setText(id);
-
-		//Tile info - Address
-		QString addr("Tile Address : 0x");
-		addr += QString::number((win_tile_addr + (map_value << 4)), 16).toUpper();
-		tile_addr->setText(addr);
-
-		//Tile info - Size
-		QString size("Tile Size : 8x8");
-		tile_size->setText(size);
-
-		//Tile info - H/V Flip
-		QString flip("H-Flip : N    V-Flip : N");
-
-		if((!h_flip) && (!v_flip)) { flip = "H-Flip : N    V-Flip : N"; }
-		else if((h_flip) && (!v_flip)) { flip = "H-Flip : Y    V-Flip : N"; }
-		else if((!h_flip) && (v_flip)) { flip = "H-Flip : N    V-Flip : Y"; }
-		else { flip = "H-Flip : Y    V-Flip : Y"; }	
-
-		h_v_flip->setText(flip);
-
-		//Tile info - Palette
-		QString pal;
-				
-		switch(pal_num)
-		{
-			case 0: pal = "Tile Palette : BCP0"; break;
-			case 1: pal = "Tile Palette : BCP1"; break;
-			case 2: pal = "Tile Palette : BCP2"; break;
-			case 3: pal = "Tile Palette : BCP3"; break;
-			case 4: pal = "Tile Palette : BCP4"; break;
-			case 5: pal = "Tile Palette : BCP5"; break;
-			case 6: pal = "Tile Palette : BCP6"; break;
-			case 7: pal = "Tile Palette : BCP7"; break;
-		}
-
-		tile_palette->setText(pal);
-
-		//Tile info - Hash
-		QString hashed = QString::fromStdString(current_hash);
-		hash_text->setText(hashed);
-	}
-
-	//Update preview for GBC OBJ 
-	else if(layer_select->currentIndex() == 2)
-	{
-		//Determine if in 8x8 or 8x16 mode
-		u8 obj_height = (main_menu::gbe_plus->ex_read_u8(REG_LCDC) & 0x04) ? 16 : 8;
-
-		for(int obj_index = 0; obj_index < 40; obj_index++)
-		{
-			//Grab X-Y OBJ coordinates
-			u8 obj_x = main_menu::gbe_plus->ex_read_u8(OAM + (obj_index * 4) + 1);
-			u8 obj_y = main_menu::gbe_plus->ex_read_u8(OAM + (obj_index * 4));
-
-			obj_x -= 8;
-			obj_y -= 16;
-
-			u8 test_left = ((obj_x + 8) > 0x100) ? 0 : obj_x;
-			u8 test_right = (obj_x + 8);
-
-			u8 test_top = ((obj_y + obj_height) > 0x100) ? 0 : obj_y;
-			u8 test_bottom = (obj_y + obj_height);
-
-			bool h_flip = (main_menu::gbe_plus->ex_read_u8(OAM + (obj_index * 4) + 3) & 0x20) ? true : false;
-			bool v_flip = (main_menu::gbe_plus->ex_read_u8(OAM + (obj_index * 4) + 3) & 0x40) ? true : false;
-
-			u8 obj_tile = main_menu::gbe_plus->ex_read_u8(OAM + (obj_index * 4) + 2);
-			if(obj_height == 16) { obj_tile &= ~0x1; }
-
-			u8 obj_pal = (main_menu::gbe_plus->ex_read_u8(OAM + (obj_index * 4) + 3) & 0x7);
-
-			if((x >= test_left) && (x <= test_right) && (y >= test_top) && (y <= test_bottom))
-			{
-				if(obj_height == 8)
-				{
-					QImage final_image = grab_obj_data(obj_index).scaled(128, 128).mirrored(h_flip, v_flip);
-					current_tile->setPixmap(QPixmap::fromImage(final_image));
-
-					//Tile info - Size
-					QString size("Tile Size : 8x8");
-					tile_size->setText(size);
-				}
-
-				else
-				{
-					QImage final_image = grab_obj_data(obj_index).scaled(64, 128).mirrored(h_flip, v_flip);
-					current_tile->setPixmap(QPixmap::fromImage(final_image));
-
-					//Tile info - Size
-					QString size("Tile Size : 8x16");
-					tile_size->setText(size);
-				}
-
-				//Tile info - ID
-				QString id("Tile ID : ");
-				id += QString::number(obj_index);
-				tile_id->setText(id);
-
-				//Tile info - Address
-				QString addr("Tile Address : 0x");
-				addr += QString::number((0x8000 + (obj_tile << 4)), 16).toUpper();
-				tile_addr->setText(addr);
-
-				//Tile info - H/V Flip
-				QString flip;
-				
-				if((!h_flip) && (!v_flip)) { flip = "H-Flip : N    V-Flip : N"; }
-				else if((h_flip) && (!v_flip)) { flip = "H-Flip : Y    V-Flip : N"; }
-				else if((!h_flip) && (v_flip)) { flip = "H-Flip : N    V-Flip : Y"; }
-				else { flip = "H-Flip : Y    V-Flip : Y"; }				
-
-				h_v_flip->setText(flip);
-
-				//Tile info - Palette
-				QString pal;
-				
-				switch(obj_pal)
-				{
-					case 0: pal = "Tile Palette : OCP0"; break;
-					case 1: pal = "Tile Palette : OCP1"; break;
-					case 2: pal = "Tile Palette : OCP2"; break;
-					case 3: pal = "Tile Palette : OCP3"; break;
-					case 4: pal = "Tile Palette : OCP4"; break;
-					case 5: pal = "Tile Palette : OCP5"; break;
-					case 6: pal = "Tile Palette : OCP6"; break;
-					case 7: pal = "Tile Palette : OCP7"; break;
-				}
-
-				tile_palette->setText(pal);
-
-				//Tile info - Hash
-				std::string current_hash = "Tile Hash : " + hash_tile(x, y);
-				QString hashed = QString::fromStdString(current_hash);
-				hash_text->setText(hashed);
-			}
-		}
-	}
+	//Tile info - Palette
+	QString pal("Tile Palette : ");
+	pal += util::to_hex_strXX(screenInfo.rendered_palette[p].code).c_str();
+	tile_palette->setText(pal);
 }
+
+void gbc_cgfx::update_palette_code(u16 p)
+{
+	//Tile info - Palette
+	QString pal("Tile Palette : ");
+	for (u8 i = 0; i < 4; i++) {
+		pal += util::to_hex_strXXXX(screenInfo.rendered_palette[p].colour[i]).c_str();
+	}
+	tile_palette->setText(pal);
+}
+
+QImage dmg_cgfx::renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer)
+{
+	std::vector<u32> bg_pixels;
+	for (u8 l = 0; l < 8; l++)
+	{
+		u16 raw_data = screenInfo.rendered_tile[tileID].tile.line[l];
+		//Grab individual pixels
+		for (int y = 7; y >= 0; y--)
+		{
+			u8 raw_pixel = ((raw_data >> 8) & (1 << y)) ? 2 : 0;
+			raw_pixel |= (raw_data & (1 << y)) ? 1 : 0;
+			if (layer <= 1)
+			{
+				bg_pixels.push_back(config::DMG_BG_PAL[screenInfo.rendered_palette[palId].colour[raw_pixel]]);
+			}
+			else
+			{
+				bg_pixels.push_back(config::DMG_OBJ_PAL[screenInfo.rendered_palette[palId].colour[raw_pixel]][palSel]);
+			}
+		}
+	}
+
+	QImage raw_image(8, 8, QImage::Format_ARGB32);
+
+	//Copy raw pixels to QImage
+	for (int x = 0; x < bg_pixels.size(); x++)
+	{
+		raw_image.setPixel((x % 8), (x / 8), bg_pixels[x]);
+	}
+	return raw_image;
+}
+
+QImage gbc_cgfx::renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer)
+{
+	std::vector<u32> bg_pixels;
+	for (u8 l = 0; l < 8; l++)
+	{
+		u16 raw_data = screenInfo.rendered_tile[tileID].tile.line[l];
+		//Grab individual pixels
+		for (int y = 7; y >= 0; y--)
+		{
+			u8 raw_pixel = ((raw_data >> 8) & (1 << y)) ? 2 : 0;
+			raw_pixel |= (raw_data & (1 << y)) ? 1 : 0;
+			bg_pixels.push_back(screenInfo.rendered_palette[palId].renderColour[raw_pixel]);
+		}
+	}
+
+	QImage raw_image(8, 8, QImage::Format_ARGB32);
+
+	//Copy raw pixels to QImage
+	for (int x = 0; x < bg_pixels.size(); x++)
+	{
+		raw_image.setPixel((x % 8), (x / 8), bg_pixels[x]);
+	}
+	return raw_image;
+}
+
 
 /****** Dumps the tile from a given layer ******/
 void dmg_cgfx::dump_layer_tile(u32 x, u32 y)
@@ -1982,100 +1491,26 @@ bool gbe_cgfx::eventFilter(QObject* target, QEvent* event)
 				x >>= 1;
 				y >>= 1;
 
-				//Determine highlighted BG tiles
-				if(layer_select->currentIndex() == 0)
+				if (x <= mouse_start_x)
 				{
-					u8 sx = main_menu::gbe_plus->ex_read_u8(REG_SX) % 8;
-					u8 sy = main_menu::gbe_plus->ex_read_u8(REG_SY) % 8;
-
-					u8 tile_start_x, tile_start_y = 0;
-					u8 tile_x, tile_y = 0;
-
-					//Make sure selections work no matter which direction mouse drags in
-					//Set the start and end points according to where the newest position is in relation to the original mouse click
-					if(mouse_event->x() > mouse_start_x)
-					{
-						tile_start_x = ((mouse_start_x + sx) >> 1) / 8;
-						tile_x = (x / 8);
-					}
-
-					else
-					{
-						tile_start_x = (x / 8);
-						tile_x = ((mouse_start_x + sx) >> 1) / 8;
-					}
-
-					if(mouse_event->y() > mouse_start_y)
-					{
-						tile_start_y = ((mouse_start_y + sy) >> 1) / 8;
-						tile_y = (y / 8);
-					}
-
-					else
-					{
-						tile_start_y = (y / 8);
-						tile_y = ((mouse_start_y + sy) >> 1) / 8;
-					}
-
-					//Set X and Y
-					rect_x->setValue(tile_start_x + 1);
-					rect_y->setValue(tile_start_y + 1);
-
-					//Set W and H
-					rect_w->setValue(tile_x - tile_start_x + 1);
-					rect_h->setValue(tile_y - tile_start_y + 1);
-
-					//Update highlighting
-					update_selection();
+					rect_x->setValue(x);
+					rect_w->setValue(mouse_start_x - x);
+				}
+				else
+				{
+					rect_w->setValue(x - mouse_start_x);
 				}
 
-				//Determine highlighted Window tiles
-				else if(layer_select->currentIndex() == 1)
+				if (y <= mouse_start_y)
 				{
-					u8 wx = main_menu::gbe_plus->ex_read_u8(REG_WX) % 8;
-					u8 wy = main_menu::gbe_plus->ex_read_u8(REG_WY);
-					wx = (wx < 7) ? 0 : (wx - 7);
-
-					u8 tile_start_x, tile_start_y = 0;
-					u8 tile_x, tile_y = 0;
-
-					//Make sure selections work no matter which direction mouse drags in
-					//Set the start and end points according to where the newest position is in relation to the original mouse click
-					if(mouse_event->x() > mouse_start_x)
-					{
-						tile_start_x = ((mouse_start_x >> 1) - wx) / 8;
-						tile_x = ((x - wx) / 8);
-					}
-
-					else
-					{
-						tile_start_x = ((x - wx) / 8);
-						tile_x = ((mouse_start_x >> 1) - wx) / 8;
-					}
-
-					if(mouse_event->y() > mouse_start_y)
-					{
-						tile_start_y = ((mouse_start_y >> 1) - wy) / 8;
-						tile_y = ((y - wy) / 8);
-					}
-
-					else
-					{
-						tile_start_y = ((y - wy) / 8);
-						tile_y = ((mouse_start_y >> 1) - wy) / 8;
-					}
-
-					//Set X and Y
-					rect_x->setValue(tile_start_x + 1);
-					rect_y->setValue(tile_start_y + 1);
-
-					//Set W and H
-					rect_w->setValue(tile_x - tile_start_x + 1);
-					rect_h->setValue(tile_y - tile_start_y + 1);
-
-					//Update highlighting
-					update_selection();
+					rect_y->setValue(y);
+					rect_h->setValue(mouse_start_y - y);
 				}
+				else
+				{
+					rect_h->setValue(y - mouse_start_y);
+				}
+				update_selection();
 			}
 		}
 
@@ -2165,11 +1600,15 @@ bool gbe_cgfx::eventFilter(QObject* target, QEvent* event)
 		u32 y = mouse_event->y();
 
 		//Layers tab
-		if(target == current_layer)
+		if(target == current_layer && !mouse_drag)
 		{
 			mouse_drag = true;
-			mouse_start_x = mouse_event->x();
-			mouse_start_y = mouse_event->y();
+			mouse_start_x = x / 2;
+			mouse_start_y = y / 2;
+			rect_x->setValue(mouse_start_x);
+			rect_y->setValue(mouse_start_y);
+			rect_w->setValue(0);
+			rect_h->setValue(0);
 		}
 
 		//OBJ Meta Tile tab
@@ -2264,6 +1703,7 @@ bool gbe_cgfx::eventFilter(QObject* target, QEvent* event)
 	else if((event->type() == QEvent::MouseButtonRelease) && (mouse_drag))
 	{
 		mouse_drag = false;
+		update_selection();
 	}
 
 
@@ -2504,37 +1944,71 @@ void gbe_cgfx::reject_folder()
 /****** Updates the dumping selection for multiple tiles in the layer tab ******/
 void gbe_cgfx::update_selection()
 {
-	//Make sure no more than 20 tiles can be selected horizontally
-	if((rect_x->value() + rect_w->value()) > 21)
+	u32* pt = rawImageData;
+	QImage raw_image(160, 144, QImage::Format_ARGB32);
+	//Fill in image with pixels from the emulated LCD
+	for (int y = 0; y < 144; y++)
 	{
-		rect_w->setValue(21 - rect_x->value());
+		u32* pixel_data = (u32*)(raw_image.scanLine(y));
+		std::copy(pt, pt + 160, pixel_data);
+		pt += 160;
+	}
+	raw_image = raw_image.scaled(320, 288);
+	
+	//draw a box when dragging mouse
+	QPainter painter(&raw_image);
+
+	if (mouse_drag) {
+		painter.setPen(QPen(QColor(255, 0, 0)));
+		painter.drawRect(rect_x->value() * 2 + 1, rect_y->value() * 2 + 1, rect_w->value() * 2 - 1, rect_h->value() * 2 - 1);
+		painter.setPen(QPen(QColor(0, 255, 255)));
+		painter.drawRect(rect_x->value() * 2, rect_y->value() * 2, rect_w->value() * 2 - 1, rect_h->value() * 2 - 1);
+	}
+	if (rect_w->value() > 0 && rect_h->value() > 0)
+	{
+
+		//hightlight selected tiles
+		for (int y = 0; y < 144; y++) 
+		{
+			std::vector<tile_strip> strips;
+			switch (layer_select->currentIndex())
+			{
+			case 0: strips = screenInfo.scanline[y].rendered_bg; break;
+			case 1: strips = screenInfo.scanline[y].rendered_win; break;
+			case 2: strips = screenInfo.scanline[y].rendered_obj; break;
+			}
+			for (int i = 0; i < strips.size(); i++)
+			{
+				//test strip belongs to a tile within the selected area
+				if ((strips[i].x + 7) >= rect_x->value() && strips[i].x <= (rect_x->value() + rect_w->value())
+					&& (y - (strips[i].line >= 8 ? strips[i].line - 8 : strips[i].line) + 7) >= rect_y->value() 
+					&& (y - (strips[i].line >= 8 ? strips[i].line - 8 : strips[i].line)) <= (rect_y->value() + rect_h->value()))
+				{
+					if (strips[i].line == 0 || strips[i].line == 7 || strips[i].line == 8 || strips[i].line == 15)
+					{
+						//draw top or bottom line
+						painter.setPen(QPen(QColor(0, 255, 0)));
+						painter.drawLine(strips[i].x * 2 + 1, y * 2 + 1, strips[i].x * 2 + 15, y * 2 + 1);
+						painter.setPen(QPen(QColor(255, 0, 255)));
+						painter.drawLine(strips[i].x * 2, y * 2, strips[i].x * 2 + 14, y * 2);
+					}
+					else
+					{
+						//draw side
+						painter.setPen(QPen(QColor(0, 255, 0)));
+						painter.drawLine(strips[i].x * 2 + 1, y * 2, strips[i].x * 2 + 1, y * 2 + 1);
+						painter.drawLine(strips[i].x * 2 + 15, y * 2, strips[i].x * 2 + 15, y * 2 + 1);
+						painter.setPen(QPen(QColor(255, 0, 255)));
+						painter.drawLine(strips[i].x * 2, y * 2, strips[i].x * 2, y * 2 + 1);
+						painter.drawLine(strips[i].x * 2 + 14, y * 2, strips[i].x * 2 + 14, y * 2 + 1);
+					}
+				}
+			}
+		}
 	}
 
-	//Make sure no more than 18 tiles can be selected horizontally
-	if((rect_y->value() + rect_h->value()) > 19)
-	{
-		rect_h->setValue(19 - rect_y->value());
-	}
-
-	if((rect_x->value() == 0) || (rect_y->value() == 0) || (rect_w->value() == 0) || (rect_h->value() == 0))
-	{
-		min_x_rect = max_x_rect = min_y_rect = max_y_rect = 255;
-		layer_change();
-		return;
-	}
-
-	min_x_rect = rect_x->value();
-	max_x_rect = (min_x_rect + rect_w->value()) - 1;
-
-	min_y_rect = rect_y->value();
-	max_y_rect = (min_y_rect + rect_h->value()) - 1;
-
-	min_x_rect -= 1;
-	max_x_rect -= 1;
-	min_y_rect -= 1;
-	max_y_rect -= 1;
-
-	layer_change();
+	//Set label Pixmap
+	current_layer->setPixmap(QPixmap::fromImage(raw_image));
 }
 
 /****** Dumps the selection of multiple tiles to a file ******/
