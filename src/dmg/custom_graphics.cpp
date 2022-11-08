@@ -21,11 +21,27 @@
 void GB_LCD::clear_manifest() {
 	cgfx_stat.packScale = 1;
 	cgfx_stat.packVersion = "";
+
 	for (u16 i = 0; i < cgfx_stat.imgs.size(); i++)
 	{
-		SDL_FreeSurface(cgfx_stat.imgs[i]);
+		for (u16 j = 0; j < cgfx_stat.imgs[i].size(); j++)
+		{
+			SDL_FreeSurface(cgfx_stat.imgs[i][j]);
+		}
+		cgfx_stat.imgs[i].clear();
 	}
 	cgfx_stat.imgs.clear();
+
+	for (u16 i = 0; i < cgfx_stat.himgs.size(); i++)
+	{
+		for (u16 j = 0; j < cgfx_stat.himgs[i].size(); j++)
+		{
+			SDL_FreeSurface(cgfx_stat.himgs[i][j]);
+		}
+		cgfx_stat.himgs[i].clear();
+	}
+	cgfx_stat.himgs.clear();
+
 	cgfx_stat.conds.clear();
 	cgfx_stat.tiles.clear();
 	for (u16 i = 0; i < cgfx_stat.bgs.size(); i++)
@@ -33,6 +49,8 @@ void GB_LCD::clear_manifest() {
 		SDL_FreeSurface(cgfx_stat.bgs[i].img);
 	}
 	cgfx_stat.bgs.clear();
+	SDL_FreeSurface(cgfx_stat.brightnessMod);
+	SDL_FreeSurface(cgfx_stat.tempStrip);
 }
 
 
@@ -45,103 +63,132 @@ bool GB_LCD::load_manifest(std::string filename)
 	std::string input_line = "";
 	std::string tagName = "";
 
-	if (!file.is_open())
-	{
-		std::cout << "CGFX::Could not open manifest file " << filename << ". Check file path or permissions. \n";
-		return false;
-	}
+	//SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+	//	"Loading HdPack",
+	//	filename.c_str(),
+	//	NULL);
+	bool result = false;
+	cgfx::scaling_factor = 1;
 
-	//Cycle through whole file, line-by-line
-	while (getline(file, input_line))
+	if (file.is_open())
 	{
-		input_line = util::trimfnc(input_line);
-		//get tag content
-		std::size_t found1 = input_line.find("<");
-		std::size_t found2 = input_line.find(">");
-		std::size_t found3 = input_line.find("[");
-		std::size_t found4 = input_line.find("]");
-		if (found1 != std::string::npos && found2 != std::string::npos && (found1 == 0 || found3 == 0))
+		//Cycle through whole file, line-by-line
+		while (getline(file, input_line))
 		{
-			if (found2 > found1)
+			input_line = util::trimfnc(input_line);
+			//get tag content
+			std::size_t found1 = input_line.find("<");
+			std::size_t found2 = input_line.find(">");
+			std::size_t found3 = input_line.find("[");
+			std::size_t found4 = input_line.find("]");
+			if (found1 != std::string::npos && found2 != std::string::npos && (found1 == 0 || found3 == 0))
 			{
-				tagName = input_line.substr(found1 + 1, found2 - found1 - 1);
-			}
-			std::string strRest = input_line.substr(found2 + 1);
-			if (tagName == "ver") cgfx_stat.packVersion = util::trimfnc(strRest);
-			else if (tagName == "scale") cgfx::scaling_factor = stoi(util::trimfnc(strRest));
-			else if (tagName == "img")
-			{
-				std::string imgname = util::trimfnc(strRest);
-				cgfx_stat.imgs.push_back(load_pack_image(imgname));
-			}
-			else if (tagName == "tile")
-			{
-				pack_tile pt;
-				std::string token;
-				std::size_t pos;
-				u8 tokenCnt = 0;
-				while (strRest.length() > 0)
+				if (found2 > found1)
 				{
+					tagName = input_line.substr(found1 + 1, found2 - found1 - 1);
+				}
+				std::string strRest = input_line.substr(found2 + 1);
+				std::size_t pos;
+				if (tagName == "ver") cgfx_stat.packVersion = util::trimfnc(strRest);
+				else if (tagName == "scale") cgfx::scaling_factor = stoi(util::trimfnc(strRest));
+				else if (tagName == "img")
+				{
+					//load image and make a h flipped copy
+					std::vector<SDL_Surface*> imgs;
+					std::vector<SDL_Surface*> himgs;
+					SDL_Surface* img;
 					pos = strRest.find(",");
 					if (pos != std::string::npos)
 					{
-						token = strRest.substr(0, pos);
-						strRest = strRest.substr(pos + 1, std::string::npos);
+						std::string imgname = strRest.substr(0, pos);
+						img = load_pack_image(imgname);
+						imgs.push_back(img);
+						img = h_flip_image(img);
+						himgs.push_back(img);
+						imgname = util::trimfnc(strRest.substr(pos + 1, std::string::npos));
+						img = load_pack_image(imgname);
+						imgs.push_back(img);
+						img = h_flip_image(img);
+						himgs.push_back(img);
 					}
 					else
 					{
-						token = strRest;
-						strRest = "";
+						img = load_pack_image(util::trimfnc(strRest));
+						imgs.push_back(img);
+						img = h_flip_image(img);
+						himgs.push_back(img);
 					}
-					switch (tokenCnt)
+					cgfx_stat.imgs.push_back(imgs);
+				}
+				else if (tagName == "tile")
+				{
+					pack_tile pt;
+					std::string token;
+					u8 tokenCnt = 0;
+					while (strRest.length() > 0)
 					{
-					case 0:
-						pt.imgIdx = stoi(util::trimfnc(token));
-						break;
-					case 1:
-						for (u16 i = 0; i < 8; i++)
+						pos = strRest.find(",");
+						if (pos != std::string::npos)
 						{
-							pt.tileData.line[i] = std::stoul(token.substr(i * 4, 4), nullptr, 16);
-						}
-						break;
-					case 2:
-						if (token.length() == 2)
-						{
-							pt.palette[0] = std::stoul(token, nullptr, 16);
+							token = strRest.substr(0, pos);
+							strRest = strRest.substr(pos + 1, std::string::npos);
 						}
 						else
 						{
-							for (u16 i = 0; i < 4; i++)
-							{
-								pt.palette[i] = std::stoul(token.substr(i * 4, 4), nullptr, 16);
-							}
+							token = strRest;
+							strRest = "";
 						}
-						break;
-					case 3:
-						pt.x = stoi(util::trimfnc(token));
-						break;
-					case 4:
-						pt.y = stoi(util::trimfnc(token));
-						break;
-					case 5:
-						pt.brightness = stof(util::trimfnc(token));
-						break;
-					case 6:
-						pt.default = (util::trimfnc(token) == "Y");
-						break;
 
-					default:
-						break;
+						switch (tokenCnt)
+						{
+						case 0:
+							pt.imgIdx = stoi(util::trimfnc(token));
+							break;
+						case 1:
+							for (u16 i = 0; i < 8; i++)
+							{
+								pt.tileData.line[i] = std::stoul(token.substr(i * 4, 4), nullptr, 16);
+							}
+							break;
+						case 2:
+							if (token.length() == 2)
+							{
+								pt.palette[0] = std::stoul(token, nullptr, 16);
+							}
+							else
+							{
+								for (u16 i = 0; i < 4; i++)
+								{
+									pt.palette[i] = std::stoul(token.substr(i * 4, 4), nullptr, 16);
+								}
+							}
+							break;
+						case 3:
+							pt.x = stoi(util::trimfnc(token));
+							break;
+						case 4:
+							pt.y = stoi(util::trimfnc(token));
+							break;
+						case 5:
+							pt.brightness = stof(util::trimfnc(token));
+							break;
+						case 6:
+							pt.default = (util::trimfnc(token) == "Y");
+							break;
+
+						default:
+							break;
+						}
+
+						tokenCnt++;
 					}
-
-					tokenCnt++;
+					cgfx_stat.tiles.push_back(pt);
 				}
-				token = strRest.substr(0, pos);
 			}
 		}
+		file.close();
+		result = true;
 	}
-
-	file.close();
 
 	//Initialize HD buffer for CGFX greater that 1:1
 	config::sys_width *= cgfx::scaling_factor;
@@ -149,12 +196,17 @@ bool GB_LCD::load_manifest(std::string filename)
 
 	reset_buffers();
 
+	cgfx_stat.brightnessMod = SDL_CreateRGBSurfaceWithFormat(0, cgfx::scaling_factor * 8, cgfx::scaling_factor, 32, SDL_PIXELFORMAT_ARGB8888);
+	SDL_SetSurfaceBlendMode(cgfx_stat.brightnessMod, SDL_BLENDMODE_MOD);
+	cgfx_stat.tempStrip = SDL_CreateRGBSurfaceWithFormat(0, cgfx::scaling_factor * 8, cgfx::scaling_factor, 32, SDL_PIXELFORMAT_ARGB8888);
+
 	srcrect.w = cgfx::scaling_factor;
 	srcrect.h = cgfx::scaling_factor;
+	hdrect.w = cgfx::scaling_factor * 8;
+	hdrect.h = cgfx::scaling_factor;
+	hdsrcrect = hdrect;
 
-	std::cout << "CGFX::" << filename << " loaded successfully\n";
-
-	return true;
+	return result;
 }
 
 SDL_Surface* GB_LCD::load_pack_image(std::string filename)
@@ -166,6 +218,26 @@ SDL_Surface* GB_LCD::load_pack_image(std::string filename)
 	return r;
 }
 
+SDL_Surface* GB_LCD::h_flip_image(SDL_Surface* s)
+{
+	SDL_Surface* r = SDL_CreateRGBSurfaceWithFormat(0, s->w, s->h, 32, SDL_PIXELFORMAT_ARGB8888);
+	SDL_LockSurface(s);
+	SDL_LockSurface(r);
+	u32* srcP = (u32*)(s->pixels);
+	u32* dstP = (u32*)(r->pixels) + s->w;
+	for (u16 y = 0; y < s->h; y++) {
+		for (u16 x = 0; x < s->w; x++) {
+			dstP--;
+			*dstP = *srcP;
+			srcP++;
+		}
+		dstP += s->w;
+	}
+	SDL_UnlockSurface(r);
+	SDL_UnlockSurface(s);
+
+	return r;
+}
 
 /****** Loads 24-bit data from source and converts it to 32-bit ARGB ******/
 bool GB_LCD::load_image_data() 
@@ -1452,6 +1524,7 @@ void GB_LCD::new_rendered_screen_data() {
 void GB_LCD::new_rendered_scanline_data(u8 lineNo)
 {
 	srcrect.y = cgfx::scaling_factor * lcd_stat.current_scanline;
+	hdrect.y = srcrect.y;
 	cgfx_stat.screen_data.scanline[lineNo].lcdc = mem->read_u8(REG_LCDC);
 	cgfx_stat.screen_data.scanline[lineNo].rendered_bg.clear();
 	cgfx_stat.screen_data.scanline[lineNo].rendered_win.clear();

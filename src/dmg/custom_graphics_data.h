@@ -96,11 +96,13 @@ struct dmg_cgfx_data
 { 
 	std::string packVersion;
 	u16 packScale;
-	std::vector <SDL_Surface*> imgs;
+	std::vector <std::vector <SDL_Surface*>> imgs;
+	std::vector <std::vector <SDL_Surface*>> himgs;
 	std::vector <pack_condition> conds;
 	std::vector <pack_tile> tiles;
 	std::vector <pack_background> bgs;
-
+	SDL_Surface* brightnessMod;
+	SDL_Surface* tempStrip;
 
 	std::vector <std::string> manifest;
 	std::vector <u8> manifest_entry_size;

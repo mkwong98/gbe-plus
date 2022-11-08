@@ -39,6 +39,8 @@ class GB_LCD
 	bool load_manifest(std::string filename);
 	void clear_manifest();
 	SDL_Surface* load_pack_image(std::string filename);
+	SDL_Surface* h_flip_image(SDL_Surface* s);
+	virtual pack_tile* get_tile_match(tile_strip* s) = 0;
 
 	bool load_image_data();
 	bool load_meta_data();
@@ -121,6 +123,8 @@ class GB_LCD
 	void reset_buffers();
 	SDL_Rect srcrect;
 	SDL_Rect rawrect;
+	SDL_Rect hdrect;
+	SDL_Rect hdsrcrect;
 	SDL_Surface* tempscreen;
 
 	int frame_start_time;
@@ -145,6 +149,8 @@ class GB_LCD
 	virtual void render_bg_scanline(bool raw) = 0;
 	virtual void render_win_scanline(bool raw) = 0;
 	virtual void render_obj_scanline(bool raw) = 0;
+	void render_HD_strip(SDL_Surface* src, SDL_Rect* srcr, SDL_Surface* dst, SDL_Rect* dstr, double brightness, bool vflip);
+	void clear_HD_strip(SDL_Surface* src, SDL_Rect* srcr, SDL_Surface* dst, SDL_Rect* dstr, bool vflip);
 
 	void scanline_compare();
 
@@ -159,6 +165,7 @@ public:
 	void update_all_bg_hash();
 	void update_bg_hash(u16 bg_index);
 	std::string get_hash(u16 addr, u8 gfx_type);
+	pack_tile* get_tile_match(tile_strip* s);
 
 protected:
 	void collect_scanline_data();
@@ -188,6 +195,7 @@ public:
 	void update_all_bg_hash();
 	void update_bg_hash(u16 bg_index);
 	std::string get_hash(u16 addr, u8 gfx_type);
+	pack_tile* get_tile_match(tile_strip* s);
 
 protected:
 	//GBC color palette updates
