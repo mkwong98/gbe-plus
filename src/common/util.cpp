@@ -12,6 +12,8 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <chrono>
+#include <iomanip>
 
 #include "util.h"
 
@@ -835,6 +837,18 @@ std::string trimfnc(std::string str) {
 	str.erase(str.find_last_not_of(typeOfWhitespaces) + 1);
 	str.erase(0, str.find_first_not_of(typeOfWhitespaces));
 	return str;
+}
+
+std::string timeStr() {
+	std::stringstream temp;
+
+	const std::chrono::time_point<std::chrono::system_clock> now =
+		std::chrono::system_clock::now();
+
+	const std::time_t t_c = std::chrono::system_clock::to_time_t(now);
+
+	temp << std::put_time(std::localtime(&t_c), "%Y%m%d%H%M%S") << std::flush;
+	return temp.str();
 }
 
 } //Namespace

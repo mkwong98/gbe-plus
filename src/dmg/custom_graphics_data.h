@@ -95,7 +95,6 @@ struct pack_background
 struct dmg_cgfx_data
 { 
 	std::string packVersion;
-	u16 packScale;
 	std::vector <std::vector <SDL_Surface*>> imgs;
 	std::vector <std::vector <SDL_Surface*>> himgs;
 	std::vector <pack_condition> conds;

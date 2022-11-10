@@ -83,8 +83,6 @@ class gbe_cgfx : public QDialog
 	QSpinBox* rect_y;
 	QSpinBox* rect_h;
 
-	QCheckBox* use_vram_addr;
-	QCheckBox* use_auto_bright;
 	QLineEdit* meta_name;
 
 	//OBJ Meta tile tab widgets
@@ -110,13 +108,11 @@ class gbe_cgfx : public QDialog
 	data_dialog* data_folder;
 
 	//Pop-ups
-	QMessageBox* manifest_warning;
 	QMessageBox* manifest_write_fail;
 	QMessageBox* save_fail;
 	QMessageBox* redump_hash;
 
 	bool pause;
-	bool enable_manifest_warning;
 	bool enable_manifest_critical;
 	bool redump;
 
@@ -154,7 +150,8 @@ class gbe_cgfx : public QDialog
 
 	void update_preview(u32 x, u32 y);
 	virtual void update_palette_code(u16 p) = 0;
-	virtual QImage renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer) = 0;
+	virtual std::vector<u32> renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer) = 0;
+	QImage renderTileToImage(u16 tileID, u16 palId, u8 palSel, u8 layer);
 
 	virtual void dump_layer_tile(u32 x, u32 y) = 0;
 	void dump_obj_layer_tile(u32 x, u32 y);
@@ -172,6 +169,7 @@ class gbe_cgfx : public QDialog
 	bool mouse_drag;
 	bool meta_highlight;
 
+	dmg_cgfx_data* pack_data;
 
 	protected slots:
 	void close_cgfx();
@@ -193,7 +191,6 @@ class gbe_cgfx : public QDialog
 	void select_folder();
 	void reject_folder();
 	void update_selection();
-	void ignore_manifest_warnings();
 	void ignore_manifest_criticals();
 	void advance_next_frame();
 	void update_input_control(int index);
@@ -209,7 +206,7 @@ public:
 
 protected:
 	void update_palette_code(u16 p);
-	QImage renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer);
+	std::vector<u32> renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer);
 	void dump_layer_tile(u32 x, u32 y);
 	std::string hash_tile(u8 x, u8 y);
 };
@@ -222,7 +219,7 @@ public:
 
 protected:
 	void update_palette_code(u16 p);
-	QImage renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer);
+	std::vector<u32> renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer);
 	void dump_layer_tile(u32 x, u32 y);
 	std::string hash_tile(u8 x, u8 y);
 };

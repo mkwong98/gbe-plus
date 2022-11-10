@@ -106,6 +106,7 @@ namespace util
 	extern u32 poly32;
 
 	std::string trimfnc(std::string str);
+	std::string timeStr();
 }
 
 #endif // GBE_UTIL 

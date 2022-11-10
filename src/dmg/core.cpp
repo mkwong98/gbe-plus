@@ -726,8 +726,8 @@ void* GB_core::get_core_data(u32 core_index)
 	case 2: // obj layer
 		return core_cpu->controllers.video->render_raw_layer(core_index);
 		break;
-	case 3: // screen composition
-		return &(core_cpu->controllers.video->cgfx_stat.screen_data);
+	case 3: // pack data
+		return &(core_cpu->controllers.video->cgfx_stat);
 		break;
 	}
 }

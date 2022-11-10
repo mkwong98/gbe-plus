@@ -19,7 +19,6 @@
 #include "common/config.h"
 
 void GB_LCD::clear_manifest() {
-	cgfx_stat.packScale = 1;
 	cgfx_stat.packVersion = "";
 
 	for (u16 i = 0; i < cgfx_stat.imgs.size(); i++)
