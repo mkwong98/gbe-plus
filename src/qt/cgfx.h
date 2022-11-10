@@ -26,6 +26,7 @@
 #include "common/common.h"
 #include "data_dialog.h"
 #include "dmg/lcd_data.h"
+#include "dmg/custom_graphics_data.h"
 
 class gbe_cgfx : public QDialog
 {
@@ -150,7 +151,7 @@ class gbe_cgfx : public QDialog
 
 	void update_preview(u32 x, u32 y);
 	virtual void update_palette_code(u16 p) = 0;
-	virtual std::vector<u32> renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer) = 0;
+	virtual void renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer, std::vector<u32>* top, std::vector<u32>* bottom) = 0;
 	QImage renderTileToImage(u16 tileID, u16 palId, u8 palSel, u8 layer);
 
 	virtual void dump_layer_tile(u32 x, u32 y) = 0;
@@ -206,7 +207,7 @@ public:
 
 protected:
 	void update_palette_code(u16 p);
-	std::vector<u32> renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer);
+	void renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer, std::vector<u32>* top, std::vector<u32>* bottom);
 	void dump_layer_tile(u32 x, u32 y);
 	std::string hash_tile(u8 x, u8 y);
 };
@@ -219,7 +220,7 @@ public:
 
 protected:
 	void update_palette_code(u16 p);
-	std::vector<u32> renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer);
+	void renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer, std::vector<u32>* top, std::vector<u32>* bottom);
 	void dump_layer_tile(u32 x, u32 y);
 	std::string hash_tile(u8 x, u8 y);
 };

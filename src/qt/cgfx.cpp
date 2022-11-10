@@ -1158,9 +1158,8 @@ void gbc_cgfx::update_palette_code(u16 p)
 	tile_palette->setText(pal);
 }
 
-std::vector<u32> dmg_cgfx::renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer)
+void dmg_cgfx::renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer, std::vector<u32>* top, std::vector<u32>* bottom)
 {
-	std::vector<u32> bg_pixels;
 	for (u8 l = 0; l < 8; l++)
 	{
 		u16 raw_data = screenInfo.rendered_tile[tileID].tile.line[l];
@@ -1171,21 +1170,37 @@ std::vector<u32> dmg_cgfx::renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer
 			raw_pixel |= (raw_data & (1 << y)) ? 1 : 0;
 			if (layer <= 1)
 			{
-				bg_pixels.push_back(config::DMG_BG_PAL[screenInfo.rendered_palette[palId].colour[raw_pixel]]);
+				if (raw_pixel == 0)
+				{
+					bottom->push_back(config::DMG_BG_PAL[screenInfo.rendered_palette[palId].colour[raw_pixel]]);
+					top->push_back(0);
+				}
+				else
+				{
+					top->push_back(config::DMG_BG_PAL[screenInfo.rendered_palette[palId].colour[raw_pixel]]);
+					bottom->push_back(0);
+				}
 			}
 			else
 			{
-				bg_pixels.push_back(config::DMG_OBJ_PAL[screenInfo.rendered_palette[palId].colour[raw_pixel]][palSel]);
+				if (raw_pixel == 0)
+				{
+					top->push_back(0);
+					bottom->push_back(0);
+				}
+				else
+				{
+					top->push_back(config::DMG_OBJ_PAL[screenInfo.rendered_palette[palId].colour[raw_pixel]][palSel]);
+					bottom->push_back(0);
+				}
 			}
 		}
 	}
 
-	return bg_pixels;
 }
 
-std::vector<u32> gbc_cgfx::renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer)
+void gbc_cgfx::renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer, std::vector<u32>* top, std::vector<u32>* bottom)
 {
-	std::vector<u32> bg_pixels;
 	for (u8 l = 0; l < 8; l++)
 	{
 		u16 raw_data = screenInfo.rendered_tile[tileID].tile.line[l];
@@ -1194,22 +1209,49 @@ std::vector<u32> gbc_cgfx::renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer
 		{
 			u8 raw_pixel = ((raw_data >> 8) & (1 << y)) ? 2 : 0;
 			raw_pixel |= (raw_data & (1 << y)) ? 1 : 0;
-			bg_pixels.push_back(screenInfo.rendered_palette[palId].renderColour[raw_pixel]);
+			if (layer <= 1)
+			{
+				if (raw_pixel == 0)
+				{
+					bottom->push_back(screenInfo.rendered_palette[palId].renderColour[raw_pixel]);
+					top->push_back(0);
+				}
+				else
+				{
+					top->push_back(screenInfo.rendered_palette[palId].renderColour[raw_pixel]);
+					bottom->push_back(0);
+				}
+			}
+			else
+			{
+				if (raw_pixel == 0)
+				{
+					top->push_back(0);
+					bottom->push_back(0);
+				}
+				else
+				{
+					top->push_back(screenInfo.rendered_palette[palId].renderColour[raw_pixel]);
+					bottom->push_back(0);
+				}
+			}
 		}
 	}
 
-	return bg_pixels;
 }
 
 QImage gbe_cgfx::renderTileToImage(u16 tileID, u16 palId, u8 palSel, u8 layer) {
-	std::vector<u32> bg_pixels = renderTile(tileID, palId, palSel, layer);
+	std::vector<u32> top_pixels;
+	std::vector<u32> bottom_pixels;
+
+	renderTile(tileID, palId, palSel, layer, &top_pixels, &bottom_pixels);
 
 	QImage raw_image(8, 8, QImage::Format_ARGB32);
 
 	//Copy raw pixels to QImage
-	for (int x = 0; x < bg_pixels.size(); x++)
+	for (int x = 0; x < top_pixels.size(); x++)
 	{
-		raw_image.setPixel((x % 8), (x / 8), bg_pixels[x]);
+		raw_image.setPixel((x % 8), (x / 8), top_pixels[x] | bottom_pixels[x]);
 	}
 	return raw_image;
 }
