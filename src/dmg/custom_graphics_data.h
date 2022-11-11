@@ -20,24 +20,33 @@
 
 struct pack_condition
 {
-	const u8 HMIRROR = 0;
-	const u8 VMIRROR = 1;
-	const u8 BGPRIORITY = 2;
-	const u8 PALETTE0 = 3;
-	const u8 PALETTE1 = 4;
-	const u8 PALETTE2 = 5;
-	const u8 PALETTE3 = 6;
-	const u8 PALETTE4 = 7;
-	const u8 PALETTE5 = 8;
-	const u8 PALETTE6 = 9;
-	const u8 PALETTE7 = 10;
-	const u8 TILENEARBY = 11;
-	const u8 SPRITENEARBY = 12;
-	const u8 TILEATPOSITION = 13;
-	const u8 SPRITEATPOSITION = 14;
-	const u8 MEMORYCHECK = 15;
-	const u8 MEMORYBANKCHECK = 16;
-	const u8 FRAMERANGE = 17;
+	static const u8 HMIRROR = 0;
+	static const u8 VMIRROR = 1;
+	static const u8 BGPRIORITY = 2;
+	static const u8 PALETTE0 = 3;
+	static const u8 PALETTE1 = 4;
+	static const u8 PALETTE2 = 5;
+	static const u8 PALETTE3 = 6;
+	static const u8 PALETTE4 = 7;
+	static const u8 PALETTE5 = 8;
+	static const u8 PALETTE6 = 9;
+	static const u8 PALETTE7 = 10;
+	static const u8 TILENEARBY = 11;
+	static const u8 SPRITENEARBY = 12;
+	static const u8 TILEATPOSITION = 13;
+	static const u8 SPRITEATPOSITION = 14;
+	static const u8 MEMORYCHECK = 15;
+	static const u8 MEMORYBANKCHECK = 16;
+	static const u8 MEMORYCHECKCONSTANT = 17;
+	static const u8 MEMORYBANKCHECKCONSTANT = 18;
+	static const u8 FRAMERANGE = 19;
+
+	static const u8 EQ = 0;
+	static const u8 NE = 1;
+	static const u8 GT = 2;
+	static const u8 LS = 3;
+	static const u8 GE = 4;
+	static const u8 LE = 5;
 
 	std::string name;
 	u8 type;
@@ -45,7 +54,7 @@ struct pack_condition
 	//find tile
 	s16 x;
 	s16 y;
-	u16 tileData[8];
+	tile_pattern tileData;
 	u16 palette[4];
 
 	//mem compare
@@ -72,7 +81,9 @@ struct pack_tile
 	std::vector <pack_cond_app> condApps;
 	u16 imgIdx;
 	tile_pattern tileData;
+	std::string tileStr;
 	u16 palette[4];
+	std::string palStr;
 	u16 x;
 	u16 y;
 	float brightness;
@@ -102,6 +113,7 @@ struct dmg_cgfx_data
 	std::vector <pack_background> bgs;
 	SDL_Surface* brightnessMod;
 	SDL_Surface* tempStrip;
+	u32 frameCnt;
 
 	std::vector <std::string> manifest;
 	std::vector <u8> manifest_entry_size;

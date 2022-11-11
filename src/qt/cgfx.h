@@ -40,6 +40,7 @@ class gbe_cgfx : public QDialog
 	void draw_gb_layer(u8 layer);
 
 	void reset_inputs();
+	void init();
 
 	QTabWidget* tabs;
 	QDialogButtonBox* tabs_button;
@@ -76,15 +77,11 @@ class gbe_cgfx : public QDialog
 	QLabel* h_v_flip;
 	QLabel* tile_palette;
 	QLabel* hash_text;
-	QLabel* vram_text;
-	QLabel* bright_text;
 
 	QSpinBox* rect_x;
 	QSpinBox* rect_w;
 	QSpinBox* rect_y;
 	QSpinBox* rect_h;
-
-	QLineEdit* meta_name;
 
 	//OBJ Meta tile tab widgets
 	QSpinBox* obj_meta_width;
@@ -150,7 +147,7 @@ class gbe_cgfx : public QDialog
 	QLabel* current_tile;
 
 	void update_preview(u32 x, u32 y);
-	virtual void update_palette_code(u16 p) = 0;
+	virtual std::string get_palette_code(u16 p) = 0;
 	virtual void renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer, std::vector<u32>* top, std::vector<u32>* bottom) = 0;
 	QImage renderTileToImage(u16 tileID, u16 palId, u8 palSel, u8 layer);
 
@@ -206,7 +203,7 @@ public:
 	QImage grab_bg_data(int bg_index);
 
 protected:
-	void update_palette_code(u16 p);
+	std::string get_palette_code(u16 p);
 	void renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer, std::vector<u32>* top, std::vector<u32>* bottom);
 	void dump_layer_tile(u32 x, u32 y);
 	std::string hash_tile(u8 x, u8 y);
@@ -219,7 +216,7 @@ public:
 	QImage grab_bg_data(int bg_index);
 
 protected:
-	void update_palette_code(u16 p);
+	std::string get_palette_code(u16 p);
 	void renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer, std::vector<u32>* top, std::vector<u32>* bottom);
 	void dump_layer_tile(u32 x, u32 y);
 	std::string hash_tile(u8 x, u8 y);

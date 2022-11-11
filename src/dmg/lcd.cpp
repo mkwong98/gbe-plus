@@ -475,11 +475,42 @@ void GB_LCD::clear_HD_strip(SDL_Surface* src, SDL_Rect* srcr, SDL_Surface* dst, 
 pack_tile* DMG_LCD::get_tile_match(tile_strip* s)
 {
 	pack_tile* hdTile;
-	for (u8 j = 0; j < cgfx_stat.screen_data.rendered_tile[s->pattern_id].pack_tile_match.size(); j++)
+	for (u16 j = 0; j < cgfx_stat.screen_data.rendered_tile[s->pattern_id].pack_tile_match.size(); j++)
 	{
 		hdTile = &(cgfx_stat.tiles[cgfx_stat.screen_data.rendered_tile[s->pattern_id].pack_tile_match[j]]);
 		if (hdTile->palette[0] == cgfx_stat.screen_data.rendered_palette[s->palette_id].code || hdTile->default)
 		{
+			bool allCondPassed = true;
+			for (u16 i = 0; i < hdTile->condApps.size(); i++)
+			{
+				pack_condition c = cgfx_stat.conds[hdTile->condApps[i].condIdx];
+				bool matchResult;
+				switch (c.type) {
+				case pack_condition::HMIRROR:
+					matchResult = s->hflip;
+					break;
+				case pack_condition::VMIRROR:
+					matchResult = s->vflip;
+					break;
+				case pack_condition::BGPRIORITY:
+					matchResult = s->bg_priority;
+					break;
+				case pack_condition::PALETTE0:
+					matchResult = (s->palette_sel == 0);
+					break;
+				case pack_condition::PALETTE1:
+					matchResult = (s->palette_sel == 1);
+					break;
+
+				case pack_condition::TILENEARBY:
+
+
+				default:
+					matchResult = false;
+					break;
+				}
+				if (hdTile->condApps[i].negate) matchResult = !matchResult;
+			}
 			return hdTile;
 		}
 	}
@@ -517,7 +548,6 @@ void DMG_LCD::render_bg_scanline(bool raw)
 		rawrect.x = pixel_counter;
 
 		//look for hd 
-		hdTile = get_tile_match(&p);
 		if (!raw) hdTile = get_tile_match(&p);
 		else hdTile = NULL;
 
@@ -606,7 +636,6 @@ void DMG_LCD::render_win_scanline(bool raw)
 		rawrect.x = pixel_counter;
 
 		//look for hd 
-		hdTile = get_tile_match(&p);
 		if (!raw) hdTile = get_tile_match(&p);
 		else hdTile = NULL;
 
@@ -708,7 +737,6 @@ void DMG_LCD::render_obj_scanline(bool raw)
 		u8 pixel_counter = p.x;
 
 		//look for hd 
-		hdTile = get_tile_match(&p);
 		if (!raw) hdTile = get_tile_match(&p);
 		else hdTile = NULL;
 

@@ -38,6 +38,9 @@ class GB_LCD
 	//Custom GFX functions
 	bool load_manifest(std::string filename);
 	void clear_manifest();
+	u8 getOpType(std::string op);
+	void processConditionNames(std::string names, std::vector<pack_cond_app>* apps);
+
 	SDL_Surface* load_pack_image(std::string filename);
 	SDL_Surface* h_flip_image(SDL_Surface* s);
 	virtual pack_tile* get_tile_match(tile_strip* s) = 0;

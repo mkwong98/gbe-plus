@@ -52,6 +52,45 @@ void GB_LCD::clear_manifest() {
 	SDL_FreeSurface(cgfx_stat.tempStrip);
 }
 
+u8 GB_LCD::getOpType(std::string op)
+{
+	if (op == "==") return pack_condition::EQ;
+	if (op == "!=") return pack_condition::NE;
+	if (op == ">") return pack_condition::GT;
+	if (op == "<") return pack_condition::LS;
+	if (op == ">=") return pack_condition::GE;
+	if (op == "<=") return pack_condition::LE;
+}
+
+void GB_LCD::processConditionNames(std::string names, std::vector<pack_cond_app>* apps)
+{
+	std::string strRest = names;
+	std::string token;
+	std::size_t pos;
+	pack_cond_app app;
+	while (strRest.length() > 0)
+	{
+		pos = strRest.find("&");
+		if (pos != std::string::npos)
+		{
+			token = util::trimfnc(strRest.substr(0, pos));
+			strRest = strRest.substr(pos + 1, std::string::npos);
+		}
+		else
+		{
+			token = util::trimfnc(strRest);
+			strRest = "";
+		}
+		pos = token.find("!");
+		app.negate = (pos == 0);
+		for (u16 i = 0; i < cgfx_stat.conds.size(); i++) {
+			if (cgfx_stat.conds[i].name == token) {
+				app.condIdx = i;
+				apps->push_back(app);
+			}
+		}
+	}
+}
 
 /****** Loads the manifest file ******/
 bool GB_LCD::load_manifest(std::string filename)
@@ -61,6 +100,7 @@ bool GB_LCD::load_manifest(std::string filename)
 	std::ifstream file(filename.c_str(), std::ios::in);
 	std::string input_line = "";
 	std::string tagName = "";
+	cgfx_stat.frameCnt = 0;
 
 	//SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
 	//	"Loading HdPack",
@@ -68,6 +108,42 @@ bool GB_LCD::load_manifest(std::string filename)
 	//	NULL);
 	bool result = false;
 	cgfx::scaling_factor = 1;
+
+	//add build-in condition
+	pack_condition pc;
+	pc.type = pack_condition::HMIRROR;
+	pc.name = "hmirror";
+	cgfx_stat.conds.push_back(pc);
+	pc.type = pack_condition::VMIRROR;
+	pc.name = "vmirror";
+	cgfx_stat.conds.push_back(pc);
+	pc.type = pack_condition::BGPRIORITY;
+	pc.name = "bgpriority";
+	cgfx_stat.conds.push_back(pc);
+	pc.type = pack_condition::PALETTE0;
+	pc.name = "sppalette0";
+	cgfx_stat.conds.push_back(pc);
+	pc.type = pack_condition::PALETTE1;
+	pc.name = "sppalette1";
+	cgfx_stat.conds.push_back(pc);
+	pc.type = pack_condition::PALETTE2;
+	pc.name = "sppalette2";
+	cgfx_stat.conds.push_back(pc);
+	pc.type = pack_condition::PALETTE3;
+	pc.name = "sppalette3";
+	cgfx_stat.conds.push_back(pc);
+	pc.type = pack_condition::PALETTE4;
+	pc.name = "sppalette4";
+	cgfx_stat.conds.push_back(pc);
+	pc.type = pack_condition::PALETTE5;
+	pc.name = "sppalette5";
+	cgfx_stat.conds.push_back(pc);
+	pc.type = pack_condition::PALETTE6;
+	pc.name = "sppalette6";
+	cgfx_stat.conds.push_back(pc);
+	pc.type = pack_condition::PALETTE7;
+	pc.name = "sppalette7";
+	cgfx_stat.conds.push_back(pc);
 
 	if (file.is_open())
 	{
@@ -82,6 +158,14 @@ bool GB_LCD::load_manifest(std::string filename)
 			std::size_t found4 = input_line.find("]");
 			if (found1 != std::string::npos && found2 != std::string::npos && (found1 == 0 || found3 == 0))
 			{
+				std::string condNames;
+				if (found3 == 0 && found4 > found3) {
+					condNames = input_line.substr(found3 + 1, found4 - found3 - 1);
+				}
+				else
+				{
+					condNames = "";
+				}
 				if (found2 > found1)
 				{
 					tagName = input_line.substr(found1 + 1, found2 - found1 - 1);
@@ -129,27 +213,29 @@ bool GB_LCD::load_manifest(std::string filename)
 						pos = strRest.find(",");
 						if (pos != std::string::npos)
 						{
-							token = strRest.substr(0, pos);
+							token = util::trimfnc(strRest.substr(0, pos));
 							strRest = strRest.substr(pos + 1, std::string::npos);
 						}
 						else
 						{
-							token = strRest;
+							token = util::trimfnc(strRest);
 							strRest = "";
 						}
 
 						switch (tokenCnt)
 						{
 						case 0:
-							pt.imgIdx = stoi(util::trimfnc(token));
+							pt.imgIdx = stoi(token);
 							break;
 						case 1:
+							pt.tileStr = token;
 							for (u16 i = 0; i < 8; i++)
 							{
 								pt.tileData.line[i] = std::stoul(token.substr(i * 4, 4), nullptr, 16);
 							}
 							break;
 						case 2:
+							pt.palStr = token;
 							if (token.length() == 2)
 							{
 								pt.palette[0] = std::stoul(token, nullptr, 16);
@@ -163,16 +249,16 @@ bool GB_LCD::load_manifest(std::string filename)
 							}
 							break;
 						case 3:
-							pt.x = stoi(util::trimfnc(token));
+							pt.x = stoi(token);
 							break;
 						case 4:
-							pt.y = stoi(util::trimfnc(token));
+							pt.y = stoi(token);
 							break;
 						case 5:
-							pt.brightness = stof(util::trimfnc(token));
+							pt.brightness = stof(token);
 							break;
 						case 6:
-							pt.default = (util::trimfnc(token) == "Y");
+							pt.default = (token == "Y");
 							break;
 
 						default:
@@ -181,7 +267,165 @@ bool GB_LCD::load_manifest(std::string filename)
 
 						tokenCnt++;
 					}
+					if (condNames != "") {
+						processConditionNames(condNames, &(pt.condApps));
+					}
 					cgfx_stat.tiles.push_back(pt);
+				}
+				else if (tagName == "condition")
+				{
+					std::string token;
+					u8 tokenCnt = 0;
+					while (strRest.length() > 0)
+					{
+						pos = strRest.find(",");
+						if (pos != std::string::npos)
+						{
+							token = util::trimfnc(strRest.substr(0, pos));
+							strRest = strRest.substr(pos + 1, std::string::npos);
+						}
+						else
+						{
+							token = util::trimfnc(strRest);
+							strRest = "";
+						}
+
+						switch (tokenCnt)
+						{
+						case 0:
+							pc.name = stoi(token);
+							break;
+						case 1:
+							if (token == "tileNearby")
+								pc.type = pack_condition::TILENEARBY;
+							else if (token == "spriteNearby")
+								pc.type = pack_condition::SPRITENEARBY;
+							else if (token == "tileAtPosition")
+								pc.type = pack_condition::TILEATPOSITION;
+							else if (token == "spriteAtPosition")
+								pc.type = pack_condition::SPRITEATPOSITION;
+							else if (token == "memoryCheck")
+								pc.type = pack_condition::MEMORYCHECK;
+							else if (token == "memoryBankCheck")
+								pc.type = pack_condition::MEMORYBANKCHECK;
+							else if (token == "memoryCheckConstant")
+								pc.type = pack_condition::MEMORYCHECKCONSTANT;
+							else if (token == "memoryBankCheckConstant")
+								pc.type = pack_condition::MEMORYBANKCHECKCONSTANT;
+							else if (token == "frameRange ")
+								pc.type = pack_condition::FRAMERANGE;
+							break;
+						case 2:
+							switch (pc.type)
+							{
+							case pack_condition::TILENEARBY:
+							case pack_condition::SPRITENEARBY:
+							case pack_condition::TILEATPOSITION:
+							case pack_condition::SPRITEATPOSITION:
+								pc.x = stoi(token);
+								break;
+							case pack_condition::MEMORYCHECK:
+							case pack_condition::MEMORYBANKCHECK:
+							case pack_condition::MEMORYCHECKCONSTANT:
+							case pack_condition::MEMORYBANKCHECKCONSTANT:
+								pc.address1 = std::stoul(token, nullptr, 16);
+								pc.mask = 0xFF;
+								break;
+							case pack_condition::FRAMERANGE:
+								pc.divisor = stoi(token);
+								break;
+							}
+							break;
+						case 3:
+							switch (pc.type)
+							{
+							case pack_condition::TILENEARBY:
+							case pack_condition::SPRITENEARBY:
+							case pack_condition::TILEATPOSITION:
+							case pack_condition::SPRITEATPOSITION:
+								pc.y = stoi(token);
+								break;
+							case pack_condition::MEMORYCHECK:
+							case pack_condition::MEMORYCHECKCONSTANT:
+								pc.opType = getOpType(token);
+								break;
+							case pack_condition::MEMORYBANKCHECK:
+							case pack_condition::MEMORYBANKCHECKCONSTANT:
+								pc.bank = stoi(token);
+								break;
+							case pack_condition::FRAMERANGE:
+								pc.compareVal = stoi(token);
+								break;
+							}
+							break;
+						case 4:
+							switch (pc.type)
+							{
+							case pack_condition::TILENEARBY:
+							case pack_condition::SPRITENEARBY:
+							case pack_condition::TILEATPOSITION:
+							case pack_condition::SPRITEATPOSITION:
+								for (u16 i = 0; i < 8; i++)
+								{
+									pc.tileData.line[i] = std::stoul(token.substr(i * 4, 4), nullptr, 16);
+								}
+								break;
+							case pack_condition::MEMORYCHECK:
+								pc.address2 = std::stoul(token, nullptr, 16);
+								break;
+							case pack_condition::MEMORYCHECKCONSTANT:
+								pc.value = std::stoul(token, nullptr, 16);
+								break;
+							case pack_condition::MEMORYBANKCHECK:
+							case pack_condition::MEMORYBANKCHECKCONSTANT:
+								pc.opType = getOpType(token);
+								break;
+							}
+							break;
+						case 5:
+							switch (pc.type)
+							{
+							case pack_condition::TILENEARBY:
+							case pack_condition::SPRITENEARBY:
+							case pack_condition::TILEATPOSITION:
+							case pack_condition::SPRITEATPOSITION:
+								if (token.length() == 2)
+								{
+									pc.palette[0] = std::stoul(token, nullptr, 16);
+								}
+								else
+								{
+									for (u16 i = 0; i < 4; i++)
+									{
+										pc.palette[i] = std::stoul(token.substr(i * 4, 4), nullptr, 16);
+									}
+								}
+								break;
+							case pack_condition::MEMORYCHECK:
+							case pack_condition::MEMORYCHECKCONSTANT:
+								pc.mask = std::stoul(token, nullptr, 16);
+								break;
+							case pack_condition::MEMORYBANKCHECK:
+								pc.address2 = std::stoul(token, nullptr, 16);
+								break;
+							case pack_condition::MEMORYBANKCHECKCONSTANT:
+								pc.value = std::stoul(token, nullptr, 16);
+								break;
+
+							}
+							break;
+						case 6:
+						case pack_condition::MEMORYBANKCHECK:
+						case pack_condition::MEMORYBANKCHECKCONSTANT:
+							pc.mask = std::stoul(token, nullptr, 16);
+							break;
+						default:
+							break;
+						}
+
+						tokenCnt++;
+					}
+					cgfx_stat.conds.push_back(pc);
 				}
 			}
 		}
@@ -1518,6 +1762,7 @@ void GB_LCD::new_rendered_screen_data() {
 	}
 
 	cgfx_stat.screen_data.rendered_palette.clear();
+	cgfx_stat.frameCnt++;
 }
 
 void GB_LCD::new_rendered_scanline_data(u8 lineNo)

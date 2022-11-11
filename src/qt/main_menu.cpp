@@ -954,7 +954,7 @@ void main_menu::show_cgfx()
 		QImage selected_img = (obj_height == 16) ? cgfx->grab_obj_data(obj_index).scaled(128, 256) : cgfx->grab_obj_data(obj_index).scaled(256, 256);
 		cgfx->obj_select_img->setPixmap(QPixmap::fromImage(selected_img));
 	}
-
+	cgfx->init();
 	cgfx->reset_inputs();
 	cgfx->show();
 	cgfx->parse_manifest_items();
