@@ -293,7 +293,7 @@ bool GB_LCD::load_manifest(std::string filename)
 						switch (tokenCnt)
 						{
 						case 0:
-							pc.name = stoi(token);
+							pc.name = token;
 							break;
 						case 1:
 							if (token == "tileNearby")
@@ -306,12 +306,8 @@ bool GB_LCD::load_manifest(std::string filename)
 								pc.type = pack_condition::SPRITEATPOSITION;
 							else if (token == "memoryCheck")
 								pc.type = pack_condition::MEMORYCHECK;
-							else if (token == "memoryBankCheck")
-								pc.type = pack_condition::MEMORYBANKCHECK;
 							else if (token == "memoryCheckConstant")
 								pc.type = pack_condition::MEMORYCHECKCONSTANT;
-							else if (token == "memoryBankCheckConstant")
-								pc.type = pack_condition::MEMORYBANKCHECKCONSTANT;
 							else if (token == "frameRange ")
 								pc.type = pack_condition::FRAMERANGE;
 							break;
@@ -325,14 +321,14 @@ bool GB_LCD::load_manifest(std::string filename)
 								pc.x = stoi(token);
 								break;
 							case pack_condition::MEMORYCHECK:
-							case pack_condition::MEMORYBANKCHECK:
 							case pack_condition::MEMORYCHECKCONSTANT:
-							case pack_condition::MEMORYBANKCHECKCONSTANT:
 								pc.address1 = std::stoul(token, nullptr, 16);
 								pc.mask = 0xFF;
 								break;
 							case pack_condition::FRAMERANGE:
 								pc.divisor = stoi(token);
+								break;
+							default:
 								break;
 							}
 							break;
@@ -347,14 +343,12 @@ bool GB_LCD::load_manifest(std::string filename)
 								break;
 							case pack_condition::MEMORYCHECK:
 							case pack_condition::MEMORYCHECKCONSTANT:
-								pc.opType = getOpType(token);
-								break;
-							case pack_condition::MEMORYBANKCHECK:
-							case pack_condition::MEMORYBANKCHECKCONSTANT:
 								pc.bank = stoi(token);
 								break;
 							case pack_condition::FRAMERANGE:
 								pc.compareVal = stoi(token);
+								break;
+							default:
 								break;
 							}
 							break;
@@ -371,14 +365,10 @@ bool GB_LCD::load_manifest(std::string filename)
 								}
 								break;
 							case pack_condition::MEMORYCHECK:
-								pc.address2 = std::stoul(token, nullptr, 16);
-								break;
 							case pack_condition::MEMORYCHECKCONSTANT:
-								pc.value = std::stoul(token, nullptr, 16);
-								break;
-							case pack_condition::MEMORYBANKCHECK:
-							case pack_condition::MEMORYBANKCHECKCONSTANT:
 								pc.opType = getOpType(token);
+								break;
+							default:
 								break;
 							}
 							break;
@@ -402,22 +392,37 @@ bool GB_LCD::load_manifest(std::string filename)
 								}
 								break;
 							case pack_condition::MEMORYCHECK:
-							case pack_condition::MEMORYCHECKCONSTANT:
-								pc.mask = std::stoul(token, nullptr, 16);
-								break;
-							case pack_condition::MEMORYBANKCHECK:
 								pc.address2 = std::stoul(token, nullptr, 16);
 								break;
-							case pack_condition::MEMORYBANKCHECKCONSTANT:
+							case pack_condition::MEMORYCHECKCONSTANT:
 								pc.value = std::stoul(token, nullptr, 16);
 								break;
-
+							default:
+								break;
 							}
 							break;
 						case 6:
-						case pack_condition::MEMORYBANKCHECK:
-						case pack_condition::MEMORYBANKCHECKCONSTANT:
-							pc.mask = std::stoul(token, nullptr, 16);
+							switch (pc.type)
+							{
+							case pack_condition::MEMORYCHECK:
+								pc.bank2 = stoi(token);
+								break;
+							case pack_condition::MEMORYCHECKCONSTANT:
+								pc.mask = std::stoul(token, nullptr, 16);
+								break;
+							default:
+								break;
+							}
+							break;
+						case 7:
+							switch (pc.type)
+							{
+							case pack_condition::MEMORYCHECK:
+								pc.mask = std::stoul(token, nullptr, 16);
+								break;
+							default:
+								break;
+							}
 							break;
 						default:
 							break;
@@ -426,12 +431,16 @@ bool GB_LCD::load_manifest(std::string filename)
 						tokenCnt++;
 					}
 					cgfx_stat.conds.push_back(pc);
+
+
 				}
 			}
 		}
 		file.close();
 		result = true;
 	}
+
+
 
 	//Initialize HD buffer for CGFX greater that 1:1
 	config::sys_width *= cgfx::scaling_factor;

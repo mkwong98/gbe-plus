@@ -36,10 +36,8 @@ struct pack_condition
 	static const u8 TILEATPOSITION = 13;
 	static const u8 SPRITEATPOSITION = 14;
 	static const u8 MEMORYCHECK = 15;
-	static const u8 MEMORYBANKCHECK = 16;
-	static const u8 MEMORYCHECKCONSTANT = 17;
-	static const u8 MEMORYBANKCHECKCONSTANT = 18;
-	static const u8 FRAMERANGE = 19;
+	static const u8 MEMORYCHECKCONSTANT = 16;
+	static const u8 FRAMERANGE = 17;
 
 	static const u8 EQ = 0;
 	static const u8 NE = 1;
@@ -61,6 +59,7 @@ struct pack_condition
 	u16 address1;
 	u16 address2;
 	u8 bank;
+	u8 bank2;
 	u8 opType;
 	u8 value;
 	u8 mask;
@@ -68,6 +67,9 @@ struct pack_condition
 	//frame range
 	u32 divisor;
 	u32 compareVal;
+
+	bool latest_result;
+	
 };
 
 struct pack_cond_app

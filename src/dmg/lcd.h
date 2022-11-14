@@ -43,7 +43,13 @@ class GB_LCD
 
 	SDL_Surface* load_pack_image(std::string filename);
 	SDL_Surface* h_flip_image(SDL_Surface* s);
-	virtual pack_tile* get_tile_match(tile_strip* s) = 0;
+	virtual pack_tile* get_tile_match(tile_strip* s, u16 cscanline) = 0;
+	bool check_screen_tile_at_loc(SDL_Rect* loc, pack_condition* c);
+	bool check_line_tile_at_loc(std::vector <tile_strip>* scanline, SDL_Rect* loc, pack_condition* c);
+	bool check_sprite_at_loc(SDL_Rect* loc, pack_condition* c);
+	virtual bool check_tile_condition_palette_match(tile_strip* s, pack_condition* c) = 0;
+	void resolve_global_condition();
+
 
 	bool load_image_data();
 	bool load_meta_data();
@@ -168,7 +174,8 @@ public:
 	void update_all_bg_hash();
 	void update_bg_hash(u16 bg_index);
 	std::string get_hash(u16 addr, u8 gfx_type);
-	pack_tile* get_tile_match(tile_strip* s);
+	pack_tile* get_tile_match(tile_strip* s, u16 cscanline);
+	bool check_tile_condition_palette_match(tile_strip* s, pack_condition* c);
 
 protected:
 	void collect_scanline_data();
@@ -198,7 +205,8 @@ public:
 	void update_all_bg_hash();
 	void update_bg_hash(u16 bg_index);
 	std::string get_hash(u16 addr, u8 gfx_type);
-	pack_tile* get_tile_match(tile_strip* s);
+	pack_tile* get_tile_match(tile_strip* s, u16 cscanline);
+	bool check_tile_condition_palette_match(tile_strip* s, pack_condition* c);
 
 protected:
 	//GBC color palette updates

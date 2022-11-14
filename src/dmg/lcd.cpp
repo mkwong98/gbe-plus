@@ -378,6 +378,9 @@ SDL_Surface* GB_LCD::render_raw_layer(u8 layer)
 /****** Render pixels for a given scanline (per-scanline) ******/
 void GB_LCD::run_render_scanline() 
 {
+	//resolve global conditions
+	resolve_global_condition();
+
 	//Draw background pixel data
 	render_bg_scanline(false);
 	//Draw window pixel data
@@ -471,21 +474,170 @@ void GB_LCD::clear_HD_strip(SDL_Surface* src, SDL_Rect* srcr, SDL_Surface* dst, 
 	SDL_UnlockSurface(src);
 }
 
+bool GB_LCD::check_screen_tile_at_loc(SDL_Rect* loc, pack_condition* c)
+{
+	bool matchResult = check_line_tile_at_loc(&(cgfx_stat.screen_data.scanline[loc->y].rendered_bg), loc, c);
+	if (!matchResult)
+		matchResult = check_line_tile_at_loc(&(cgfx_stat.screen_data.scanline[loc->y].rendered_win), loc, c);
+	return matchResult;
+}
 
-pack_tile* DMG_LCD::get_tile_match(tile_strip* s)
+bool GB_LCD::check_sprite_at_loc(SDL_Rect* loc, pack_condition* c)
+{
+	return check_line_tile_at_loc(&(cgfx_stat.screen_data.scanline[loc->y].rendered_obj), loc, c);
+}
+
+bool GB_LCD::check_line_tile_at_loc(std::vector <tile_strip>* scanline, SDL_Rect* loc, pack_condition* c)
+{
+	for (u8 i = 0; i < scanline->size(); i++) {
+		tile_strip* testStr = &((*scanline)[i]);
+		//check location
+		if (testStr->x == loc->x && testStr->line == loc->h)
+		{
+			//check pattern
+			if (memcmp(cgfx_stat.screen_data.rendered_tile[testStr->pattern_id].tile.line.data(), c->tileData.line.data(), 16) == 0)
+			{
+				//check palette
+				if (check_tile_condition_palette_match(testStr, c))
+				{
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+
+bool DMG_LCD::check_tile_condition_palette_match(tile_strip* s, pack_condition* c)
+{
+	return cgfx_stat.screen_data.rendered_palette[s->palette_id].code == c->palette[0];
+}
+
+bool GBC_LCD::check_tile_condition_palette_match(tile_strip* s, pack_condition* c)
+{
+	return (cgfx_stat.screen_data.rendered_palette[s->palette_id].colour[0] == c->palette[0]
+		&& cgfx_stat.screen_data.rendered_palette[s->palette_id].colour[1] == c->palette[1]
+		&& cgfx_stat.screen_data.rendered_palette[s->palette_id].colour[2] == c->palette[2]
+		&& cgfx_stat.screen_data.rendered_palette[s->palette_id].colour[3] == c->palette[3]);	
+}
+
+
+void GB_LCD::resolve_global_condition()
+{
+	SDL_Rect loc;
+	u8 old_vram_bank;
+	u8 val1;
+	u8 val2;
+
+	for (u16 j = 0; j < cgfx_stat.conds.size(); j++)
+	{
+		pack_condition* c = &(cgfx_stat.conds[j]);
+		c->latest_result = false;
+		switch (c->type) {
+		case pack_condition::TILEATPOSITION:
+			loc.x = c->x;
+			loc.y = c->y;
+			loc.h = 0;
+			c->latest_result = check_screen_tile_at_loc(&loc, c);
+			break;
+
+		case pack_condition::SPRITEATPOSITION:
+			loc.x = c->x;
+			loc.y = c->y;
+			loc.h = 0;
+			c->latest_result = check_sprite_at_loc(&loc, c);
+			break;
+
+		case pack_condition::MEMORYCHECK:
+			old_vram_bank = ((GBC_MMU*)mem)->vram_bank;
+			((GBC_MMU*)mem)->vram_bank = c->bank;
+			val1 = mem->read_u8(c->address1) & c->mask;
+			((GBC_MMU*)mem)->vram_bank = c->bank2;
+			val2 = mem->read_u8(c->address2) & c->mask;
+			switch (c->opType)
+			{
+			case pack_condition::EQ:
+				c->latest_result = val1 == val2;
+				break;
+			case pack_condition::NE:
+				c->latest_result = val1 != val2;
+				break;
+			case pack_condition::GT:
+				c->latest_result = val1 > val2;
+				break;
+			case pack_condition::LS:
+				c->latest_result = val1 < val2;
+				break;
+			case pack_condition::GE:
+				c->latest_result = val1 >= val2;
+				break;
+			case pack_condition::LE:
+				c->latest_result = val1 <= val2;
+				break;
+			default:
+				break;
+			}
+			((GBC_MMU*)mem)->vram_bank = old_vram_bank;
+			break;
+
+		case pack_condition::MEMORYCHECKCONSTANT:
+			old_vram_bank = ((GBC_MMU*)mem)->vram_bank;
+			((GBC_MMU*)mem)->vram_bank = c->bank;
+			val1 = mem->read_u8(c->address1) & c->mask;
+			val2 = c->value & c->mask;
+			switch (c->opType)
+			{
+			case pack_condition::EQ:
+				c->latest_result = val1 == val2;
+				break;
+			case pack_condition::NE:
+				c->latest_result = val1 != val2;
+				break;
+			case pack_condition::GT:
+				c->latest_result = val1 > val2;
+				break;
+			case pack_condition::LS:
+				c->latest_result = val1 < val2;
+				break;
+			case pack_condition::GE:
+				c->latest_result = val1 >= val2;
+				break;
+			case pack_condition::LE:
+				c->latest_result = val1 <= val2;
+				break;
+			default:
+				break;
+			}
+			((GBC_MMU*)mem)->vram_bank = old_vram_bank;
+			break;
+
+		case pack_condition::FRAMERANGE:
+			c->latest_result = cgfx_stat.frameCnt % c->divisor >= c->compareVal;
+			break;
+		default:
+			break;
+		}
+	}
+}
+
+
+pack_tile* DMG_LCD::get_tile_match(tile_strip* s, u16 cscanline)
 {
 	pack_tile* hdTile;
+	SDL_Rect loc;
+
 	for (u16 j = 0; j < cgfx_stat.screen_data.rendered_tile[s->pattern_id].pack_tile_match.size(); j++)
 	{
 		hdTile = &(cgfx_stat.tiles[cgfx_stat.screen_data.rendered_tile[s->pattern_id].pack_tile_match[j]]);
 		if (hdTile->palette[0] == cgfx_stat.screen_data.rendered_palette[s->palette_id].code || hdTile->default)
 		{
+			//check for conditions
 			bool allCondPassed = true;
 			for (u16 i = 0; i < hdTile->condApps.size(); i++)
 			{
-				pack_condition c = cgfx_stat.conds[hdTile->condApps[i].condIdx];
+				pack_condition* c = &(cgfx_stat.conds[hdTile->condApps[i].condIdx]);
 				bool matchResult;
-				switch (c.type) {
+				switch (c->type) {
 				case pack_condition::HMIRROR:
 					matchResult = s->hflip;
 					break;
@@ -503,21 +655,33 @@ pack_tile* DMG_LCD::get_tile_match(tile_strip* s)
 					break;
 
 				case pack_condition::TILENEARBY:
+					loc.x = s->x + (s->hflip ? -c->x : c->x);
+					loc.y = cscanline + (s->vflip ? -c->y : c->y);
+					loc.h = s->line;
+					matchResult = check_screen_tile_at_loc(&loc, c);
+					break;
 
+				case pack_condition::SPRITENEARBY:
+					loc.x = s->x + (s->hflip ? -c->x : c->x);
+					loc.y = cscanline + (s->vflip ? -c->y : c->y);
+					loc.h = s->line;
+					matchResult = check_sprite_at_loc(&loc, c);
+					break;
 
 				default:
-					matchResult = false;
+					matchResult = c->latest_result;
 					break;
 				}
 				if (hdTile->condApps[i].negate) matchResult = !matchResult;
+				allCondPassed = allCondPassed && matchResult;
 			}
-			return hdTile;
+			if(allCondPassed) return hdTile;
 		}
 	}
 	return NULL;
 }
 
-pack_tile* GBC_LCD::get_tile_match(tile_strip* s)
+pack_tile* GBC_LCD::get_tile_match(tile_strip* s, u16 cscanline)
 {
 	pack_tile* hdTile;
 	for (u8 j = 0; j < cgfx_stat.screen_data.rendered_tile[s->pattern_id].pack_tile_match.size(); j++)
@@ -548,7 +712,7 @@ void DMG_LCD::render_bg_scanline(bool raw)
 		rawrect.x = pixel_counter;
 
 		//look for hd 
-		if (!raw) hdTile = get_tile_match(&p);
+		if (!raw) hdTile = get_tile_match(&p, lcd_stat.current_scanline);
 		else hdTile = NULL;
 
 		if (hdTile)
@@ -636,7 +800,7 @@ void DMG_LCD::render_win_scanline(bool raw)
 		rawrect.x = pixel_counter;
 
 		//look for hd 
-		if (!raw) hdTile = get_tile_match(&p);
+		if (!raw) hdTile = get_tile_match(&p, lcd_stat.current_scanline);
 		else hdTile = NULL;
 
 		if (hdTile)
@@ -737,7 +901,7 @@ void DMG_LCD::render_obj_scanline(bool raw)
 		u8 pixel_counter = p.x;
 
 		//look for hd 
-		if (!raw) hdTile = get_tile_match(&p);
+		if (!raw) hdTile = get_tile_match(&p, lcd_stat.current_scanline);
 		else hdTile = NULL;
 
 		if (hdTile)
