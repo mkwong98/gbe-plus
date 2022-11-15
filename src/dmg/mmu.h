@@ -181,10 +181,6 @@ class GB_MMU
 	u8 tama5_read(u16 address);
 	void grab_tama5_time(u8 index);
 
-	void gb_mem_remap();
-	bool gb_mem_read_map(std::string filename);
-	void gb_mem_format_save(std::string filename);
-
 	void set_gs_cheats();
 	void set_gg_cheats();
 

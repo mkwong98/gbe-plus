@@ -375,16 +375,12 @@ gbe_cgfx::gbe_cgfx(QWidget *parent) : QDialog(parent)
 	main_layout->addWidget(tabs_button);
 	setLayout(main_layout);
 
-	data_folder = new data_dialog;
-
 	connect(tabs_button, SIGNAL(accepted()), this, SLOT(accept()));
 	connect(tabs_button, SIGNAL(rejected()), this, SLOT(reject()));
 	connect(tabs_button->button(QDialogButtonBox::Close), SIGNAL(clicked()), this, SLOT(close_cgfx()));
 	connect(blank, SIGNAL(stateChanged(int)), this, SLOT(set_blanks()));
 	connect(auto_trans, SIGNAL(stateChanged(int)), this, SLOT(set_auto_trans()));
 	connect(layer_select, SIGNAL(currentIndexChanged(int)), this, SLOT(layer_change()));
-	connect(data_folder, SIGNAL(accepted()), this, SLOT(select_folder()));
-	connect(data_folder, SIGNAL(rejected()), this, SLOT(reject_folder()));
 	connect(rect_x, SIGNAL(valueChanged(int)), this, SLOT(update_selection()));
 	connect(rect_y, SIGNAL(valueChanged(int)), this, SLOT(update_selection()));
 	connect(rect_w, SIGNAL(valueChanged(int)), this, SLOT(update_selection()));
@@ -912,46 +908,6 @@ void gbe_cgfx::paintEvent(QPaintEvent* event)
 {
 	//Update GUI elements of the advanced menu
 	name_label->setMinimumWidth(dest_label->width());
-}
-
-
-/****** Browse for a directory to use in the advanced menu ******/
-void gbe_cgfx::browse_advanced_dir()
-{
-	QString path;
-
-	data_folder->open_data_folder();			
-
-	while(!data_folder->finish) { QApplication::processEvents(); }
-	
-	path = data_folder->directory().path();
-	path = data_folder->path.relativeFilePath(path);
-
-	advanced_box->raise();
-
-	if(path.isNull()) { return; }
-
-	//Make sure path is complete, e.g. has the correct separator at the end
-	//Qt doesn't append this automatically
-	std::string temp_str = path.toStdString();
-	std::string temp_chr = "";
-	temp_chr = temp_str[temp_str.length() - 1];
-
-	if((temp_chr != "/") && (temp_chr != "\\")) { path.append("/"); }
-	path = QDir::toNativeSeparators(path);
-
-	dest_folder->setText(path);
-	last_custom_path = dest_folder->text().toStdString();
-}
-
-/****** Selects folder ******/
-void gbe_cgfx::select_folder() { data_folder->finish = true; }
-
-/****** Rejects folder ******/
-void gbe_cgfx::reject_folder()
-{
-	data_folder->finish = true;
-	data_folder->setDirectory(data_folder->last_path);
 }
 
 /****** Updates the dumping selection for multiple tiles in the layer tab ******/

@@ -24,7 +24,6 @@ namespace cgfx
 	bool auto_obj_trans = false;
 
 	u8 scaling_factor = 1;
-	u32 transparency_color = 0x00000000;
 
 	std::string cgfx_path = "HdPacks/";
 	std::string dump_bg_path = "";

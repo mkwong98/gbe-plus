@@ -24,7 +24,6 @@
 #endif
 
 #include "common/common.h"
-#include "data_dialog.h"
 #include "dmg/lcd_data.h"
 #include "dmg/custom_graphics_data.h"
 
@@ -100,8 +99,6 @@ class gbe_cgfx : public QDialog
 
 	//Manifest tab widgets
 	QScrollArea* manifest_display;
-
-	data_dialog* data_folder;
 
 	//Pop-ups
 	QMessageBox* manifest_write_fail;
