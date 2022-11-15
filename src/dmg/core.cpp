@@ -132,9 +132,6 @@ void GB_core::reset()
 	//Re-read specified ROM file
 	if(!core_mmu->read_file(get_rom_file())) { can_reset = false; }
 
-	//Re-read BIOS file
-	if((config::use_bios) && (!read_bios(config::bios_file))) { can_reset = false; }
-
 	//Start everything all over again
 	if(can_reset) { start(); }
 	else { running = false; }
@@ -176,9 +173,6 @@ void GB_core::load_state(u8 slot)
 	if(!core_cpu->controllers.video->lcd_read(offset, state_file)) { return; }
 
 	std::cout<<"GBE::Loaded state " << state_file << "\n";
-
-	//Invalidate current CGFX
-	if(cgfx::load_cgfx) { core_cpu->controllers.video->invalidate_cgfx(); }
 
 	//OSD
 	config::osd_message = "LOADED STATE " + util::to_str(slot);
@@ -545,39 +539,6 @@ void GB_core::handle_hotkey(SDL_Event& event)
 
 		reset();
 	}
-
-	//GB Camera load/unload external picture into VRAM
-	else if((event.type == SDL_KEYDOWN) && (event.key.keysym.sym == config::hotkey_camera))
-	{
-		//Set data into VRAM
-		if((core_mmu->cart.mbc_type == GB_MMU::GB_CAMERA) && (!core_mmu->cart.cam_lock))
-		{
-			if(core_mmu->cam_load_snapshot(config::external_camera_file)) { std::cout<<"GBE::Loaded external camera file\n"; }
-			core_mmu->cart.cam_lock = true;
-		}
-
-		//Clear data from VRAM
-		else if((core_mmu->cart.mbc_type == GB_MMU::GB_CAMERA) && (core_mmu->cart.cam_lock))
-		{
-			//Clear VRAM - 0x9000 to 0x9800
-			for(u32 x = 0x9000; x < 0x9800; x++) { core_mmu->write_u8(x, 0x0); }
-
-			//Clear VRAM - 0x8800 to 0x8900
-			for(u32 x = 0x8800; x < 0x8900; x++) { core_mmu->write_u8(x, 0x0); }
-
-			//Clear VRAM - 0x8000 to 0x8500
-			for(u32 x = 0x8000; x < 0x8500; x++) { core_mmu->write_u8(x, 0x0); }
-
-			//Clear SRAM
-			for(u32 x = 0; x < core_mmu->cart.cam_buffer.size(); x++) { core_mmu->random_access_bank[0][0x100 + x] = 0x0; }
-			
-			std::cout<<"GBE::Erased external camera file from VRAM\n";
-
-			core_mmu->cart.cam_lock = false;
-		}
-	}
-
-
 }
 
 /****** Process hotkey input - Use exsternally when not using SDL ******/
@@ -588,37 +549,6 @@ void GB_core::handle_hotkey(int input, bool pressed)
 
 	//Toggle turbo off
 	else if((input == config::hotkey_turbo) && (!pressed)) { config::turbo = false; }
-
-	//GB Camera load/unload external picture into VRAM
-	else if((input == config::hotkey_camera) && (pressed))
-	{
-		//Set data into VRAM
-		if((core_mmu->cart.mbc_type == GB_MMU::GB_CAMERA) && (!core_mmu->cart.cam_lock))
-		{
-			if(core_mmu->cam_load_snapshot(config::external_camera_file)) { std::cout<<"GBE::Loaded external camera file\n"; }
-			core_mmu->cart.cam_lock = true;
-		}
-
-		//Clear data from VRAM
-		else if((core_mmu->cart.mbc_type == GB_MMU::GB_CAMERA) && (core_mmu->cart.cam_lock))
-		{
-			//Clear VRAM - 0x9000 to 0x9800
-			for(u32 x = 0x9000; x < 0x9800; x++) { core_mmu->write_u8(x, 0x0); }
-
-			//Clear VRAM - 0x8800 to 0x8900
-			for(u32 x = 0x8800; x < 0x8900; x++) { core_mmu->write_u8(x, 0x0); }
-
-			//Clear VRAM - 0x8000 to 0x8500
-			for(u32 x = 0x8000; x < 0x8500; x++) { core_mmu->write_u8(x, 0x0); }
-
-			//Clear SRAM
-			for(u32 x = 0; x < core_mmu->cart.cam_buffer.size(); x++) { core_mmu->random_access_bank[0][0x100 + x] = 0x0; }
-			
-			std::cout<<"GBE::Erased external camera file from VRAM\n";
-
-			core_mmu->cart.cam_lock = false;
-		}
-	}
 
 	//Reset emulation on F8
 	//Only done when using GB Memory Cartridge via GUI
@@ -671,12 +601,6 @@ u32 GB_core::ex_get_reg(u8 reg_index)
 /****** Read binary file to memory ******/
 bool GB_core::read_file(std::string filename) { return core_mmu->read_file(filename); }
 
-/****** Read BIOS file into memory ******/
-bool GB_core::read_bios(std::string filename) { return core_mmu->read_bios(config::bios_file); }
-
-/****** Read firmware file into memory (not applicable) ******/
-bool GB_core::read_firmware(std::string filename) { return true; }
-
 /****** Returns a byte from core memory ******/
 u8 GB_core::ex_read_u8(u16 address) { return core_mmu->read_u8(address); }
 
@@ -684,18 +608,6 @@ u8 GB_core::ex_read_u8(u16 address) { return core_mmu->read_u8(address); }
 void GB_core::ex_write_u8(u16 address, u8 value) { core_mmu->write_u8(address, value); }
 
 void GB_core::read_cgfx() {	cgfx::loaded = core_cpu->controllers.video->load_manifest(get_manifest_file());}
-
-/****** Dumps selected OBJ to a file ******/
-void GB_core::dump_obj(int obj_index)
-{
-	core_cpu->controllers.video->dump_obj(obj_index);
-}
-
-/****** Dumps selected BG tile to a file ******/
-void GB_core::dump_bg(int bg_index)
-{
-	core_cpu->controllers.video->dump_bg(bg_index);
-}
 
 /****** Grabs the OBJ palette ******/
 u32* GB_core::get_obj_palette(int pal_index)
@@ -708,13 +620,6 @@ u32* GB_core::get_bg_palette(int pal_index)
 {
 	return &core_cpu->controllers.video->lcd_stat.bg_colors_final[0][pal_index];
 }
-
-/****** Grabs the hash for a specific tile ******/
-std::string GB_core::get_hash(u32 addr, u8 gfx_type)
-{
-	return core_cpu->controllers.video->get_hash(addr, gfx_type);
-}
-
 
 /****** Returns miscellaneous data from the core ******/
 void* GB_core::get_core_data(u32 core_index)

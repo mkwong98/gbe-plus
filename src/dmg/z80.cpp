@@ -14,15 +14,13 @@
 DMG_Z80::DMG_Z80() 
 {
 	controllers.video = new DMG_LCD();
-	if(config::use_bios) { reset_bios(); }
-	else { DMG_Z80::reset(); }
+	DMG_Z80::reset();
 }
 
 GBC_Z80::GBC_Z80()
 {
 	controllers.video = new GBC_LCD();
-	if (config::use_bios) { reset_bios(); }
-	else { GBC_Z80::reset(); }
+	GBC_Z80::reset();
 }
 
 /****** Z80 Deconstructor ******/
@@ -86,45 +84,6 @@ void GBC_Z80::reset()
 	reg.a = 0x11;
 	double_speed = false;
 	Z80::reset();
-}
-
-/****** Z80 Reset - For BIOS ******/
-void Z80::reset_bios() 
-{
-	reg.a = 0x00;
-	reg.b = 0x00;
-	reg.c = 0x00;
-	reg.d = 0x00;
-	reg.e = 0x00;
-	reg.h = 0x00;
-	reg.l = 0x00;
-	reg.f = 0x00;
-	reg.pc = 0x00;
-	reg.sp = 0x0000;
-	temp_byte = 0;
-	temp_word = 0;
-	cpu_clock_m = 0;
-	cpu_clock_t = 0;
-	div_counter = 0;
-	tima_counter = 0;
-	tima_speed = 0;
-	cycles = 0;
-	running = false;
-	halt = false;
-	pause = false;
-	interrupt = false;
-	interrupt_delay = false;
-	skip_instruction = false;
-
-	mem = NULL;
-
-	std::cout<<"CPU::Initialized\n";
-}
-
-void GBC_Z80::reset_bios()
-{
-	double_speed = false;
-	Z80::reset_bios();
 }
 
 /****** Read CPU data from save state ******/

@@ -57,18 +57,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	button_layout->addWidget(tabs_button);
 	button_set->setLayout(button_layout);
 
-	//General settings - Use BIOS
-	QWidget* bios_set = new QWidget(general);
-	QLabel* bios_label = new QLabel("Use BIOS/Boot ROM", bios_set);
-	bios = new QCheckBox(bios_set);
-	bios->setToolTip("Instructs GBE+ to boot a system's BIOS or Boot ROM");
-
-	QHBoxLayout* bios_layout = new QHBoxLayout;
-	bios_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	bios_layout->addWidget(bios);
-	bios_layout->addWidget(bios_label);
-	bios_set->setLayout(bios_layout);
-
 	//General settings - Emulate specialty game carts
 	QWidget* special_cart_set = new QWidget(general);
 	QLabel* special_cart_label = new QLabel("Special ROM Type : ", special_cart_set);
@@ -143,7 +131,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	gen_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
 	gen_layout->addWidget(special_cart_set);
 	gen_layout->addWidget(overclock_set);
-	gen_layout->addWidget(bios_set);
 	gen_layout->addWidget(cheats_set);
 	gen_layout->addWidget(patch_set);
 	gen_layout->addWidget(rtc_set);
@@ -865,46 +852,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	bcg_chip_3_set->setVisible(false);
 	bcg_chip_4_set->setVisible(false);
 
-	//Path settings - DMG BIOS
-	QWidget* dmg_bios_set = new QWidget(paths);
-	dmg_bios_label = new QLabel("DMG Boot ROM :  ");
-	QPushButton* dmg_bios_button = new QPushButton("Browse");
-	dmg_bios = new QLineEdit(paths);
-	
-	QHBoxLayout* dmg_bios_layout = new QHBoxLayout;
-	dmg_bios_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	dmg_bios_layout->addWidget(dmg_bios_label);
-	dmg_bios_layout->addWidget(dmg_bios);
-	dmg_bios_layout->addWidget(dmg_bios_button);
-	dmg_bios_set->setLayout(dmg_bios_layout);
-	dmg_bios_label->resize(50, dmg_bios_label->height());
-
-	//Path settings - GBC BIOS
-	QWidget* gbc_bios_set = new QWidget(paths);
-	gbc_bios_label = new QLabel("GBC Boot ROM :  ");
-	QPushButton* gbc_bios_button = new QPushButton("Browse");
-	gbc_bios = new QLineEdit(paths);
-
-	QHBoxLayout* gbc_bios_layout = new QHBoxLayout;
-	gbc_bios_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	gbc_bios_layout->addWidget(gbc_bios_label);
-	gbc_bios_layout->addWidget(gbc_bios);
-	gbc_bios_layout->addWidget(gbc_bios_button);
-	gbc_bios_set->setLayout(gbc_bios_layout);
-
-	//Path settings - CGFX Folder
-	QWidget* cgfx_path_set = new QWidget(paths);
-	cgfx_path_label = new QLabel("CGFX Manifest :  ");
-	QPushButton* cgfx_path_button = new QPushButton("Browse");
-	cgfx_path = new QLineEdit(paths);
-
-	QHBoxLayout* cgfx_path_layout = new QHBoxLayout;
-	cgfx_path_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	cgfx_path_layout->addWidget(cgfx_path_label);
-	cgfx_path_layout->addWidget(cgfx_path);
-	cgfx_path_layout->addWidget(cgfx_path_button);
-	cgfx_path_set->setLayout(cgfx_path_layout);
-
 	//Path settings - Screenshot
 	QWidget* screenshot_set = new QWidget(paths);
 	screenshot_label = new QLabel("Screenshots :  ");
@@ -946,9 +893,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 
 	QVBoxLayout* paths_layout = new QVBoxLayout;
 	paths_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	paths_layout->addWidget(dmg_bios_set);
-	paths_layout->addWidget(gbc_bios_set);
-	paths_layout->addWidget(cgfx_path_set);
 	paths_layout->addWidget(screenshot_set);
 	paths_layout->addWidget(game_saves_set);
 	paths_layout->addWidget(cheats_path_set);
@@ -966,7 +910,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	connect(tabs_button, SIGNAL(accepted()), this, SLOT(accept()));
 	connect(tabs_button, SIGNAL(rejected()), this, SLOT(reject()));
 	connect(tabs_button->button(QDialogButtonBox::Close), SIGNAL(clicked()), this, SLOT(close_settings()));
-	connect(bios, SIGNAL(stateChanged(int)), this, SLOT(set_bios()));
 	connect(overclock, SIGNAL(currentIndexChanged(int)), this, SLOT(overclock_change()));
 	connect(auto_patch, SIGNAL(stateChanged(int)), this, SLOT(set_patches()));
 	connect(edit_cheats, SIGNAL(clicked()), this, SLOT(show_cheats()));
@@ -995,16 +938,10 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	connect(data_folder, SIGNAL(rejected()), this, SLOT(reject_folder()));
 
 	QSignalMapper* paths_mapper = new QSignalMapper(this);
-	connect(dmg_bios_button, SIGNAL(clicked()), paths_mapper, SLOT(map()));
-	connect(gbc_bios_button, SIGNAL(clicked()), paths_mapper, SLOT(map()));
-	connect(cgfx_path_button, SIGNAL(clicked()), paths_mapper, SLOT(map()));
 	connect(screenshot_button, SIGNAL(clicked()), paths_mapper, SLOT(map()));
 	connect(game_saves_button, SIGNAL(clicked()), paths_mapper, SLOT(map()));
 	connect(cheats_path_button, SIGNAL(clicked()), paths_mapper, SLOT(map()));
 
-	paths_mapper->setMapping(dmg_bios_button, 0);
-	paths_mapper->setMapping(gbc_bios_button, 1);
-	paths_mapper->setMapping(cgfx_path_button, 4);
 	paths_mapper->setMapping(screenshot_button, 5);
 	paths_mapper->setMapping(game_saves_button, 8);
 	paths_mapper->setMapping(cheats_path_button, 9);
@@ -1232,10 +1169,6 @@ void gen_settings::set_ini_options()
 	//Emulated CPU speed
 	overclock->setCurrentIndex(config::oc_flags);
 
-	//BIOS or Boot ROM option
-	if(config::use_bios) { bios->setChecked(true); }
-	else { bios->setChecked(false); }
-
 	//Enable patches
 	if(config::use_patches) { auto_patch->setChecked(true); }
 	else { auto_patch->setChecked(false); }
@@ -1386,9 +1319,6 @@ void gen_settings::set_ini_options()
 	input_camera->setText(QString::number(config::hotkey_camera));
 
 	//BIOS, Boot ROM and Manifest paths
-	QString path_1(QString::fromStdString(config::dmg_bios_path));
-	QString path_2(QString::fromStdString(config::gbc_bios_path));
-	QString path_5(QString::fromStdString(cgfx::cgfx_path));
 	QString path_6(QString::fromStdString(config::ss_path));
 	QString path_9(QString::fromStdString(config::save_path));
 	QString path_10(QString::fromStdString(config::cheats_path));
@@ -1409,20 +1339,12 @@ void gen_settings::set_ini_options()
 		if(chip_list[x] == init_chip_list[3]) { battle_chip_4->setCurrentIndex(x); }
 	}
 
-	dmg_bios->setText(path_1);
-	gbc_bios->setText(path_2);
-	cgfx_path->setText(path_5);
 	screenshot->setText(path_6);
 	game_saves->setText(path_9);
 	cheats_path->setText(path_10);
 }
 
-/****** Toggles whether to use the Boot ROM or BIOS ******/
-void gen_settings::set_bios()
-{
-	if(bios->isChecked()) { config::use_bios = true; }
-	else { config::use_bios = false; }
-}
+
 
 /****** Changes the emulated CPU speed ******/
 void gen_settings::overclock_change()
@@ -1635,7 +1557,7 @@ void gen_settings::set_paths(int index)
 {
 	QString path;
 
-	//Open file browser for Boot ROMs, BIOS, Firmware, cheats, and manifests
+	//Open file browser for Boot ROMs, cheats, and manifests
 	if((index < 5) || (index >= 9))
 	{
 		path = QFileDialog::getOpenFileName(this, tr("Open"), "", tr("All files (*)"));
@@ -1674,21 +1596,6 @@ void gen_settings::set_paths(int index)
 
 	switch(index)
 	{
-		case 0: 
-			config::dmg_bios_path = path.toStdString();
-			dmg_bios->setText(path);
-			break;
-
-		case 1:
-			config::gbc_bios_path = path.toStdString();
-			gbc_bios->setText(path);
-			break;
-
-		case 4:
-			cgfx::cgfx_path = path.toStdString();
-			cgfx_path->setText(path);
-			break;
-
 		case 5:
 			config::ss_path = path.toStdString();
 			screenshot->setText(path);
@@ -2542,15 +2449,6 @@ void gen_settings::switch_control_layout()
 	last_control_id = controls_combo->currentIndex();
 }
 
-/****** Updates the settings window ******/
-void gen_settings::paintEvent(QPaintEvent* event)
-{
-	gbc_bios_label->setMinimumWidth(dmg_bios_label->width());
-	cgfx_path_label->setMinimumWidth(dmg_bios_label->width());
-	screenshot_label->setMinimumWidth(dmg_bios_label->width());
-	game_saves_label->setMinimumWidth(dmg_bios_label->width());
-	cheats_path_label->setMinimumWidth(dmg_bios_label->width());
-}
 
 /****** Closes the settings window ******/
 void gen_settings::closeEvent(QCloseEvent* event)

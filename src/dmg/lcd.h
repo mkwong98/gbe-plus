@@ -50,23 +50,6 @@ class GB_LCD
 	virtual bool check_tile_condition_palette_match(tile_strip* s, pack_condition* c) = 0;
 	void resolve_global_condition();
 
-
-	bool load_image_data();
-	bool load_meta_data();
-	bool find_meta_data();
-
-	virtual void dump_obj(u8 obj_index) = 0;
-	virtual void dump_bg(u16 obj_index) = 0;
-
-	virtual void update_obj_hash(u8 obj_index) = 0;
-	virtual void update_all_bg_hash() = 0;
-	virtual void update_bg_hash(u16 bg_index) = 0;
-
-	bool has_hash(u16 addr, std::string hash);
-	virtual std::string get_hash(u16 addr, u8 gfx_type) = 0;
-	u32 adjust_pixel_brightness(u32 color, u8 palette_id, u8 gfx_type);
-	void invalidate_cgfx();
-
 	void new_rendered_screen_data();
 	void new_rendered_scanline_data(u8 lineNo);
 
@@ -168,12 +151,6 @@ class GB_LCD
 class DMG_LCD : public GB_LCD
 {
 public:
-	void dump_obj(u8 obj_index);
-	void dump_bg(u16 obj_index);
-	void update_obj_hash(u8 obj_index);
-	void update_all_bg_hash();
-	void update_bg_hash(u16 bg_index);
-	std::string get_hash(u16 addr, u8 gfx_type);
 	pack_tile* get_tile_match(tile_strip* s, u16 cscanline);
 	bool check_tile_condition_palette_match(tile_strip* s, pack_condition* c);
 
@@ -199,12 +176,6 @@ class GBC_LCD : public GB_LCD
 {
 public:
 	void step_sub(int cpu_clock);
-	void dump_obj(u8 obj_index);
-	void dump_bg(u16 obj_index);
-	void update_obj_hash(u8 obj_index);
-	void update_all_bg_hash();
-	void update_bg_hash(u16 bg_index);
-	std::string get_hash(u16 addr, u8 gfx_type);
 	pack_tile* get_tile_match(tile_strip* s, u16 cscanline);
 	bool check_tile_condition_palette_match(tile_strip* s, pack_condition* c);
 

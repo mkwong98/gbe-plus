@@ -150,27 +150,6 @@ void GB_LCD::reset()
 	for (int x = 0; x < 16; x++) { lcd_stat.flip_16[x] = (15 - x); }
 
 	//CGFX setup
-	cgfx_stat.current_obj_hash.clear();
-	cgfx_stat.current_obj_hash.resize(40, "");
-
-	cgfx_stat.current_bg_hash.clear();
-	cgfx_stat.current_bg_hash.resize(384, "");
-
-	cgfx_stat.current_gbc_bg_hash.clear();
-	cgfx_stat.current_gbc_bg_hash.resize(2048, "");
-
-	cgfx_stat.bg_update_list.clear();
-	cgfx_stat.bg_update_list.resize(384, false);
-
-	cgfx_stat.bg_tile_update_list.clear();
-	cgfx_stat.bg_tile_update_list.resize(256, false);
-
-	cgfx_stat.bg_map_update_list.clear();
-	cgfx_stat.bg_map_update_list.resize(2048, false);
-
-	cgfx_stat.update_bg = false;
-	cgfx_stat.update_map = false;
-
 	memset(cgfx_stat.vram_tile_used, 0, 768);
 	memset(cgfx_stat.vram_tile_idx, 0xFF, 768 * 2);
 
@@ -181,14 +160,6 @@ void GB_LCD::reset()
 		cgfx_stat.screen_data.scanline[x].rendered_bg.clear();
 		cgfx_stat.screen_data.scanline[x].rendered_win.clear();
 		cgfx_stat.screen_data.scanline[x].rendered_obj.clear();
-	}
-
-	for (int x = 0; x < 8; x++)
-	{
-		cgfx_stat.bg_pal_max[x] = 0;
-		cgfx_stat.bg_pal_min[x] = 0;
-		cgfx_stat.obj_pal_max[x] = 0;
-		cgfx_stat.obj_pal_min[x] = 0;
 	}
 
 	//Initialize system screen dimensions
@@ -331,12 +302,6 @@ void GB_LCD::update_oam()
 			obj[x].h_flip = (attribute & 0x20) ? true : false;
 			obj[x].v_flip = (attribute & 0x40) ? true : false;
 			obj[x].bg_priority = (attribute & 0x80) ? 1 : 0;
-
-			//CGFX - Update OBJ hashes
-			if(cgfx::load_cgfx) 
-			{
-				update_obj_hash(x); 
-			}
 		}
 
 		else { oam_ptr+= 4; }
@@ -1040,15 +1005,6 @@ void GBC_LCD::update_bg_colors()
 
 	lcd_stat.bg_colors_final[color][palette] = 0xFF000000 | (red << 16) | (green << 8) | (blue);
 
-	//Update DMG BG palette when using GBC BIOS
-	if(mem->in_bios)
-	{
-		config::DMG_BG_PAL[0] = lcd_stat.bg_colors_final[0][0];
-		config::DMG_BG_PAL[1] = lcd_stat.bg_colors_final[1][0];
-		config::DMG_BG_PAL[2] = lcd_stat.bg_colors_final[2][0];
-		config::DMG_BG_PAL[3] = lcd_stat.bg_colors_final[3][0];
-	}
-
 	lcd_stat.update_bg_colors = false;
 	scanlinePaletteUpdated = true;
 }
@@ -1097,20 +1053,6 @@ void GBC_LCD::update_obj_colors()
 	u32 old_color = lcd_stat.obj_colors_final[color][palette];
 
 	lcd_stat.obj_colors_final[color][palette] = 0xFF000000 | (red << 16) | (green << 8) | (blue);
-
-	//Update DMG OBJ palettes when using GBC BIOS
-	if(mem->in_bios)
-	{
-		config::DMG_OBJ_PAL[0][0] = lcd_stat.obj_colors_final[0][0];
-		config::DMG_OBJ_PAL[1][0] = lcd_stat.obj_colors_final[1][0];
-		config::DMG_OBJ_PAL[2][0] = lcd_stat.obj_colors_final[2][0];
-		config::DMG_OBJ_PAL[3][0] = lcd_stat.obj_colors_final[3][0];
-
-		config::DMG_OBJ_PAL[0][1] = lcd_stat.obj_colors_final[0][1];
-		config::DMG_OBJ_PAL[1][1] = lcd_stat.obj_colors_final[1][1];
-		config::DMG_OBJ_PAL[2][1] = lcd_stat.obj_colors_final[2][1];
-		config::DMG_OBJ_PAL[3][1] = lcd_stat.obj_colors_final[3][1];
-	}
 
 	lcd_stat.update_obj_colors = false;
 	scanlinePaletteUpdated = true;
@@ -1202,29 +1144,7 @@ void GB_LCD::step_sub(int cpu_clock)
 
 					//Update OAM
 					if(lcd_stat.oam_update) update_oam();
-
-					//CGFX - Update BG Hashes
-					if(cgfx_stat.update_bg)
-					{
-						update_all_bg_hash();
-						cgfx_stat.update_bg = false;
-					}
-
-					if(cgfx_stat.update_map)
-					{
-						//Update specific map entries
-						for(int x = 0; x < 2048; x++)
-						{
-							if(cgfx_stat.bg_map_update_list[x]) 
-							{
-								update_bg_hash(0x9800 + x);
-								cgfx_stat.bg_map_update_list[x] = false;
-							}
-						}
-						
-						cgfx_stat.update_map = false;
-					}
-					
+			
 					//Render scanline when first entering Mode 0
 					collect_scanline_data();
 					run_render_scanline();
@@ -1379,37 +1299,6 @@ void GBC_LCD::step_sub(int cpu_clock)
 	if ((lcd_stat.hdma_in_progress) && (lcd_stat.hdma_type == 0)) { mem->gdma(); }
 
 	GB_LCD::step_sub(cpu_clock);
-}
-
-void DMG_LCD::update_all_bg_hash()
-{
-	for (int x = 0; x < 384; x++)
-	{
-		if (cgfx_stat.bg_update_list[x])
-		{
-			update_bg_hash(x);
-			cgfx_stat.bg_update_list[x] = false;
-		}
-	}
-}
-
-void GBC_LCD::update_all_bg_hash()
-{
-	//Check for updates based on tile data
-	for (int tile_number = 0; tile_number < 256; tile_number++)
-	{
-		//Cycle through all tile numbers that were updated
-		if (cgfx_stat.bg_tile_update_list[tile_number])
-		{
-			//Scan BG map for all tiles that use this tile number
-			for (int x = 0; x < 2048; x++)
-			{
-				if (((GBC_MMU*)mem)->video_ram[0][0x1800 + x] == tile_number) { update_bg_hash(0x9800 + x); }
-			}
-
-			cgfx_stat.bg_tile_update_list[tile_number] = false;
-		}
-	}
 }
 
 void DMG_LCD::collect_scanline_data()

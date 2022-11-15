@@ -35,8 +35,6 @@ class gbe_cgfx : public QDialog
 	public:
 	gbe_cgfx(QWidget *parent = 0);
 
-	bool parse_manifest_items();
-
 	void draw_gb_layer(u8 layer);
 
 	void reset_inputs();
@@ -117,9 +115,6 @@ class gbe_cgfx : public QDialog
 	u32 rawImageData[160 * 144];
 	rendered_screen screenInfo;
 
-	virtual QImage grab_obj_data(int obj_index) = 0;
-	virtual QImage grab_bg_data(int bg_index) = 0;
-
 	protected:
 	void closeEvent(QCloseEvent* event);
 	bool eventFilter(QObject* target, QEvent* event);
@@ -151,10 +146,6 @@ class gbe_cgfx : public QDialog
 	virtual void renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer, std::vector<u32>* top, std::vector<u32>* bottom) = 0;
 	QImage renderTileToImage(u16 tileID, u16 palId, u8 palSel, u8 layer);
 
-	virtual void dump_layer_tile(u32 x, u32 y) = 0;
-	void dump_obj_layer_tile(u32 x, u32 y);
-	virtual std::string hash_tile(u8 x, u8 y) = 0;
-
 	u8 dump_type;
 	int advanced_index;
 
@@ -171,20 +162,9 @@ class gbe_cgfx : public QDialog
 
 	protected slots:
 	void close_cgfx();
-	void close_advanced();
-	void dump_obj(int obj_index);
-	void dump_bg(int bg_index);
 	void redump_tile();
 	void dump_selection();
-	void dump_obj_meta_tile();
-	void write_manifest_entry();
-	bool delete_manifest_entry(int index);
-	void show_advanced_obj(int index);
-	void show_advanced_bg(int index);
 	void browse_advanced_dir();
-	void browse_advanced_file();
-	void set_blanks();
-	void set_auto_trans();
 	void layer_change();
 	void select_folder();
 	void reject_folder();
@@ -193,33 +173,24 @@ class gbe_cgfx : public QDialog
 	void advance_next_frame();
 	void update_input_control(int index);
 	void update_obj_meta_size();
-	void select_obj();
 };
 
 class dmg_cgfx : public gbe_cgfx
 {
 public:
-	QImage grab_obj_data(int obj_index);
-	QImage grab_bg_data(int bg_index);
 
 protected:
 	std::string get_palette_code(u16 p);
 	void renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer, std::vector<u32>* top, std::vector<u32>* bottom);
-	void dump_layer_tile(u32 x, u32 y);
-	std::string hash_tile(u8 x, u8 y);
 };
 
 class gbc_cgfx : public gbe_cgfx
 {
 public:
-	QImage grab_obj_data(int obj_index);
-	QImage grab_bg_data(int bg_index);
 
 protected:
 	std::string get_palette_code(u16 p);
 	void renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer, std::vector<u32>* top, std::vector<u32>* bottom);
-	void dump_layer_tile(u32 x, u32 y);
-	std::string hash_tile(u8 x, u8 y);
 };
 
 #endif //CGFX_GBE_QT 

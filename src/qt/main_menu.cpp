@@ -22,10 +22,6 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 {
 	//Setup actions
 	QAction* open = new QAction("Open...", this);
-	QAction* boot_no_cart = new QAction("Boot Empty Slot", this);
-	QAction* select_cam = new QAction("Select GB Camera Photo", this);
-	QAction* select_img = new QAction("Select Image File", this);
-	QAction* select_data = new QAction("Select Data File", this);
 	QAction* quit = new QAction ("Quit", this);
 
 	QAction* pause = new QAction("Pause", this);
@@ -67,12 +63,7 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 
 	file = new QMenu(tr("File"), this);
 	file->addAction(open);
-	file->addAction(boot_no_cart);
-	file->addSeparator();
 	recent_list = file->addMenu(tr("Recent Files"));
-	file->addAction(select_cam);
-	file->addAction(select_img);
-	file->addAction(select_data);
 	file->addSeparator();
 	state_save_list = file->addMenu(tr("Save State"));
 	state_load_list = file->addMenu(tr("Load State"));
@@ -120,10 +111,6 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 	//Setup signals
 	connect(quit, SIGNAL(triggered()), this, SLOT(quit()));
 	connect(open, SIGNAL(triggered()), this, SLOT(open_file()));
-	connect(boot_no_cart, SIGNAL(triggered()), this, SLOT(open_no_cart()));
-	connect(select_cam, SIGNAL(triggered()), this, SLOT(select_cam_file()));
-	connect(select_img, SIGNAL(triggered()), this, SLOT(select_img_file()));
-	connect(select_data, SIGNAL(triggered()), this, SLOT(select_data_file()));
 	connect(pause, SIGNAL(triggered()), this, SLOT(pause()));
 	connect(fullscreen, SIGNAL(triggered()), this, SLOT(fullscreen()));
 	connect(screenshot, SIGNAL(triggered()), this, SLOT(screenshot()));
@@ -166,10 +153,6 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 
 	//Parse cheats file
 	if(config::use_cheats) { parse_cheats_file(false); }
-
-	//Parse command-line arguments
-	//These will override .ini options!
-	if(!parse_cli_args()) { exit(0); }
 
 	//Setup Recent Files
 	list_mapper = new QSignalMapper(this);
@@ -300,31 +283,17 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 	fullscreen_mode = false;
 }
 
-/****** Opens a file from the CLI arguments ******/
-void main_menu::open_first_file()
-{
-	//If command-line arguments are used and they are valid, try opening a ROM right away
-	if(!config::cli_args.empty()) { open_file(); }
-}
 
 /****** Open game file ******/
 void main_menu::open_file()
 {
 	SDL_PauseAudio(1);
 
-	if(config::cli_args.empty())
-	{
-		QString filename = QFileDialog::getOpenFileName(this, tr("Open"), "", tr("GBx files (*.gb *.gbc)"));
-		if(filename.isNull()) { SDL_PauseAudio(0); return; }
+	QString filename = QFileDialog::getOpenFileName(this, tr("Open"), "", tr("GBx files (*.gb *.gbc)"));
+	if (filename.isNull()) { SDL_PauseAudio(0); return; }
 
-		set_rom_file(filename.toStdString());
-	}
+	set_rom_file(filename.toStdString());
 
-	else
-	{
-		parse_filenames();
-		config::cli_args.clear();
-	}
 
 	SDL_PauseAudio(0);
 
@@ -365,56 +334,6 @@ void main_menu::open_file()
 	boot_game();
 }
 
-/****** Boots system without a cartridge ******/
-void main_menu::open_no_cart()
-{
-	set_rom_file("NOCART");
-
-	boot_game();
-}
-
-/****** Public function for setting data file ******/
-void main_menu::set_data_file() { select_data_file(); }
-
-
-/****** Opens GB Camera image file ******/
-void main_menu::select_cam_file()
-{
-	SDL_PauseAudio(1);
-
-	QString filename = QFileDialog::getOpenFileName(this, tr("Open"), "", tr("Bitmap File(*.bmp)"));
-	if(filename.isNull()) { SDL_PauseAudio(0); return; }
-
-	config::external_camera_file = filename.toStdString();
-
-	SDL_PauseAudio(0);
-}
-
-/****** Opens an image file for various uses ******/
-void main_menu::select_img_file()
-{
-	SDL_PauseAudio(1);
-
-	QString filename = QFileDialog::getOpenFileName(this, tr("Open"), "", tr("Bitmap File(*.bmp)"));
-	if(filename.isNull()) { SDL_PauseAudio(0); return; }
-
-	config::external_image_file = filename.toStdString();
-
-	SDL_PauseAudio(0);
-}
-
-/****** Opens an binary data file for various uses ******/
-void main_menu::select_data_file()
-{
-	SDL_PauseAudio(1);
-
-	QString filename = QFileDialog::getOpenFileName(this, tr("Open"), "", tr("Binary File(*.bin)"));
-	if(filename.isNull()) { SDL_PauseAudio(0); return; }
-
-	config::external_data_file = filename.toStdString();
-
-	SDL_PauseAudio(0);
-}
 
 /****** Exits the emulator ******/
 void main_menu::quit()
@@ -433,13 +352,10 @@ void main_menu::quit()
 	config::volume = settings->volume->value();
 	config::use_haptics = (settings->rumble_on->isChecked()) ? true : false;
 
-	config::dmg_bios_path = settings->dmg_bios->text().toStdString();
-	config::gbc_bios_path = settings->gbc_bios->text().toStdString();
 	config::ss_path = settings->screenshot->text().toStdString();
 	config::save_path = settings->game_saves->text().toStdString();
 	config::cheats_path = settings->cheats_path->text().toStdString();
 
-	cgfx::cgfx_path = settings->cgfx_path->text().toStdString();
 
 	switch(settings->freq->currentIndex())
 	{
@@ -479,7 +395,7 @@ void main_menu::boot_game()
 	//Check to see if the ROM file actually exists
 	QFile test_file(QString::fromStdString(get_rom_file()));
 	
-	if((get_rom_file() != "NOCART") && (!test_file.exists()))
+	if(!test_file.exists())
 	{
 		std::string mesg_text = "The specified file: '" + get_rom_file() + "' could not be loaded";
 		warning_box->setText(QString::fromStdString(mesg_text));
@@ -487,40 +403,7 @@ void main_menu::boot_game()
 		return;
 	}
 
-	std::string test_bios_path = "";
 	u8 system_type = get_system_type_from_file(get_rom_file());
-
-	switch(system_type)
-	{
-		case 0x1: test_bios_path = config::dmg_bios_path; break;
-		case 0x2: test_bios_path = config::gbc_bios_path; break;
-	}
-
-	test_file.setFileName(QString::fromStdString(test_bios_path));
-
-	if((get_rom_file() == "NOCART") && (!config::use_bios))
-	{
-		std::string mesg_text = "A BIOS/Boot ROM file must be used when booting without a cartridge\n";
-		warning_box->setText(QString::fromStdString(mesg_text));
-		warning_box->show();
-		return;
-	}
-
-	if(!test_file.exists() && config::use_bios)
-	{
-		std::string mesg_text;
-
-		if(!test_bios_path.empty()) { mesg_text = "The BIOS file: '" + test_bios_path + "' could not be loaded"; }
-		
-		else
-		{
-				mesg_text = "No BIOS file specified for this system.\nPlease check your Paths settings or disable the 'Use BIOS/Boot ROM' option";
-		} 
-
-		warning_box->setText(QString::fromStdString(mesg_text));
-		warning_box->show();
-		return;
-	}
 
 	config::sample_rate = settings->sample_rate;
 	config::use_stereo = (settings->stereo_enable->isChecked()) ? true : false;
@@ -573,10 +456,7 @@ void main_menu::boot_game()
 
 	menu_height = menu_bar->height();
 
-	if(get_rom_file() != "NOCART")
-	{
-		config::gb_type = system_type;
-	}
+	config::gb_type = system_type;
 
 	if (config::gb_type < 2)
 	{
@@ -616,17 +496,6 @@ void main_menu::boot_game()
 	//Enable CGFX menu
 	findChild<QAction*>("custom_gfx_action")->setEnabled(true);
 
-	//Read BIOS file optionally
-	if(config::use_bios) 
-	{
-		switch(config::gb_type)
-		{
-			case 0x1 : config::bios_file = config::dmg_bios_path; reset_dmg_colors(); break;
-			case 0x2 : config::bios_file = config::gbc_bios_path; reset_dmg_colors(); break;
-		}
-
-		if(!main_menu::gbe_plus->read_bios(config::bios_file)) { return; } 
-	}
 
 	//If the fullscreen command-line argument was passed, be sure to boot into fullscreen mode
 	if(config::flags & SDL_WINDOW_FULLSCREEN_DESKTOP)
@@ -940,24 +809,9 @@ void main_menu::show_cgfx()
 	case 2: cgfx->draw_gb_layer(2); break;
 	}
 
-	//Setup OBJ meta tile tab
-	if(main_menu::gbe_plus != NULL)
-	{
-		//Setup 8x8 or 8x16 mode
-		u8 obj_height = (main_menu::gbe_plus->ex_read_u8(REG_LCDC) & 0x04) ? 16 : 8;
-
-		if(obj_height == 16) { cgfx->obj_meta_height->setSingleStep(2); }
-		else { cgfx->obj_meta_height->setSingleStep(1); }
-
-		//Also update OBJ meta tile resource
-		int obj_index = cgfx->obj_meta_index->value();
-		QImage selected_img = (obj_height == 16) ? cgfx->grab_obj_data(obj_index).scaled(128, 256) : cgfx->grab_obj_data(obj_index).scaled(256, 256);
-		cgfx->obj_select_img->setPixmap(QPixmap::fromImage(selected_img));
-	}
 	cgfx->init();
 	cgfx->reset_inputs();
 	cgfx->show();
-	cgfx->parse_manifest_items();
 	cgfx->pause = true;
 	
 	pause();

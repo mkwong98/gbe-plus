@@ -25,19 +25,12 @@ namespace config
 	std::string rom_name = "";
 	std::string state_file = "";
 
-	std::string bios_file = "";
-	std::string dmg_bios_path = "";
-	std::string gbc_bios_path = "";
 	std::string save_path = "";
 	std::string ss_path = "";
 	std::string cfg_path = "";
 	std::string data_path = "";
 	std::string cheats_path = "";
-	std::string external_camera_file = "";
-	std::string external_image_file = "";
-	std::string external_data_file = "";
 	std::vector <std::string> recent_files;
-	std::vector <std::string> cli_args;
 
 	//Default keyboard bindings
 	//Arrow Z = A button, X = B button, START = Return, Select = Space
@@ -88,8 +81,6 @@ namespace config
 
 	u32 flags = 0x4;
 	bool pause_emu = false;
-	bool use_bios = false;
-	bool no_cart = false;
 	bool ignore_illegal_opcodes = true;
 
 	special_cart_types cart_type = NORMAL_CART;
@@ -526,7 +517,6 @@ u8 get_system_type_from_file(std::string filename)
 	//Determine if no cart is inserted
 	if(filename == "NOCART")
 	{
-		config::no_cart = true;
 		return 0;
 	}
 
@@ -544,147 +534,6 @@ u8 get_system_type_from_file(std::string filename)
 		if((color_byte == 0xC0) || (color_byte == 0x80)) { return 2; }
 	}
 	return 0;
-}
-
-/****** Parse arguments passed from the command-line ******/
-bool parse_cli_args()
-{
-	//If no arguments were passed, cannot run without ROM file
-	//If using external interfaces (e.g. the GUI), a ROM file is not necessary
-	if((config::cli_args.size() < 1) && (!config::use_external_interfaces))
-	{
-		std::cout<<"GBE::Error - No ROM file in arguments \n";
-		return false;
-	}
-
-	else 
-	{
-		//Parse the rest of the arguments if any		
-		for(int x = 1; x < config::cli_args.size(); x++)
-		{	
-			//Load BIOS
-			if((config::cli_args[x] == "-b") || (config::cli_args[x] == "--bios")) 
-			{
-				if((++x) == config::cli_args.size()) { std::cout<<"GBE::Error - No BIOS file in arguments\n"; }
-
-				else 
-				{
-					config::use_bios = true; 
-					config::bios_file = config::cli_args[x];
-				}
-			}
-
-			//Set maximum FPS
-			else if((config::cli_args[x] == "-mf") || (config::cli_args[x] == "--max-fps"))
-			{
-				if((++x) == config::cli_args.size()) { std::cout<<"GBE::Error - No maximum framerate set\n"; }
-
-				else
-				{
-					u32 output = 0;
-					util::from_str(config::cli_args[x], output);
-					config::max_fps = output;
-				}
-			}
-
-			//Enable fullscreen mode
-			else if((config::cli_args[x] == "-f") || (config::cli_args[x] == "--fullscreen")) { config::flags |= SDL_WINDOW_FULLSCREEN_DESKTOP; } 
-
-			//Use MBC1M multicart mode if applicable for a given ROM
-			else if(config::cli_args[x] == "--mbc1m") { config::cart_type = DMG_MBC1M; }
-
-			//Use MBC1S if applicable for Pocket Sonar
-			else if(config::cli_args[x] == "--mbc1s") { config::cart_type = DMG_MBC1S; }
-
-			//Use MMM01 multicart mode if applicable for a given ROM
-			else if(config::cli_args[x] == "--mmm01") { config::cart_type = DMG_MMM01; }
-
-			//Use MBC30 (double SRAM) for Pocket Monsters Crystal
-			else if(config::cli_args[x] == "--mbc30") { config::cart_type = DMG_MBC30; }
-
-			//Use GB Memory Cartridge mapper
-			else if(config::cli_args[x] == "--gbmem") { config::cart_type = DMG_GBMEM; }
-	
-			//Use OpenGL for screen drawing
-			else if(config::cli_args[x] == "--opengl") { config::use_opengl = true; }
-
-			//Use Gameshark or Game Genie cheats
-			else if(config::cli_args[x] == "--cheats") { config::use_cheats = true; }
-
-			else if(config::cli_args[x] == "--patch") { config::use_patches = true; }
-
-			//Scale screen by 2x
-			else if(config::cli_args[x] == "--2x") { config::scaling_factor = config::old_scaling_factor = 2; }
-
-			//Scale screen by 3x
-			else if(config::cli_args[x] == "--3x") { config::scaling_factor = config::old_scaling_factor = 3; }
-
-			//Scale screen by 4x
-			else if(config::cli_args[x] == "--4x") { config::scaling_factor = config::old_scaling_factor = 4; }
-
-			//Scale screen by 5x
-			else if(config::cli_args[x] == "--5x") { config::scaling_factor = config::old_scaling_factor = 5; }
-
-			//Scale screen by 6x
-			else if(config::cli_args[x] == "--6x") { config::scaling_factor = config::old_scaling_factor = 6; }
-
-			//Enable Turbo File memory card
-			else if(config::cli_args[x] == "--turbo-file-memcard") { config::turbo_file_options |= 0x1; }
-
-			//Enable Turbo File write protection
-			else if(config::cli_args[x] == "--turbo-file-protect") { config::turbo_file_options |= 0x2; }
-
-			//Ignore Illegal Opcodes
-			else if(config::cli_args[x] == "--ignore-illegal-opcodes") { config::ignore_illegal_opcodes = true; }
-
-			//Auto Generate AM3 SmartMedia ID
-			else if(config::cli_args[x] == "--auto-gen-smid") { config::auto_gen_am3_id = true; }
-
-			//Print Help
-			else if((config::cli_args[x] == "-h") || (config::cli_args[x] == "--help")) 
-			{
-				if(!config::use_external_interfaces) { std::cout<<"\ngbe_plus file [options ...]\n\n"; }
-				else { std::cout<<"\ngbe_plus_qt file [options ...]\n\n"; }
-
-				std::cout<<"GBE+ Command Line Options:\n";
-				std::cout<<"-b [FILE], --bios [FILE] \t\t Load and use BIOS file\n";
-				std::cout<<"--mbc1m \t\t\t\t Use MBC1M multicart mode if applicable\n";
-				std::cout<<"--mmm01 \t\t\t\t Use MMM01 multicart mode if applicable\n";
-				std::cout<<"--mbc1s \t\t\t\t Use MBC1S sonar cart\n";
-				std::cout<<"--mbc30 \t\t\t\t Use MBC30 for Pocket Monsters Crystal\n";
-				std::cout<<"--gbmem \t\t\t\t Use GB Memory Cartridge mapper\n";
-				std::cout<<"--opengl \t\t\t\t Use OpenGL for screen drawing and scaling\n";
-				std::cout<<"--cheats \t\t\t\t Use Gameshark or Game Genie cheats\n";
-				std::cout<<"--patch \t\t\t\t Use a patch file for the ROM\n";
-				std::cout<<"--2x, --3x, --4x, --5x, --6x \t\t Scale screen by a given factor (OpenGL only)\n";
-				std::cout<<"--sys-auto \t\t\t\t Set the emulated system type to AUTO\n";
-				std::cout<<"--sys-dmg \t\t\t\t Set the emulated system type to DMG (old Gameboy)\n";
-				std::cout<<"--sys-gbc \t\t\t\t Set the emulated system type to GBC\n";
-				std::cout<<"--save-auto \t\t\t\t Set the GBA save type to Auto Detect\n";
-				std::cout<<"--turbo-file-memcard \t\t\t Enable memory card for Turbo File\n";
-				std::cout<<"--turbo-file-protect \t\t\t Enable write-proection for Turbo File\n";
-				std::cout<<"--ignore-illegal-opcodes \t\t\t Ignore Illegal CPU instructions when running\n";
-				std::cout<<"--auto-gen-smid \t\t\t\t Automatically generate 16-byte SmartMedia ID for AM3\n";
-				std::cout<<"-h, --help \t\t\t\t Print these help messages\n";
-				return false;
-			}
-
-			else
-			{
-				std::cout<<"GBE::Error - Unknown argument - " << config::cli_args[x] << "\n";
-				return false;
-			}
-		}
-
-		return true;
-	}
-}
-
-/****** Parse ROM filename and save file ******/
-void parse_filenames()
-{
-	//ROM file is always first argument
-	set_rom_file(config::cli_args[0]);
 }
 
 void set_rom_file(std::string filename)
@@ -859,24 +708,6 @@ bool parse_ini_file()
 	{
 		ini_item = ini_opts[x];
 
-		//Use BIOS
-		if(ini_item == "#use_bios")
-		{
-			if((x + 1) < size) 
-			{
-				util::from_str(ini_opts[++x], output);
-
-				if(output == 1) { config::use_bios = true; }
-				else { config::use_bios = false; }
-			}
-
-			else 
-			{ 
-				std::cout<<"GBE::Error - Could not parse gbe.ini (#use_bios) \n";
-				return false;
-			}
-		}
-
 		//Emulated SIO device
 		if(ini_item == "#sio_device")
 		{
@@ -965,42 +796,6 @@ bool parse_ini_file()
 			}
 		}
 
-		//DMG BIOS path
-		else if(ini_item == "#dmg_bios_path")
-		{
-			if((x + 1) < size) 
-			{
-				ini_item = ini_opts[++x];
-				std::string first_char = "";
-				first_char = ini_item[0];
-				
-				//When left blank, don't parse the next line item
-				if(first_char != "#") { config::dmg_bios_path = ini_item; }
-				else { config::dmg_bios_path = ""; x--;}
- 
-			}
-
-			else { config::dmg_bios_path = ""; }
-		}
-
-		//GBC BIOS path
-		else if(ini_item == "#gbc_bios_path")
-		{
-			if((x + 1) < size) 
-			{
-				ini_item = ini_opts[++x];
-				std::string first_char = "";
-				first_char = ini_item[0];
-				
-				//When left blank, don't parse the next line item
-				if(first_char != "#") { config::gbc_bios_path = ini_item; }
-				else { config::gbc_bios_path = ""; x--;}
- 
-			}
-
-			else { config::gbc_bios_path = ""; }
-		}
-
 		//Game save path
 		else if(ini_item == "#save_path")
 		{
@@ -1053,60 +848,6 @@ bool parse_ini_file()
 			}
 
 			else { config::cheats_path = ""; }
-		}
-
-		//External camera file
-		else if(ini_item == "#camera_file")
-		{
-			if((x + 1) < size) 
-			{
-				ini_item = ini_opts[++x];
-				std::string first_char = "";
-				first_char = ini_item[0];
-				
-				//When left blank, don't parse the next line item
-				if(first_char != "#") { config::external_camera_file = ini_item; }
-				else { config::external_camera_file = ""; x--;}
- 
-			}
-
-			else { config::external_camera_file = ""; }
-		}
-
-		//External image file
-		else if(ini_item == "#image_file")
-		{
-			if((x + 1) < size) 
-			{
-				ini_item = ini_opts[++x];
-				std::string first_char = "";
-				first_char = ini_item[0];
-				
-				//When left blank, don't parse the next line item
-				if(first_char != "#") { config::external_image_file = ini_item; }
-				else { config::external_image_file = ""; x--;}
- 
-			}
-
-			else { config::external_image_file = ""; }
-		}
-
-		//External data file
-		else if(ini_item == "#data_file")
-		{
-			if((x + 1) < size) 
-			{
-				ini_item = ini_opts[++x];
-				std::string first_char = "";
-				first_char = ini_item[0];
-				
-				//When left blank, don't parse the next line item
-				if(first_char != "#") { config::external_data_file = ini_item; }
-				else { config::external_data_file = ""; x--;}
- 
-			}
-
-			else { config::external_data_file = ""; }
 		}
 
 		//Use OpenGL
@@ -1793,96 +1534,6 @@ bool parse_ini_file()
 			else { cgfx::cgfx_path = ""; }
 		}
 
-		//CGFX BG Tile dump folder
-		else if(ini_item == "#dump_bg_path")
-		{
-			if((x + 1) < size) 
-			{
-				ini_item = ini_opts[++x];
-				std::string first_char = "";
-				first_char = ini_item[0];
-				
-				//When left blank, don't parse the next line item
-				if(first_char != "#") { cgfx::dump_bg_path = ini_item; }
-				else { x--; }
-			}
-		}
-
-		//CGFX OBJ Tile dump folder
-		else if(ini_item == "#dump_obj_path")
-		{
-			if((x + 1) < size) 
-			{
-				ini_item = ini_opts[++x];
-				std::string first_char = "";
-				first_char = ini_item[0];
-				
-				//When left blank, don't parse the next line item
-				if(first_char != "#") { cgfx::dump_obj_path = ini_item; }
-				else { x--; }
-			}
-		}
-
-		//CGFX Scaling factor
-		else if(ini_item == "#cgfx_scaling_factor")
-		{
-			if((x + 1) < size) 
-			{
-				util::from_str(ini_opts[++x], output);
-
-				if((output >= 1) && (output <= 10)) { cgfx::scaling_factor = output; }
-				else { cgfx::scaling_factor = 1; }
-			}
-
-			else 
-			{
-				std::cout<<"GBE::Error - Could not parse gbe.ini (#cgfx_scaling_factor) \n";
-				return false;
-			}
-		}
-
-		//CGFX Transparency color
-		else if(ini_item == "#cgfx_transparency")
-		{
-			if((x + 1) < size)
-			{
-				ini_item = ini_opts[++x];
-				std::size_t found = ini_item.find("0x");
-				std::string format = ini_item.substr(0, 2);
-
-				//Value must be in hex format with "0x"
-				if(format != "0x")
-				{
-					std::cout<<"GBE::Error - Could not parse gbe.ini (#cgfx_transparency) \n";
-					return false;
-				}
-
-				std::string hex_color = ini_item.substr(found + 2);
-
-				//Value must not be more than 8 characters long for AARRGGBB
-				if(hex_color.size() > 8)
-				{
-					std::cout<<"GBE::Error - Could not parse gbe.ini (#cgfx_transparency) \n";
-					return false;
-				}
-
-				u32 transparency = 0;
-
-				//Parse the string into hex
-				if(!util::from_hex_str(hex_color, transparency))
-				{
-					std::cout<<"GBE::Error - Could not parse gbe.ini (#cgfx_transparency) \n";
-					return false;
-				}
-			}
-
-			else
-			{
-				std::cout<<"GBE::Error - Could not parse gbe.ini (#cgfx_transparency) \n";
-				return false;
-			}
-		}
-
 		//IR database index
 		else if(ini_item == "#ir_db_index")
 		{
@@ -1937,10 +1588,6 @@ bool save_ini_file()
 	int recent_count = config::recent_files.size();
 	std::string val;
 
-	//Use BIOS
-	val = (config::use_bios) ? "1" : "0";
-	output_lines.push_back("[#use_bios:" + val + "]");
-
 	//Emulated SIO device
 	output_lines.push_back("[#sio_device:" + util::to_str(config::sio_device) + "]");
 
@@ -1959,15 +1606,6 @@ bool save_ini_file()
 	val = (config::use_osd) ? "1" : "0";
 	output_lines.push_back("[#use_osd:" + val + "]");
 
-	//DMG BIOS path
-	val = (config::dmg_bios_path == "") ? "" : (":'" + config::dmg_bios_path + "'");
-	output_lines.push_back("[#dmg_bios_path" + val + "]");
-
-
-	//GBC BIOS path
-	val = (config::gbc_bios_path == "") ? "" : (":'" + config::gbc_bios_path + "'");
-	output_lines.push_back("[#gbc_bios_path" + val + "]");
-
 	//Game save path
 	val = (config::save_path == "") ? "" : (":'" + config::save_path + "'");
 	output_lines.push_back("[#save_path" + val + "]");
@@ -1979,18 +1617,6 @@ bool save_ini_file()
 	//Cheats path
 	val = (config::cheats_path == "") ? "" : (":'" + config::cheats_path + "'");
 	output_lines.push_back("[#cheats_path" + val + "]");
-
-	//External camera file
-	val = (config::external_camera_file == "") ? "" : (":'" + config::external_camera_file + "'");
-	output_lines.push_back("[#camera_file" + val + "]");
-
-	//External image file
-	val = (config::external_image_file == "") ? "" : (":'" + config::external_image_file + "'");
-	output_lines.push_back("[#image_file" + val + "]");
-
-	//External image file
-	val = (config::external_data_file == "") ? "" : (":'" + config::external_data_file + "'");
-	output_lines.push_back("[#data_file" + val + "]");
 
 	//Use OpenGL
 	val = (config::use_opengl) ? "1" : "0";
@@ -2144,26 +1770,6 @@ bool save_ini_file()
 	//Use CGFX
 	val = (cgfx::load_cgfx) ? "1" : "0";
 	output_lines.push_back("[#use_cgfx:" + val + "]");
-
-	//CGFX manifest path
-	val = (cgfx::cgfx_path == "") ? "" : (":'" + cgfx::cgfx_path + "'");
-	output_lines.push_back("[#cgfx_path" + val + "]");
-
-	//CGFX BG Tile dump folder
-	val = (cgfx::dump_bg_path == "") ? "" : (":'" + cgfx::dump_bg_path + "'");
-	output_lines.push_back("[#dump_bg_path" + val + "]");
-
-	//CGFX OBJ Tile dump folder
-	val = (cgfx::dump_obj_path == "") ? "" : (":'" + cgfx::dump_obj_path + "'");
-	output_lines.push_back("[#dump_obj_path" + val + "]");
-
-	//CGFX Scaling factor
-	val = util::to_str(cgfx::scaling_factor);
-	output_lines.push_back("[#cgfx_scaling_factor:" + val + "]");
-
-	//CGFX Transparency color
-	val = util::to_hex_str(cgfx::transparency_color);
-	output_lines.push_back("[#cgfx_transparency:" + val + "]");
 
 	//IR database index
 	val = util::to_str(config::ir_db_index);

@@ -8,7 +8,7 @@
 //
 // Handles reading and writing bytes to memory locations
 // Used to switch ROM and RAM banks
-// Also loads ROM and BIOS files
+// Also loads ROM files
 
 #include "mmu.h"
 #include "common/cgfx_common.h"
@@ -67,17 +67,12 @@ void GB_MMU::reset()
 	bank_mode = 0;
 	ram_banking_enabled = false;
 
-	in_bios = config::use_bios;
-	bios_type = 1;
-	bios_size = 0x100;
-
 	cart.rom_size = 0;
 	cart.ram_size = 0;
 	cart.mbc_type = ROM_ONLY;
 	cart.battery = false;
 	cart.ram = false;
 	cart.multicart = ((config::cart_type == DMG_MBC1M) || (config::cart_type == DMG_MMM01));
-	cart.sonar = (config::cart_type == DMG_MBC1S);
 	cart.rumble = false;
 
 	cart.rtc = false;
@@ -144,9 +139,6 @@ void GB_MMU::reset()
 	sub_screen_update = 0;
 	sub_screen_lock = false;
 
-	//Load Pocket Sonar data now
-	if(cart.sonar) { mbc1s_load_sonar_data(config::external_image_file); }
-
 	std::cout<<"MMU::Initialized\n";
 }
 
@@ -169,9 +161,6 @@ bool GB_MMU::mmu_read(u32 offset, std::string filename)
 
 	mmu_read_content(&file);
 
-	//Sanitize MMU data from save state
-	if((bios_size != 0x100) && (bios_size != 0x900)) { bios_size = 0x100; }
-	
 	rom_bank &= 0x1FF;
 	ram_bank &= 0xF;
 	bank_mode &= 0x1;
@@ -199,9 +188,6 @@ void GB_MMU::mmu_read_content(std::ifstream* file)
 	file->read((char*)&bank_bits, sizeof(bank_bits));
 	file->read((char*)&bank_mode, sizeof(bank_mode));
 	file->read((char*)&ram_banking_enabled, sizeof(ram_banking_enabled));
-	file->read((char*)&in_bios, sizeof(in_bios));
-	file->read((char*)&bios_type, sizeof(bios_type));
-	file->read((char*)&bios_size, sizeof(bios_size));
 	file->read((char*)&cart, sizeof(cart));
 	file->read((char*)&previous_value, sizeof(previous_value));
 }
@@ -255,9 +241,6 @@ void GB_MMU::mmu_write_content(std::ofstream* file) {
 	file->write((char*)&bank_bits, sizeof(bank_bits));
 	file->write((char*)&bank_mode, sizeof(bank_mode));
 	file->write((char*)&ram_banking_enabled, sizeof(ram_banking_enabled));
-	file->write((char*)&in_bios, sizeof(in_bios));
-	file->write((char*)&bios_type, sizeof(bios_type));
-	file->write((char*)&bios_size, sizeof(bios_size));
 	file->write((char*)&cart, sizeof(cart));
 	file->write((char*)&previous_value, sizeof(previous_value));
 }
@@ -286,9 +269,6 @@ u32 GB_MMU::size()
 	mmu_size += sizeof(bank_bits);
 	mmu_size += sizeof(bank_mode);
 	mmu_size += sizeof(ram_banking_enabled);
-	mmu_size += sizeof(in_bios);
-	mmu_size += sizeof(bios_type);
-	mmu_size += sizeof(bios_size);
 	mmu_size += sizeof(cart);
 	mmu_size += sizeof(previous_value);
 
@@ -308,76 +288,53 @@ u32 GBC_MMU::size()
 /****** Read byte from memory ******/
 u8 DMG_MMU::read_u8(u16 address)
 {
-	if (!in_bios)
+	//Read from RP
+	if (address == REG_RP)
 	{
-		//Read from RP
-		if (address == REG_RP)
-		{
-			//GBC only
-			return 0x0;
-		}
+		//GBC only
+		return 0x0;
 	}
 	return GB_MMU::read_u8_sub(address);
 }
 
 u8 GBC_MMU::read_u8(u16 address)
 {
-	if (!in_bios)
+	//Read from VRAM, GBC uses banking
+	if ((address >= 0x8000) && (address <= 0x9FFF))
 	{
-		//Read from VRAM, GBC uses banking
-		if ((address >= 0x8000) && (address <= 0x9FFF))
+		return video_ram[vram_bank][address - 0x8000];
+	}
+
+	//In GBC mode, read from Working RAM using Banking
+	if ((address >= 0xC000) && (address <= 0xDFFF))
+	{
+		//Read from Bank 0 always when address is within 0xC000 - 0xCFFF
+		if ((address >= 0xC000) && (address <= 0xCFFF)) { return working_ram_bank[0][address - 0xC000]; }
+
+		//Read from selected Bank when address is within 0xD000 - 0xDFFF
+		else { return working_ram_bank[wram_bank][address - 0xD000]; }
+	}
+
+	//Read from RP
+	if (address == REG_RP)
+	{
+		//Initiate manual IR transmission (Full Changer, Pokemon Pikachu 2, Pocket Sakura, TV Remote)
+		if (!ir_signal && (ir_trigger == 1))
 		{
-			return video_ram[vram_bank][address - 0x8000];
+			ir_trigger++;
 		}
 
-		//In GBC mode, read from Working RAM using Banking
-		if ((address >= 0xC000) && (address <= 0xDFFF))
-		{
-			//Read from Bank 0 always when address is within 0xC000 - 0xCFFF
-			if ((address >= 0xC000) && (address <= 0xCFFF)) { return working_ram_bank[0][address - 0xC000]; }
+		//If Bits 6 and 7 are not set, treat Bit 1 as HIGH
+		if ((memory_map[address] & 0xC0) == 0) { return memory_map[address] | 0x2; }
 
-			//Read from selected Bank when address is within 0xD000 - 0xDFFF
-			else { return working_ram_bank[wram_bank][address - 0xD000]; }
-		}
-
-		//Read from RP
-		if (address == REG_RP)
-		{
-			//Initiate manual IR transmission (Full Changer, Pokemon Pikachu 2, Pocket Sakura, TV Remote)
-			if (!ir_signal && (ir_trigger == 1))
-			{
-				ir_trigger++;
-			}
-
-			//If Bits 6 and 7 are not set, treat Bit 1 as HIGH
-			if ((memory_map[address] & 0xC0) == 0) { return memory_map[address] | 0x2; }
-
-			//Otherwise, read RP normally
-			else { return memory_map[address]; }
-		}
+		//Otherwise, read RP normally
+		else { return memory_map[address]; }
 	}
 	return GB_MMU::read_u8_sub(address);
 }
 
 u8 GB_MMU::read_u8_sub(u16 address)
 {
-	//Read from BIOS
-	if(in_bios)
-	{
-		//GBC BIOS reads from 0x00 to 0xFF and 0x200 to 0x900
-		//0x100 - 0x1FF is reserved for the Nintendo logo + checksum + first lines of game code
-		//For the latter, just read from the cartridge ROM
-		if((bios_size == 0x900) && (address > 0x100) && (address < 0x200)) { return memory_map[address]; }
-		
-		else if(address == 0x100) 
-		{ 
-			in_bios = false; 
-			std::cout<<"MMU::Exiting BIOS \n";
-		}
-
-		else if(address < bios_size) { return bios[address]; }
-	}
-
 	//Read using ROM Banking
 	if((cart.multicart) && (address <= 0x3FFF)) { return mbc_read(address); }
 
@@ -1054,16 +1011,6 @@ void GB_MMU::write_u8(u16 address, u8 value)
 		lcd_stat->bgp[2] = (value >> 4) & 0x3;
 		lcd_stat->bgp[3] = (value >> 6) & 0x3;
 
-		//Update CGFX
-		if(cgfx::load_cgfx)
-		{
-			for(int x = 0; x < 384; x++)
-			{
-				cgfx_stat->bg_update_list[x] = true;
-			}
-			
-			cgfx_stat->update_bg = true;
-		}
 	}
 
 	//OBP0
@@ -1351,11 +1298,6 @@ void DMG_MMU::write_u8(u16 address, u8 value)
 		//DMG BG Tile data update
 		if (address <= 0x97FF)
 		{
-			if (cgfx::load_cgfx)
-			{
-				cgfx_stat->update_bg = true;
-				cgfx_stat->bg_update_list[(address & ~0x8000) >> 4] = true;
-			}
 
 			//mark as unused, cut tie to tile list
 			u16 idx = (address & ~0x8000) >> 4;
@@ -1469,18 +1411,6 @@ void GBC_MMU::write_u8(u16 address, u8 value)
 		//GBC BG Tile Data update
 		if (address <= 0x97FF)
 		{
-			if (cgfx::load_cgfx)
-			{
-				cgfx_stat->update_bg = true;
-
-				u8 tile_number = (address - lcd_stat->bg_tile_addr) >> 4;
-
-				//Convert tile number to signed if necessary
-				if (lcd_stat->bg_tile_addr == 0x8800) { tile_number = lcd_stat->signed_tile_lut[tile_number]; }
-				cgfx_stat->bg_tile_update_list[tile_number] = true;
-			}
-
-
 			//mark as unused, cut tie to tile list
 			u16 idx = (address & ~0x8000) >> 4;
 			if (vram_bank) idx += 384;
@@ -1489,18 +1419,6 @@ void GBC_MMU::write_u8(u16 address, u8 value)
 			{
 				cgfx_stat->screen_data.rendered_tile[cgfx_stat->vram_tile_idx[idx]].address = 0xFFFF;
 				cgfx_stat->vram_tile_idx[idx] = 0xFFFF;
-			}
-		}
-
-		//GBC BG Map Data update
-		else if (address >= 0x9800)
-		{
-			if (cgfx::load_cgfx)
-			{
-				cgfx_stat->update_map = true;
-
-				u16 map_number = address - 0x9800;
-				cgfx_stat->bg_map_update_list[map_number] = true;
 			}
 		}
 	}
@@ -1520,8 +1438,7 @@ u8 GB_MMU::mbc_read(u16 address)
 	switch(cart.mbc_type)
 	{
 		case MBC1:
-			if(!cart.sonar) { return cart.multicart ? mbc1_multicart_read(address) : mbc1_read(address); }
-			else { return mbc1s_read(address); }
+			return cart.multicart ? mbc1_multicart_read(address) : mbc1_read(address); 
 			break;
 
 		case MBC2:
@@ -1575,8 +1492,7 @@ void GB_MMU::mbc_write(u16 address, u8 value)
 	switch(cart.mbc_type)
 	{
 		case MBC1:
-			if(!cart.sonar) { cart.multicart ? mbc1_multicart_write(address, value) : mbc1_write(address, value); }
-			else { mbc1s_write(address, value); }
+			cart.multicart ? mbc1_multicart_write(address, value) : mbc1_write(address, value); 
 			break;
 
 		case MBC2:
@@ -1696,20 +1612,6 @@ void GB_MMU::hdma()
 /****** Read binary file to memory ******/
 bool GB_MMU::read_file(std::string filename)
 {
-	//No cart inserted
-	if(config::no_cart)
-	{
-		//Abort if no BIOS provided
-		if(!config::use_bios)
-		{
-			std::cout<<"MMU::Error - Emulating no cart inserted without BIOS\n";
-			return false;
-		}
-		
-		std::cout<<"MMU::No cart inserted\n";
-		return true;
-	}
-
 	std::ifstream file(filename.c_str(), std::ios::binary);
 
 	if(!file.is_open()) 
@@ -2051,9 +1953,6 @@ bool GB_MMU::read_file(std::string filename)
 		gb_mem_read_map(m_file);
 	}
 
-	//Let MBC1S access cart RAM area for MBC registers
-	if(cart.sonar) { cart.ram = true; }
-
 	//Calculate 8-bit checksum
 	u8 checksum = 0;
 
@@ -2108,45 +2007,43 @@ bool GB_MMU::read_file(std::string filename)
 	if(config::use_cheats) { set_gg_cheats(); }
 
 	//Manually HLE MMIO
-	if(!in_bios) 
+	memory_map[REG_DIV] = 0xAF;
+	write_u8(REG_LCDC, 0x91);
+	write_u8(REG_BGP, 0xFC);
+	write_u8(REG_P1, 0xFF);
+	write_u8(REG_TAC, 0xF8);
+	write_u8(0xFF10, 0x80);
+	write_u8(0xFF11, 0xBF);
+   	write_u8(0xFF12, 0xF3); 
+  	write_u8(0xFF14, 0xBF); 
+   	write_u8(0xFF16, 0x3F); 
+   	write_u8(0xFF17, 0x00); 
+   	write_u8(0xFF19, 0xBF); 
+   	write_u8(0xFF1A, 0x7F); 
+   	write_u8(0xFF1B, 0xFF); 
+   	write_u8(0xFF1C, 0x9F); 
+   	write_u8(0xFF1E, 0xBF); 
+   	write_u8(0xFF20, 0xFF); 
+   	write_u8(0xFF21, 0x00); 
+   	write_u8(0xFF22, 0x00); 
+   	write_u8(0xFF23, 0xBF); 
+   	write_u8(0xFF24, 0x77); 
+   	write_u8(0xFF25, 0xF3);
+	write_u8(0xFF26, 0xF1);
+	write_u8(IF_FLAG, 0xE0);
+
+	//Some sound registers are set, however, don't actually play sound
+	for(int x = 0; x < 4; x++) { apu_stat->channel[x].playing = false; }
+
+	if (config::gb_type == 2)
 	{
-		memory_map[REG_DIV] = 0xAF;
-		write_u8(REG_LCDC, 0x91);
-		write_u8(REG_BGP, 0xFC);
-		write_u8(REG_P1, 0xFF);
-		write_u8(REG_TAC, 0xF8);
-		write_u8(0xFF10, 0x80);
-		write_u8(0xFF11, 0xBF);
-   		write_u8(0xFF12, 0xF3); 
-  		write_u8(0xFF14, 0xBF); 
-   		write_u8(0xFF16, 0x3F); 
-   		write_u8(0xFF17, 0x00); 
-   		write_u8(0xFF19, 0xBF); 
-   		write_u8(0xFF1A, 0x7F); 
-   		write_u8(0xFF1B, 0xFF); 
-   		write_u8(0xFF1C, 0x9F); 
-   		write_u8(0xFF1E, 0xBF); 
-   		write_u8(0xFF20, 0xFF); 
-   		write_u8(0xFF21, 0x00); 
-   		write_u8(0xFF22, 0x00); 
-   		write_u8(0xFF23, 0xBF); 
-   		write_u8(0xFF24, 0x77); 
-   		write_u8(0xFF25, 0xF3);
-		write_u8(0xFF26, 0xF1);
-		write_u8(IF_FLAG, 0xE0);
-
-		//Some sound registers are set, however, don't actually play sound
-		for(int x = 0; x < 4; x++) { apu_stat->channel[x].playing = false; }
-
-		if (config::gb_type == 2)
-		{
-			memory_map[0xFF51] = 0xFF;
-			memory_map[0xFF52] = 0xFF;
-			memory_map[0xFF53] = 0xFF;
-			memory_map[0xFF54] = 0xFF;
-			memory_map[0xFF55] = 0xFF;
-		}
+		memory_map[0xFF51] = 0xFF;
+		memory_map[0xFF52] = 0xFF;
+		memory_map[0xFF53] = 0xFF;
+		memory_map[0xFF54] = 0xFF;
+		memory_map[0xFF55] = 0xFF;
 	}
+
 
 	//Manually set some I/O registers
 	//Some I/O registers are 0xFF on DMG units, 0x0 on GBC units
@@ -2172,46 +2069,6 @@ void DMG_MMU::init_io_reg()
 void GBC_MMU::init_io_reg()
 {
 	memory_map[REG_RP] = 0x3E;
-}
-
-/****** Read GB BIOS ******/
-bool GB_MMU::read_bios(std::string filename)
-{
-	std::ifstream file(filename.c_str(), std::ios::binary);
-
-	if(!file.is_open()) 
-	{
-		std::cout<<"MMU::BIOS file " << filename << " could not be opened. Check file path or permissions. \n";
-		return false; 
-	}
-
-	//Get BIOS file size
-	file.seekg(0, file.end);
-	bios_size = file.tellg();
-	file.seekg(0, file.beg);
-
-	//Check the file size before reading
-	if((bios_size == 0x100) || (bios_size == 0x900))
-	{
-		//Resize BIOS memory
-		bios.resize(bios_size);
-
-		u8* ex_bios = &bios[0];
-
-		//Read BIOS data from file
-		file.read((char*)ex_bios, bios_size);
-		file.close();
-
-		std::cout<<"MMU::BIOS file " << filename << " loaded successfully. \n";
-
-		return true;
-	}
-
-	else
-	{
-		std::cout<<"MMU::BIOS file " << filename << " has an incorrect file size : (" << bios_size << " bytes) \n";
-		return false;
-	}	
 }
 
 /****** Load backup save data ******/

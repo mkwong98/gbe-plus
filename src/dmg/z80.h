@@ -109,7 +109,6 @@ class Z80
 	//Core Functions
 	~Z80();
 	virtual void reset();
-	virtual void reset_bios();
 	virtual void exec_op(u8 opcode);
 	void exec_op(u16 opcode);
 	virtual u32 get_cycles() = 0;
@@ -176,7 +175,6 @@ public:
 	GBC_Z80();
 	~GBC_Z80();
 	void reset();
-	void reset_bios();
 	void exec_op(u8 opcode);
 	u32 get_cycles();
 

@@ -45,7 +45,6 @@ class GB_MMU
 	};
 
 	std::vector <u8> memory_map;
-	std::vector <u8> bios;
 
 	//Memory Banks
 	std::vector< std::vector<u8> > read_only_bank;
@@ -61,11 +60,6 @@ class GB_MMU
 	u8 bank_mode;
 	bool ram_banking_enabled;
 
-	//BIOS controls
-	bool in_bios;
-	u8 bios_type;
-	u32 bios_size;
-
 	//Cartridge data structure
 	struct cart_data
 	{
@@ -76,7 +70,6 @@ class GB_MMU
 		bool battery;
 		bool ram;
 		bool multicart;
-		bool sonar;
 		bool rumble;
 
 		//MBC3 RTC
@@ -160,7 +153,6 @@ class GB_MMU
 
 	bool read_file(std::string filename);
 	virtual void init_io_reg() = 0;
-	bool read_bios(std::string filename);
 	bool save_backup(std::string filename);
 	bool load_backup(std::string filename);
 

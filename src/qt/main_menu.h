@@ -52,9 +52,6 @@ class main_menu : public QWidget
 	bool fullscreen_mode;
 
 	void pause_emu();
-	void open_first_file();
-	void set_card_file();
-	void set_data_file();
 
 	protected:
 	void paintEvent(QPaintEvent* event);
@@ -65,10 +62,6 @@ class main_menu : public QWidget
 
 	private slots:
 	void open_file();
-	void open_no_cart();
-	void select_cam_file();
-	void select_img_file();
-	void select_data_file();
 	void fullscreen();
 	void screenshot();
 	void pause();

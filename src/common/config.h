@@ -22,8 +22,6 @@
 void reset_dmg_colors();
 void set_dmg_colors(u8 color_type);
 u8 get_system_type_from_file(std::string filename);
-bool parse_cli_args();
-void parse_filenames();
 
 void set_rom_file(std::string filename);
 std::string get_rom_file();
@@ -52,19 +50,12 @@ enum special_cart_types
 
 namespace config
 { 
-	extern std::string bios_file;
-	extern std::string dmg_bios_path;
-	extern std::string gbc_bios_path;
 	extern std::string save_path;
 	extern std::string ss_path;
 	extern std::string cfg_path;
 	extern std::string data_path;
 	extern std::string cheats_path;
-	extern std::string external_camera_file;
-	extern std::string external_image_file;
-	extern std::string external_data_file;
 	extern std::vector <std::string> recent_files;
-	extern std::vector <std::string> cli_args;
 
 	extern u32 gbe_key_a, gbe_key_b, gbe_key_x, gbe_key_y, gbe_key_start, gbe_key_select, gbe_key_up, gbe_key_down, gbe_key_left, gbe_key_right, gbe_key_r_trigger, gbe_key_l_trigger;
 	extern u32 gbe_joy_a, gbe_joy_b, gbe_joy_x, gbe_joy_y, gbe_joy_start, gbe_joy_select, gbe_joy_up, gbe_joy_down, gbe_joy_left, gbe_joy_right, gbe_joy_r_trigger, gbe_joy_l_trigger;
@@ -89,8 +80,6 @@ namespace config
 
 	extern u32 flags;
 	extern bool pause_emu;
-	extern bool use_bios;
-	extern bool no_cart;
 	extern bool ignore_illegal_opcodes;
 
 	extern special_cart_types cart_type;

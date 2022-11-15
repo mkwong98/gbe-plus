@@ -46,7 +46,6 @@ class gen_settings : public QDialog
 	u8 last_control_id;
 
 	//General tab widgets
-	QCheckBox* bios;
 	QComboBox* special_cart;
 	QComboBox* overclock;
 	QCheckBox* cheats;
@@ -87,16 +86,10 @@ class gen_settings : public QDialog
 	QSlider* dead_zone;
 
 	//Paths tab widgets
-	QLineEdit* dmg_bios;
-	QLineEdit* gbc_bios;
-	QLineEdit* cgfx_path;
 	QLineEdit* screenshot;
 	QLineEdit* game_saves;
 	QLineEdit* cheats_path;
 
-	QLabel* dmg_bios_label;
-	QLabel* gbc_bios_label;
-	QLabel* cgfx_path_label;
 	QLabel* screenshot_label;
 	QLabel* game_saves_label;
 	QLabel* cheats_path_label;
@@ -170,13 +163,11 @@ class gen_settings : public QDialog
 	void update_volume();
 
 	protected:
-	void paintEvent(QPaintEvent* event);
 	void keyPressEvent(QKeyEvent* event);
 	void closeEvent(QCloseEvent* event);
 	bool eventFilter(QObject* target, QEvent* event);
 
 	private slots:
-	void set_bios();
 	void overclock_change();
 	void set_patches();
 	void show_cheats();

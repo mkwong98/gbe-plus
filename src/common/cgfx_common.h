@@ -27,25 +27,12 @@ namespace cgfx
 
 	extern bool load_cgfx;
 	extern bool loaded;
-	extern bool ignore_blank_dumps;
-	extern bool auto_obj_trans;
 
 	extern u32 transparency_color;
 	extern u8 scaling_factor;
 
 	extern std::string cgfx_path;
-	extern std::string dump_bg_path;
-	extern std::string dump_obj_path;
-	extern std::string dump_name;
 	extern std::string meta_dump_name;
-
-	extern std::string last_hash;
-	extern u32 last_vram_addr;
-	extern u8 last_type;
-	extern u8 last_palette;
-	extern bool last_added;
-	extern bool last_saved;
-	extern bool ignore_existing_hash;
 }
 
 #endif // GBE_CGFX 
