@@ -38,16 +38,6 @@ bool save_cheats_file();
 bool load_osd_font();
 void draw_osd_msg(std::string osd_text, u32* osd_surface, u8 x_offset, u8 y_offset);
 
-enum special_cart_types
-{
-	NORMAL_CART,
-	DMG_MBC1M,
-	DMG_MBC1S,
-	DMG_MMM01,
-	DMG_MBC30,
-	DMG_GBMEM,
-};
-
 namespace config
 { 
 	extern std::string save_path;
@@ -57,22 +47,11 @@ namespace config
 	extern std::string cheats_path;
 	extern std::vector <std::string> recent_files;
 
-	extern u32 gbe_key_a, gbe_key_b, gbe_key_x, gbe_key_y, gbe_key_start, gbe_key_select, gbe_key_up, gbe_key_down, gbe_key_left, gbe_key_right, gbe_key_r_trigger, gbe_key_l_trigger;
-	extern u32 gbe_joy_a, gbe_joy_b, gbe_joy_x, gbe_joy_y, gbe_joy_start, gbe_joy_select, gbe_joy_up, gbe_joy_down, gbe_joy_left, gbe_joy_right, gbe_joy_r_trigger, gbe_joy_l_trigger;
-
-	extern u32 con_key_up, con_key_down, con_key_left, con_key_right, con_key_1, con_key_2;
-	extern u32 con_joy_up, con_joy_down, con_joy_left, con_joy_right, con_joy_1, con_joy_2;
-
-	extern int touch_zone_x[10];
-	extern int touch_zone_y[10];
-	extern int touch_zone_pad[10];
-	extern u8 touch_mode;
+	extern u32 gbe_key_a, gbe_key_b, gbe_key_start, gbe_key_select, gbe_key_up, gbe_key_down, gbe_key_left, gbe_key_right;
+	extern u32 gbe_joy_a, gbe_joy_b, gbe_joy_start, gbe_joy_select, gbe_joy_up, gbe_joy_down, gbe_joy_left, gbe_joy_right;
 
 	extern u32 hotkey_turbo;
 	extern u32 hotkey_mute;
-	extern u32 hotkey_camera;
-	extern u32 hotkey_swap_screen;
-	extern u32 hotkey_shift_screen;
 	extern int dead_zone;
 	extern int joy_id;
 	extern int joy_sdl_id;
@@ -82,8 +61,6 @@ namespace config
 	extern bool pause_emu;
 	extern bool ignore_illegal_opcodes;
 
-	extern special_cart_types cart_type;
-
 	extern bool use_opengl;
 	extern bool turbo;
 	extern u8 scaling_factor;
@@ -92,7 +69,6 @@ namespace config
 	extern u8 gb_type;
 	extern u8 dmg_gbc_pal;
 	extern u32 utp_steps;
-	extern u32 magic_reader_id;
 
 	extern bool use_cheats;
 	extern std::vector <u32> gs_cheats;
@@ -125,10 +101,6 @@ namespace config
 
 	extern u16 rtc_offset[6];
 	extern u32 oc_flags;
-	extern u32 ir_db_index;
-
-	extern u16 battle_chip_id;
-	extern u16 chip_list[6];
 
 	extern u8 turbo_file_options;
 

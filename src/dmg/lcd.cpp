@@ -1226,9 +1226,6 @@ void GB_LCD::step_sub(int cpu_clock)
 				//Update FPS counter + title
 				fps_count++;
 
-				//Process gyroscope
-				if(mem->cart.mbc_type == GB_MMU::MBC7) { mem->g_pad->process_gyroscope(); }
-
 				//Process Gameshark cheats
 				if(config::use_cheats) { mem->set_gs_cheats(); }
 
@@ -1631,9 +1628,6 @@ void GBC_LCD::collect_obj_scanline() {
 	if (!lcd_stat.obj_enable) return;
 
 	std::vector <tile_strip>* strips = &(cgfx_stat.screen_data.scanline[lcd_stat.current_scanline].rendered_obj);
-	int searchF;
-	int searchT;
-	int compareIdx;
 	//Update render list for DMG games
 	//Cycle through all of the sprites
 	for (int x = 0; x < 40; x++)

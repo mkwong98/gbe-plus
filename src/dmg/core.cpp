@@ -229,8 +229,6 @@ void GB_core::run_core()
 				else if((event.type == SDL_JOYDEVICEADDED) && (!core_pad.joy_init)) { core_pad.init(); }
 			}
 			
-			//Perform reset for GB Memory Cartridge
-			if((config::cart_type == DMG_GBMEM) && (core_mmu->cart.flash_stat == 0xF0)) { reset(); }
 		}
 
 		//Run the CPU
@@ -549,20 +547,6 @@ void GB_core::handle_hotkey(int input, bool pressed)
 
 	//Toggle turbo off
 	else if((input == config::hotkey_turbo) && (!pressed)) { config::turbo = false; }
-
-	//Reset emulation on F8
-	//Only done when using GB Memory Cartridge via GUI
-	else if((input == SDLK_F8) && (pressed) && (config::cart_type == DMG_GBMEM) && (config::use_external_interfaces))
-	{
-		//If running GB Memory Cartridge, make sure this is a true reset, i.e. boot to the menu program
-		if(core_mmu->cart.flash_stat == 0x40)
-		{
-			core_mmu->cart.flash_stat = 0;
-			config::gb_type = core_mmu->cart.flash_cnt;
-		}
-
-		reset();
-	}
 }
 
 /****** Updates the core's volume ******/
@@ -609,17 +593,6 @@ void GB_core::ex_write_u8(u16 address, u8 value) { core_mmu->write_u8(address, v
 
 void GB_core::read_cgfx() {	cgfx::loaded = core_cpu->controllers.video->load_manifest(get_manifest_file());}
 
-/****** Grabs the OBJ palette ******/
-u32* GB_core::get_obj_palette(int pal_index)
-{
-	return &core_cpu->controllers.video->lcd_stat.obj_colors_final[0][pal_index];
-}
-
-/****** Grabs the BG palette ******/
-u32* GB_core::get_bg_palette(int pal_index)
-{
-	return &core_cpu->controllers.video->lcd_stat.bg_colors_final[0][pal_index];
-}
 
 /****** Returns miscellaneous data from the core ******/
 void* GB_core::get_core_data(u32 core_index)
@@ -635,4 +608,5 @@ void* GB_core::get_core_data(u32 core_index)
 		return &(core_cpu->controllers.video->cgfx_stat);
 		break;
 	}
+	return NULL;
 }

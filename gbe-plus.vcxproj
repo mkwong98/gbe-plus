@@ -86,6 +86,7 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>C:\Users\user\Documents\GitHub\glew-2.1.0\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtOpenGL;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtWidgets;C:\Users\user\Documents\GitHub\gbe-plus\src;C:\Users\user\Documents\GitHub\SDL2-2.0.22\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib;C:\Users\user\Documents\GitHub\SDL2-2.0.22\lib\x64;$(LibraryPath)</LibraryPath>
+    <CodeAnalysisRuleSet>Unused code set.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -166,7 +167,6 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
-    <ClCompile Include="src\dmg\camera.cpp" />
     <ClCompile Include="src\dmg\core.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
@@ -221,14 +221,11 @@
     <ClCompile Include="src\qt\main.cpp" />
     <ClCompile Include="src\qt\main_menu.cpp" />
     <ClCompile Include="src\qt\ogl_manager.cpp" />
-    <ClCompile Include="src\qt\pp2_menu.cpp" />
-    <ClCompile Include="src\qt\ps_menu.cpp" />
     <ClCompile Include="src\qt\qt_common.cpp" />
     <ClCompile Include="src\qt\render.cpp" />
     <ClCompile Include="src\qt\rtc_menu.cpp" />
     <ClCompile Include="src\qt\screens.cpp" />
     <ClCompile Include="src\qt\tbf_menu.cpp" />
-    <ClCompile Include="src\qt\zzh_menu.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\cgfx_common.h" />
@@ -340,42 +337,6 @@
       <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ClCompile</OutputItemType>
     </CustomBuild>
     <ClInclude Include="src\qt\ogl_manager.h" />
-    <CustomBuild Include="src\qt\pp2_menu.h">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">C:\Qt\Qt5.12.12\5.12.12\msvc2017\bin\moc.exe "%(FullPath)" -o "%(RootDir)%(Directory)moc_%(Filename).cpp</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">C:\Qt\Qt5.12.12\5.12.12\msvc2017\bin\moc.exe "%(FullPath)" -o "%(RootDir)%(Directory)moc_%(Filename).cpp</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename)%(Extension) using MOC</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compiling %(Filename)%(Extension) using MOC</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(RootDir)%(Directory)moc_%(Filename).cpp</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(RootDir)%(Directory)moc_%(Filename).cpp</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ClCompile</OutputItemType>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ClCompile</OutputItemType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Qt\Qt5.12.12\5.12.12\msvc2017\bin\moc.exe "%(FullPath)" -o "%(RootDir)%(Directory)moc_%(Filename).cpp</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Qt\Qt5.12.12\5.12.12\msvc2017\bin\moc.exe "%(FullPath)" -o "%(RootDir)%(Directory)moc_%(Filename).cpp</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compiling %(Filename)%(Extension) using MOC</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compiling %(Filename)%(Extension) using MOC</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RootDir)%(Directory)moc_%(Filename).cpp</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RootDir)%(Directory)moc_%(Filename).cpp</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ClCompile</OutputItemType>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ClCompile</OutputItemType>
-    </CustomBuild>
-    <CustomBuild Include="src\qt\ps_menu.h">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">C:\Qt\Qt5.12.12\5.12.12\msvc2017\bin\moc.exe "%(FullPath)" -o "%(RootDir)%(Directory)moc_%(Filename).cpp</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">C:\Qt\Qt5.12.12\5.12.12\msvc2017\bin\moc.exe "%(FullPath)" -o "%(RootDir)%(Directory)moc_%(Filename).cpp</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename)%(Extension) using MOC</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compiling %(Filename)%(Extension) using MOC</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(RootDir)%(Directory)moc_%(Filename).cpp</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(RootDir)%(Directory)moc_%(Filename).cpp</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ClCompile</OutputItemType>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ClCompile</OutputItemType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Qt\Qt5.12.12\5.12.12\msvc2017\bin\moc.exe "%(FullPath)" -o "%(RootDir)%(Directory)moc_%(Filename).cpp</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Qt\Qt5.12.12\5.12.12\msvc2017\bin\moc.exe "%(FullPath)" -o "%(RootDir)%(Directory)moc_%(Filename).cpp</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compiling %(Filename)%(Extension) using MOC</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compiling %(Filename)%(Extension) using MOC</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RootDir)%(Directory)moc_%(Filename).cpp</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RootDir)%(Directory)moc_%(Filename).cpp</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ClCompile</OutputItemType>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ClCompile</OutputItemType>
-    </CustomBuild>
     <ClInclude Include="src\qt\qt_common.h" />
     <ClInclude Include="src\qt\render.h" />
     <CustomBuild Include="src\qt\rtc_menu.h">
@@ -432,76 +393,9 @@
       <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ClCompile</OutputItemType>
       <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ClCompile</OutputItemType>
     </CustomBuild>
-    <CustomBuild Include="src\qt\zzh_menu.h">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">C:\Qt\Qt5.12.12\5.12.12\msvc2017\bin\moc.exe "%(FullPath)" -o "%(RootDir)%(Directory)moc_%(Filename).cpp</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">C:\Qt\Qt5.12.12\5.12.12\msvc2017\bin\moc.exe "%(FullPath)" -o "%(RootDir)%(Directory)moc_%(Filename).cpp</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename)%(Extension) using MOC</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compiling %(Filename)%(Extension) using MOC</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(RootDir)%(Directory)moc_%(Filename).cpp</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(RootDir)%(Directory)moc_%(Filename).cpp</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ClCompile</OutputItemType>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ClCompile</OutputItemType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Qt\Qt5.12.12\5.12.12\msvc2017\bin\moc.exe "%(FullPath)" -o "%(RootDir)%(Directory)moc_%(Filename).cpp</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Qt\Qt5.12.12\5.12.12\msvc2017\bin\moc.exe "%(FullPath)" -o "%(RootDir)%(Directory)moc_%(Filename).cpp</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compiling %(Filename)%(Extension) using MOC</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compiling %(Filename)%(Extension) using MOC</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RootDir)%(Directory)moc_%(Filename).cpp</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RootDir)%(Directory)moc_%(Filename).cpp</Outputs>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ClCompile</OutputItemType>
-      <OutputItemType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ClCompile</OutputItemType>
-    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <None Include="src\data\cards\bcb\battle_space\battle_space_baasaakaa.bin" />
-    <None Include="src\data\cards\bcb\battle_space\battle_space_barukirii.bin" />
-    <None Include="src\data\cards\bcb\battle_space\battle_space_gurizurii.bin" />
-    <None Include="src\data\cards\bcb\battle_space\battle_space_mahou_senshi.bin" />
-    <None Include="src\data\cards\bcb\battle_space\battle_space_naito.bin" />
-    <None Include="src\data\cards\bcb\battle_space\battle_space_reisu.bin" />
-    <None Include="src\data\cards\bcb\battle_space\battle_space_shaaman.bin" />
-    <None Include="src\data\cards\bcb\battle_space\battle_space_shiifu.bin" />
-    <None Include="src\data\cards\bcb\battle_space\battle_space_soosaraa.bin" />
-    <None Include="src\data\cards\bcb\battle_space\battle_space_woriyaa.bin" />
-    <None Include="src\data\cards\bcb\family_jockey_2\family_jockey_a1.bin" />
-    <None Include="src\data\cards\bcb\family_jockey_2\family_jockey_a2.bin" />
-    <None Include="src\data\cards\bcb\family_jockey_2\family_jockey_a4.bin" />
-    <None Include="src\data\cards\bcb\family_jockey_2\family_jockey_b1.bin" />
-    <None Include="src\data\cards\bcb\family_jockey_2\family_jockey_b2.bin" />
-    <None Include="src\data\cards\bcb\family_jockey_2\family_jockey_b4.bin" />
-    <None Include="src\data\cards\bcb\family_jockey_2\family_jockey_c3.bin" />
-    <None Include="src\data\cards\bcb\family_jockey_2\family_jockey_c5.bin" />
-    <None Include="src\data\cards\bcb\famista_3\famista_1.bin" />
-    <None Include="src\data\cards\bcb\famista_3\famista_2.bin" />
-    <None Include="src\data\cards\bcb\famista_3\famista_3.bin" />
-    <None Include="src\data\cards\bcb\famista_3\famista_4.bin" />
-    <None Include="src\data\cards\bcb\kattobi_road\kattobi_road_fowaarudo.bin" />
-    <None Include="src\data\cards\bcb\kattobi_road\kattobi_road_gaudi.bin" />
-    <None Include="src\data\cards\bcb\kattobi_road\kattobi_road_miirataabo.bin" />
-    <None Include="src\data\cards\bcb\kattobi_road\kattobi_road_naito_2000.bin" />
-    <None Include="src\data\cards\bcb\kattobi_road\kattobi_road_riisurakksu.bin" />
-    <None Include="src\data\cards\bcb\kattobi_road\kattobi_road_rokutasuyonnto.bin" />
-    <None Include="src\data\cards\bcb\monster_maker\monster_maker_diaane.bin" />
-    <None Include="src\data\cards\bcb\monster_maker\monster_maker_erisaisu.bin" />
-    <None Include="src\data\cards\bcb\monster_maker\monster_maker_haagun.bin" />
-    <None Include="src\data\cards\bcb\monster_maker\monster_maker_rooran.bin" />
-    <None Include="src\data\cards\bcb\monster_maker\monster_maker_rorieen.bin" />
-    <None Include="src\data\cards\bcb\monster_maker\monster_maker_tamuroon.bin" />
-    <None Include="src\data\cards\btb\chibittsuu.bin" />
-    <None Include="src\data\cards\btb\rarufu.bin" />
-    <None Include="src\data\cards\btb\tamappi.bin" />
-    <None Include="src\data\cards\hcv1000\oshare_majo\TD_01.bin" />
-    <None Include="src\data\cards\hcv1000\oshare_majo\TD_02.bin" />
-    <None Include="src\data\cards\hcv1000\oshare_majo\TF_01.bin" />
-    <None Include="src\data\cards\hcv1000\oshare_majo\TF_02.bin" />
-    <None Include="src\data\cards\hcv1000\oshare_majo\TH_01.bin" />
-    <None Include="src\data\cards\hcv1000\oshare_majo\TH_02.bin" />
     <None Include="src\data\gbma\index.html" />
-    <None Include="src\data\gbma\map.bin" />
-    <None Include="src\data\gbma\mbox.bin" />
-    <None Include="src\data\gbma\minigame.bin" />
-    <None Include="src\data\pocket_sakura_db.bin" />
-    <None Include="src\data\pokemon_pikachu_db.bin" />
-    <None Include="src\data\zzh_db.bin" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

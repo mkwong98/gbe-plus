@@ -49,8 +49,6 @@ class core_emu
 
 	//CGFX interface
 	virtual void read_cgfx() = 0;
-	virtual u32* get_obj_palette(int pal_index) = 0;
-	virtual u32* get_bg_palette(int pal_index) = 0;
 
 	//Misc
 	virtual void* get_core_data(u32 core_index) = 0;

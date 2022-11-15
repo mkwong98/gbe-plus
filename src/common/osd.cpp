@@ -7,7 +7,6 @@
 // Description : GBE+ On-Screen Display
 //
 // Loads font for OSD messages. Draws OSD messages to a given SDL surface
-// Also loads virtual cursor used for NDS input
 
 #include <iostream>
 #include <fstream>

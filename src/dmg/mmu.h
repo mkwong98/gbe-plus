@@ -69,7 +69,6 @@ class GB_MMU
 		mbc_types mbc_type;
 		bool battery;
 		bool ram;
-		bool multicart;
 		bool rumble;
 
 		//MBC3 RTC
@@ -98,26 +97,13 @@ class GB_MMU
 		u16 addr;
 		u16 buffer;
 
-		//Camera
-		u8 cam_reg[54];
-		std::vector <u8> cam_buffer;
-		bool cam_lock;
-
-		//MBC1S
-		u8 sonar_byte;
-		u8 depth;
-		std::vector <u8> frame_data;
-		u32 pulse_count;
-		u32 frame_count;
-
 		//TAMA5
 		u8 tama_reg[16];
 		u8 tama_ram[256];
 		u8 tama_cmd;
 		u8 tama_out;
 
-		//GB Memory Cartridge
-		u8 gb_mem_map[128];
+
 	} cart;
 
 	u8 ir_signal;
@@ -166,13 +152,6 @@ class GB_MMU
 	void mbc1_write(u16 address, u8 value);
 	u8 mbc1_read(u16 address);
 
-	void mbc1_multicart_write(u16 address, u8 value);
-	u8 mbc1_multicart_read(u16 address);
-
-	void mbc1s_write(u16 address, u8 value);
-	u8 mbc1s_read(u16 address);
-	bool mbc1s_load_sonar_data(std::string filename);
-
 	void mbc2_write(u16 address, u8 value);
 	u8 mbc2_read(u16 address);
 
@@ -197,10 +176,6 @@ class GB_MMU
 
 	void mmm01_write(u16 address, u8 value);
 	u8 mmm01_read(u16 address);
-
-	void cam_write(u16 address, u8 value);
-	u8 cam_read(u16 address);
-	bool cam_load_snapshot(std::string filename);
 
 	void tama5_write(u16 address, u8 value);
 	u8 tama5_read(u16 address);

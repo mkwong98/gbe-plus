@@ -26,9 +26,6 @@
 #include "data_dialog.h"
 #include "cheat_menu.h"
 #include "rtc_menu.h"
-#include "pp2_menu.h"
-#include "ps_menu.h"
-#include "zzh_menu.h"
 #include "tbf_menu.h"
 
 class gen_settings : public QDialog
@@ -46,7 +43,6 @@ class gen_settings : public QDialog
 	u8 last_control_id;
 
 	//General tab widgets
-	QComboBox* special_cart;
 	QComboBox* overclock;
 	QCheckBox* cheats;
 	QPushButton* edit_cheats;
@@ -81,7 +77,6 @@ class gen_settings : public QDialog
 	QVBoxLayout* controls_layout;
 	QVBoxLayout* advanced_controls_layout;
 	QVBoxLayout* hotkey_controls_layout;
-	QVBoxLayout* bcg_controls_layout;
 
 	QSlider* dead_zone;
 
@@ -99,64 +94,32 @@ class gen_settings : public QDialog
 
 	QLineEdit* input_a;
 	QLineEdit* input_b;
-	QLineEdit* input_x;
-	QLineEdit* input_y;
 	QLineEdit* input_start;
 	QLineEdit* input_select;
 	QLineEdit* input_left;
 	QLineEdit* input_right;
 	QLineEdit* input_up;
 	QLineEdit* input_down;
-	QLineEdit* input_l;
-	QLineEdit* input_r;
-	QLineEdit* input_con_left;
-	QLineEdit* input_con_right;
-	QLineEdit* input_con_up;
-	QLineEdit* input_con_down;
-	QLineEdit* input_con_1;
-	QLineEdit* input_con_2;
 	QLineEdit* input_turbo;
 	QLineEdit* input_mute;
-	QLineEdit* input_camera;
 
 	QPushButton* config_a;
 	QPushButton* config_b;
-	QPushButton* config_x;
-	QPushButton* config_y;
 	QPushButton* config_start;
 	QPushButton* config_select;
 	QPushButton* config_left;
 	QPushButton* config_right;
 	QPushButton* config_up;
 	QPushButton* config_down;
-	QPushButton* config_l;
-	QPushButton* config_r;
-	QPushButton* config_con_left;
-	QPushButton* config_con_right;
-	QPushButton* config_con_up;
-	QPushButton* config_con_down;
-	QPushButton* config_con_1;
-	QPushButton* config_con_2;
 	QPushButton* config_turbo;
 	QPushButton* config_mute;
-	QPushButton* config_camera;
 
 	//Advanced controls tab widget
 	QCheckBox* rumble_on;
 
-	//Battle Chip Gate tab widgets
-	QComboBox* chip_gate_type;
-	QComboBox* battle_chip_1;
-	QComboBox* battle_chip_2;
-	QComboBox* battle_chip_3;
-	QComboBox* battle_chip_4;
-
 	//Misc widgets
 	cheat_menu* dmg_cheat_menu;
 	rtc_menu* real_time_clock_menu;
-	pp2_menu* pokemon_pikachu_menu;
-	ps_menu* pocket_sakura_menu;
-	zzh_menu* full_changer_menu;
 	tbf_menu* turbo_file_menu;
 	QMessageBox* warning_box;
 
@@ -188,8 +151,6 @@ class gen_settings : public QDialog
 	void rebuild_input_index();
 	void input_device_change();
 	void dead_zone_change();
-	void get_chip_list();
-	void set_battle_chip();
 	void configure_button(int button);
 	void close_input();
 	void close_settings();
@@ -207,35 +168,18 @@ class gen_settings : public QDialog
 	QWidget* input_device_set;
 	QWidget* input_a_set;
 	QWidget* input_b_set;
-	QWidget* input_x_set;
-	QWidget* input_y_set;
 	QWidget* input_start_set;
 	QWidget* input_select_set;
 	QWidget* input_left_set;
 	QWidget* input_right_set;
 	QWidget* input_up_set;
 	QWidget* input_down_set;
-	QWidget* input_l_set;
-	QWidget* input_r_set;
 	QWidget* dead_zone_set;
 
 	QWidget* rumble_set;
-	QWidget* con_up_set;
-	QWidget* con_down_set;
-	QWidget* con_left_set;
-	QWidget* con_right_set;
-	QWidget* con_1_set;
-	QWidget* con_2_set;
 
 	QWidget* hotkey_turbo_set;
 	QWidget* hotkey_mute_set;
-	QWidget* hotkey_camera_set;
-
-	QWidget* bcg_gate_set;
-	QWidget* bcg_chip_1_set;
-	QWidget* bcg_chip_2_set;
-	QWidget* bcg_chip_3_set;
-	QWidget* bcg_chip_4_set;
 
 	void process_joystick_event();
 	void input_delay(QPushButton* input_button); 
@@ -243,8 +187,6 @@ class gen_settings : public QDialog
 	SDL_Joystick* jstick;
 	int input_type;
 	u32 joystick_count;
-	u16 chip_list[512];
-	u16 init_chip_list[4];
 };
 
 #endif //SETTINGS_GBE_QT 

@@ -20,53 +20,6 @@
 
 namespace util
 {
-	struct hsv
-	{
-		double hue;
-		double saturation;
-		double value;
-	};
-
-	struct hsl
-	{
-		double hue;
-		double saturation;
-		double lightness;
-	};
-
-	union col32
-	{
-		struct 
-		{
-			u8 b;
-			u8 g;
-			u8 r;
-			u8 a;
-		};
-
-		u32 color;
-	};
-
-	bool save_png(SDL_Surface* source, std::string filename);
-
-	u8 rgb_min(u32 color);
-	u8 rgb_max(u32 color);
-
-	u32 hsv_to_rgb(hsv color);
-	hsv rgb_to_hsv(u32 color);
-
-	u32 hsl_to_rgb(hsl color);
-	hsl rgb_to_hsl(u32 color);
-
-	u8 hue_to_rgb(double hue_factor_1, double hue_factor_2, double hue);
-
-	u8 get_brightness_fast(u32 color);
-	u32 rgb_blend(u32 color_1, u32 color_2);
-
-	u32 add_color_factor(u32 color, u32 factor);
-	u32 sub_color_factor(u32 color, u32 factor);
-	u32 multiply_color_factor(u32 color, double factor);
-
 	u32 reflect(u32 src, u8 bit);
 	void init_crc32_table();
 	u32 get_crc32(u8* data, u32 length);

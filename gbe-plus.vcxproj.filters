@@ -36,9 +36,6 @@
     <ClCompile Include="src\dmg\apu.cpp">
       <Filter>Source Files\dmg</Filter>
     </ClCompile>
-    <ClCompile Include="src\dmg\camera.cpp">
-      <Filter>Source Files\dmg</Filter>
-    </ClCompile>
     <ClCompile Include="src\common\cgfx_common.cpp">
       <Filter>Source Files\common</Filter>
     </ClCompile>
@@ -129,12 +126,6 @@
     <ClCompile Include="src\qt\ogl_manager.cpp">
       <Filter>Source Files\qt</Filter>
     </ClCompile>
-    <ClCompile Include="src\qt\pp2_menu.cpp">
-      <Filter>Source Files\qt</Filter>
-    </ClCompile>
-    <ClCompile Include="src\qt\ps_menu.cpp">
-      <Filter>Source Files\qt</Filter>
-    </ClCompile>
     <ClCompile Include="src\qt\qt_common.cpp">
       <Filter>Source Files\qt</Filter>
     </ClCompile>
@@ -148,9 +139,6 @@
       <Filter>Source Files\qt</Filter>
     </ClCompile>
     <ClCompile Include="src\qt\tbf_menu.cpp">
-      <Filter>Source Files\qt</Filter>
-    </ClCompile>
-    <ClCompile Include="src\qt\zzh_menu.cpp">
       <Filter>Source Files\qt</Filter>
     </ClCompile>
   </ItemGroup>
@@ -220,153 +208,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="src\data\pocket_sakura_db.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\pokemon_pikachu_db.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\zzh_db.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\battle_space\battle_space_baasaakaa.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\battle_space\battle_space_barukirii.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\battle_space\battle_space_gurizurii.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\battle_space\battle_space_mahou_senshi.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\battle_space\battle_space_naito.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\battle_space\battle_space_reisu.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\battle_space\battle_space_shaaman.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\battle_space\battle_space_shiifu.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\battle_space\battle_space_soosaraa.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\battle_space\battle_space_woriyaa.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\family_jockey_2\family_jockey_a1.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\family_jockey_2\family_jockey_a2.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\family_jockey_2\family_jockey_a4.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\family_jockey_2\family_jockey_b1.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\family_jockey_2\family_jockey_b2.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\family_jockey_2\family_jockey_b4.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\family_jockey_2\family_jockey_c3.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\family_jockey_2\family_jockey_c5.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\famista_3\famista_1.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\famista_3\famista_2.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\famista_3\famista_3.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\famista_3\famista_4.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\kattobi_road\kattobi_road_fowaarudo.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\kattobi_road\kattobi_road_gaudi.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\kattobi_road\kattobi_road_miirataabo.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\kattobi_road\kattobi_road_naito_2000.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\kattobi_road\kattobi_road_riisurakksu.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\kattobi_road\kattobi_road_rokutasuyonnto.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\monster_maker\monster_maker_diaane.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\monster_maker\monster_maker_erisaisu.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\monster_maker\monster_maker_haagun.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\monster_maker\monster_maker_rooran.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\monster_maker\monster_maker_rorieen.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\bcb\monster_maker\monster_maker_tamuroon.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\btb\chibittsuu.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\btb\rarufu.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\btb\tamappi.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\hcv1000\oshare_majo\TD_01.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\hcv1000\oshare_majo\TD_02.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\hcv1000\oshare_majo\TF_01.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\hcv1000\oshare_majo\TF_02.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\hcv1000\oshare_majo\TH_01.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\cards\hcv1000\oshare_majo\TH_02.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\gbma\map.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\gbma\mbox.bin">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="src\data\gbma\minigame.bin">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="src\data\gbma\index.html" />
   </ItemGroup>
   <ItemGroup>
@@ -385,12 +226,6 @@
     <CustomBuild Include="src\qt\main_menu.h">
       <Filter>Header Files\qt</Filter>
     </CustomBuild>
-    <CustomBuild Include="src\qt\pp2_menu.h">
-      <Filter>Header Files\qt</Filter>
-    </CustomBuild>
-    <CustomBuild Include="src\qt\ps_menu.h">
-      <Filter>Header Files\qt</Filter>
-    </CustomBuild>
     <CustomBuild Include="src\qt\rtc_menu.h">
       <Filter>Header Files\qt</Filter>
     </CustomBuild>
@@ -398,9 +233,6 @@
       <Filter>Header Files\qt</Filter>
     </CustomBuild>
     <CustomBuild Include="src\qt\tbf_menu.h">
-      <Filter>Header Files\qt</Filter>
-    </CustomBuild>
-    <CustomBuild Include="src\qt\zzh_menu.h">
       <Filter>Header Files\qt</Filter>
     </CustomBuild>
   </ItemGroup>

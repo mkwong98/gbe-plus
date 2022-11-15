@@ -64,3 +64,12 @@ Win32/Release/LICENSE
 .vs/gbe-plus/v15/Browse.VC.db
 .vs/gbe-plus/v15/.suo
 .vs/gbe-plus/v15/Browse.VC.opendb
+*.ruleset
+*.sarif
+Win32/Release/src/dmg/z80.nativecodeanalysis.xml
+Win32/Release/src/dmg/mmu.nativecodeanalysis.xml
+Win32/Release/src/dmg/lcd.nativecodeanalysis.xml
+Win32/Release/src/dmg/gamepad.nativecodeanalysis.xml
+Win32/Release/src/dmg/core.nativecodeanalysis.xml
+Win32/Release/src/dmg/apu.nativecodeanalysis.xml
+Win32/Release/CodeAnalysisResultManifest.txt

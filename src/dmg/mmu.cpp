@@ -34,12 +34,6 @@ GBC_MMU::GBC_MMU()
 /****** MMU Deconstructor ******/
 GB_MMU::~GB_MMU() 
 {
-	//Always clean up external camera pic from SRAM before saving
-	if(cart.mbc_type == GB_CAMERA)
-	{
-		for(u32 x = 0; x < cart.cam_buffer.size(); x++) { random_access_bank[0][0x100 + x] = 0x0; }
-	}
-
 	save_backup(get_rom_save());
 	memory_map.clear();
 	std::cout<<"MMU::Shutdown\n"; 
@@ -48,18 +42,8 @@ GB_MMU::~GB_MMU()
 /****** MMU Reset ******/
 void GB_MMU::reset()
 {
-	//Remap ROM when resetting GB Memory Cartridge
-	if((config::cart_type == DMG_GBMEM) && (cart.flash_stat == 0xF0)) { gb_mem_remap(); }
-
-	//If ROM has already been remapped for GB Memory Cartridge, do nothing
-	if((config::cart_type == DMG_GBMEM) && (cart.flash_stat == 0x40)) { }
-
-	//Otherwise, clear memory map as usual
-	else
-	{		
-		memory_map.clear();
-		memory_map.resize(0x10000, 0);
-	}
+	memory_map.clear();
+	memory_map.resize(0x10000, 0);
 
 	rom_bank = 1;
 	ram_bank = 0;
@@ -72,7 +56,6 @@ void GB_MMU::reset()
 	cart.mbc_type = ROM_ONLY;
 	cart.battery = false;
 	cart.ram = false;
-	cart.multicart = ((config::cart_type == DMG_MBC1M) || (config::cart_type == DMG_MMM01));
 	cart.rumble = false;
 
 	cart.rtc = false;
@@ -96,25 +79,10 @@ void GB_MMU::reset()
 	cart.idle = false;
 	cart.internal_value = cart.internal_state = cart.cs = cart.sk = cart.buffer_length = cart.command_code = cart.addr = cart.buffer = 0;
 
-	for(u32 x = 0; x < 54; x++) { cart.cam_reg[x] = 0; }
-	cart.cam_buffer.clear();
-	cart.cam_lock = false;
-
-	cart.sonar_byte = 0;
-	cart.frame_data.clear();
-	cart.pulse_count = 0;
-	cart.frame_count = 0;
-	cart.depth = 0;
-
 	for(u32 x = 0; x < 16; x++) { cart.tama_reg[x] = 0; }
 	for(u32 x = 0; x < 256; x++) { cart.tama_ram[x] = 0; }
 	cart.tama_cmd = 0;
 	cart.tama_out = 0;
-
-	if(cart.flash_stat != 0x40)
-	{
-		for(u32 x = 0; x < 128; x++) { cart.gb_mem_map[x] = 0xFF; }
-	} 
 
 	ir_signal = 0;
 	ir_send = false;
@@ -335,9 +303,6 @@ u8 GBC_MMU::read_u8(u16 address)
 
 u8 GB_MMU::read_u8_sub(u16 address)
 {
-	//Read using ROM Banking
-	if((cart.multicart) && (address <= 0x3FFF)) { return mbc_read(address); }
-
 	//Read using ROM Banking
 	if((address >= 0x4000) && (address <= 0x7FFF) && (cart.mbc_type != ROM_ONLY)) { return mbc_read(address); }
 
@@ -1438,7 +1403,7 @@ u8 GB_MMU::mbc_read(u16 address)
 	switch(cart.mbc_type)
 	{
 		case MBC1:
-			return cart.multicart ? mbc1_multicart_read(address) : mbc1_read(address); 
+			return mbc1_read(address); 
 			break;
 
 		case MBC2:
@@ -1473,10 +1438,6 @@ u8 GB_MMU::mbc_read(u16 address)
 			return mmm01_read(address);
 			break;
 
-		case GB_CAMERA:
-			return cam_read(address);
-			break;
-
 		case TAMA5:
 			return tama5_read(address);
 			break;
@@ -1492,7 +1453,7 @@ void GB_MMU::mbc_write(u16 address, u8 value)
 	switch(cart.mbc_type)
 	{
 		case MBC1:
-			cart.multicart ? mbc1_multicart_write(address, value) : mbc1_write(address, value); 
+			mbc1_write(address, value); 
 			break;
 
 		case MBC2:
@@ -1525,10 +1486,6 @@ void GB_MMU::mbc_write(u16 address, u8 value)
 
 		case MMM01:
 			mmm01_write(address, value);
-			break;
-
-		case GB_CAMERA:
-			cam_write(address, value);
 			break;
 
 		case TAMA5:
@@ -1643,32 +1600,8 @@ bool GB_MMU::read_file(std::string filename)
 	{
 		ex_mem = &memory_map[0];
 	
-		//Read MMM01 cart - Bank 0 is last 32KB of ROM
-		if(config::cart_type == DMG_MMM01)
-		{
-			s32 pos = (file_size - 0x8000);
-		
-			if (pos > 0)
-			{
-				//Read the last 32KB and put it as Bank 0
-				file.seekg(pos);
-				file.read((char*)ex_mem, 0x8000);
-				file.seekg(0, file.beg);
-			}
-
-			else
-			{
-				std::cout<<"MMU::Error - MMM01 cart file size is too small (less than < 32KB)\n";
-				return false;
-			}
-		}
-
-		//Read every other MBC - Bank 0 is 1st 32KB of ROM
-		else
-		{
-			//Read 32KB worth of data from ROM file
-			file.read((char*)ex_mem, 0x8000);
-		}
+		//Read 32KB worth of data from ROM file
+		file.read((char*)ex_mem, 0x8000);
 	}
 
 	std::string title = "";
@@ -1943,16 +1876,6 @@ bool GB_MMU::read_file(std::string filename)
 			return false;
 	}
 
-	//When initially loading GB Memory Cartridge, read full 1MB if available
-	if((config::cart_type == DMG_GBMEM) && (cart.flash_stat != 0x40) && (file_size >= 0x100000))
-	{
-		cart.rom_size = 1024;
-
-		//Read map file for GB Memory Cartridge
-		std::string m_file = filename + ".map";
-		gb_mem_read_map(m_file);
-	}
-
 	//Calculate 8-bit checksum
 	u8 checksum = 0;
 
@@ -2139,32 +2062,10 @@ bool GB_MMU::load_backup(std::string filename)
 			//Read MBC RAM
 			if((cart.mbc_type != ROM_ONLY) && (cart.mbc_type != MBC7) && (cart.mbc_type != TAMA5))
 			{
-				//Read GB Memory Cartridge save according to map data
-				if(config::cart_type == DMG_GBMEM)
+				for(int x = 0; x < 0x10; x++)
 				{
-					u8 map_index = (cart.flash_io_bank * 3);
-					u8 sram_index = cart.gb_mem_map[map_index + 2] & 0xF;
-
-					u8 block_size = ((cart.gb_mem_map[map_index] & 0x3) << 1) | ((cart.gb_mem_map[map_index + 1] & 0x80) >> 7);
-					if((block_size != 0) && (block_size != 3)) { block_size = 1; }
-
-					sram.seekg(0x2000 * sram_index);
-
-					for(int x = 0; x < block_size; x++)
-					{
-						u8* ex_ram = &random_access_bank[x][0];
-						sram.read((char*)ex_ram, 0x2000); 
-					}
-				}
-				
-				//Read save data normally
-				else
-				{	
-					for(int x = 0; x < 0x10; x++)
-					{
-						u8* ex_ram = &random_access_bank[x][0];
-						sram.read((char*)ex_ram, 0x2000); 
-					}
+					u8* ex_ram = &random_access_bank[x][0];
+					sram.read((char*)ex_ram, 0x2000); 
 				}
 			}
 
@@ -2217,9 +2118,6 @@ bool GB_MMU::save_backup(std::string filename)
 {
 	if(cart.battery)
 	{
-		//Rearrange GB Memory Cartridge save data into regular a format that can be saved to disk
-		if(config::cart_type == DMG_GBMEM) { gb_mem_format_save(filename); }
-
 		std::ofstream sram(filename.c_str(), std::ios::binary);
 
 		if(!sram.is_open()) 
@@ -2396,60 +2294,11 @@ bool GB_MMU::gb_mem_read_map(std::string filename)
 		return false;
 	}
 
-	u8* ex_dat = &cart.gb_mem_map[0];
-	map_file.read((char*)ex_dat, 0x80);
 	map_file.close();
 
 	std::cout<<"MMU::Loaded GB Memory Cartridge Map File " << filename << "\n";
 
 	return true;
-}
-
-/****** Reads existing save data and updates it correctly for games stored on the GB Memory Cartridge ******/
-void GB_MMU::gb_mem_format_save(std::string filename)
-{
-	u8 map_index = (cart.flash_io_bank * 3);
-	u8 sram_index = cart.gb_mem_map[map_index + 2] & 0xF;
-
-	u8 block_size = ((cart.gb_mem_map[map_index] & 0x3) << 1) | ((cart.gb_mem_map[map_index + 1] & 0x80) >> 7);
-	if((block_size != 0) && (block_size != 3)) { block_size = 1; }
-
-	//Read current save data (32KB max)
-	u8 temp_sram[4][0x2000];
-	std::ifstream temp_file(filename.c_str(), std::ios::binary);
-
-	for(int x = 0; x < block_size; x++)
-	{
-		for(int y = 0; y < 0x2000; y++)
-		{
-			temp_sram[x][y] = random_access_bank[x][y];
-		}
-	}
-
-	//Read existing save data if available
-	random_access_bank.clear();
-	random_access_bank.resize(0x10);
-	for(int x = 0; x < 0x10; x++) { random_access_bank[x].resize(0x2000, 0); }
-
-	if(temp_file.is_open())
-	{
-		for(int x = 0; x < 0x10; x++)
-		{
-			u8* ex_ram = &random_access_bank[x][0];
-			temp_file.read((char*)ex_ram, 0x2000); 
-		}
-	}
-
-	temp_file.close();
-
-	//Merge existing save data with current save data
-	for(int x = 0; x < block_size; x++)
-	{
-		for(int y = 0; y < 0x2000; y++)
-		{
-			random_access_bank[sram_index + x][y] = temp_sram[x][y];
-		}
-	}
 }
 
 /****** Writes values to RAM as specified by the Gameshark code - Called by LCD during VBlank ******/

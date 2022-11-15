@@ -26,16 +26,10 @@ class dmg_core_pad
 	u8 p14, p15;
 	u8 column_id;
 
-	u16 sensor_x;
-	u16 sensor_y;
-	u8 gyro_flags;
-	u16 con_flags;
-
 	int pad;
 
 	bool joypad_irq;
 	bool joy_init;
-	bool con_update;
 
 	//Shadow status for keyboard input
 	bool up_shadow, down_shadow, left_shadow, right_shadow;
@@ -49,7 +43,6 @@ class dmg_core_pad
 
 	virtual void process_keyboard(int pad, bool pressed) = 0;
 	virtual void process_joystick(int pad, bool pressed) = 0;
-	virtual void process_gyroscope() = 0;
 	virtual void start_rumble() = 0;
 	virtual void stop_rumble() = 0;
 	virtual u8 read() = 0;

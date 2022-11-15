@@ -36,38 +36,17 @@ namespace config
 	//Arrow Z = A button, X = B button, START = Return, Select = Space
 	//UP, LEFT, DOWN, RIGHT = Arrow keys
 	//A key = Left Shoulder, S key = Right Shoulder
-	u32 gbe_key_a = SDLK_z; u32 gbe_key_b = SDLK_x; u32 gbe_key_x = SDLK_d; u32 gbe_key_y = SDLK_c; u32 gbe_key_start = SDLK_RETURN; u32 gbe_key_select = SDLK_SPACE;
-	u32 gbe_key_l_trigger = SDLK_a; u32 gbe_key_r_trigger = SDLK_s;
+	u32 gbe_key_a = SDLK_z; u32 gbe_key_b = SDLK_x; u32 gbe_key_start = SDLK_RETURN; u32 gbe_key_select = SDLK_SPACE;
 	u32 gbe_key_left = SDLK_LEFT; u32 gbe_key_right = SDLK_RIGHT; u32 gbe_key_down = SDLK_DOWN; u32 gbe_key_up = SDLK_UP;
 
 	//Default joystick bindings
-	u32 gbe_joy_a = 100; u32 gbe_joy_b = 101; u32 gbe_joy_x = 102; u32 gbe_joy_y = 103; u32 gbe_joy_start = 107; u32 gbe_joy_select = 106;
-	u32 gbe_joy_r_trigger = 105; u32 gbe_joy_l_trigger = 104;
+	u32 gbe_joy_a = 100; u32 gbe_joy_b = 101; u32 gbe_joy_start = 107; u32 gbe_joy_select = 106;
 	u32 gbe_joy_left = 200; u32 gbe_joy_right = 201; u32 gbe_joy_up = 202; u32 gbe_joy_down = 203;
-
-	//Default keyboard bindings - Context
-	//Left = 4 (numpad), Right = 6 (numpad), Up = 8 (numpad), Down = 2 (numpad)
-	//Con1 = 7 (numpad), Con2 = 9 (numpad)
-	u32 con_key_left = 260; u32 con_key_right = 262; u32 con_key_up = 264; u32 con_key_down = 258; u32 con_key_1 = 263; u32 con_key_2 = 265;
-
-	//Default joystick bindings - Context
-	u32 con_joy_left = 204; u32 con_joy_right = 205; u32 con_joy_up = 206; u32 con_joy_down = 207; u32 con_joy_1 = 109; u32 con_joy_2 = 110;
-
-	//Default NDS touch zone mappings
-	int touch_zone_x[10] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
-	int touch_zone_y[10] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
-	int touch_zone_pad[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-
-	//Default NDS touch mode (light pressure)
-	u8 touch_mode = 0;
 
 	//Hotkey bindings
 	//Turbo = TAB
 	u32 hotkey_turbo = SDLK_TAB;
 	u32 hotkey_mute = SDLK_m;
-	u32 hotkey_camera = SDLK_p;
-	u32 hotkey_swap_screen = SDLK_F4;
-	u32 hotkey_shift_screen = SDLK_F3;
 
 	//Default joystick dead-zone
 	int dead_zone = 16000;
@@ -83,12 +62,7 @@ namespace config
 	bool pause_emu = false;
 	bool ignore_illegal_opcodes = true;
 
-	special_cart_types cart_type = NORMAL_CART;
-
-	u32 sio_device = 0;
-	u32 ir_device = 0;
 	u32 utp_steps = 0;
-	u32 magic_reader_id = 0x500000;
 	bool use_opengl = false;
 	bool turbo = false;
 
@@ -135,14 +109,6 @@ namespace config
 	bool use_stereo = false;
 	bool use_microphone = false;
 
-	//Virtual Cursor parameters for NDS
-	bool vc_enable = false;
-	std::string vc_file = "";
-	std::vector <u32> vc_data;
-	u32 vc_wait = 1;
-	u32 vc_timeout = 180;
-	u8 vc_opacity = 31;
-
 	//System screen sizes
 	u32 sys_width = 0;
 	u32 sys_height = 0;
@@ -174,15 +140,6 @@ namespace config
 
 	//CPU overclocking flags
 	u32 oc_flags = 0;
-
-	//IR database index
-	u32 ir_db_index = 0;
-
-	//Battle Chip ID for Megaman Battle Network games + Chip Gates
-	u16 battle_chip_id = 0;
-
-	//Default Battle Chip IDs
-	u16 chip_list[6] = { 0, 0, 0, 0, 0, 0 };
 
 	//Turbo File options flags
 	u8 turbo_file_options = 0;
@@ -652,8 +609,6 @@ bool parse_ini_file()
 		}
 	}
 
-	int touch_zone_counter = 0;
-
 	//Cycle through whole file, line-by-line
 	while(getline(file, input_line))
 	{
@@ -707,40 +662,6 @@ bool parse_ini_file()
 	for(int x = 0; x < size; x++)
 	{
 		ini_item = ini_opts[x];
-
-		//Emulated SIO device
-		if(ini_item == "#sio_device")
-		{
-			if((x + 1) < size) 
-			{
-				util::from_str(ini_opts[++x], output);
-
-				if((output >= 0) && (output <= 20)) { config::sio_device = output; }
-			}
-
-			else 
-			{ 
-				std::cout<<"GBE::Error - Could not parse gbe.ini (#sio_device) \n";
-				return false;
-			}
-		}
-
-		//Emulated IR device
-		if(ini_item == "#ir_device")
-		{
-			if((x + 1) < size) 
-			{
-				util::from_str(ini_opts[++x], output);
-
-				if((output >= 0) && (output <= 7)) { config::ir_device = output; }
-			}
-
-			else 
-			{ 
-				std::cout<<"GBE::Error - Could not parse gbe.ini (#ir_device) \n";
-				return false;
-			}
-		}
 
 		//Use cheats
 		if(ini_item == "#use_cheats")
@@ -1179,12 +1100,6 @@ bool parse_ini_file()
 				//B
 				util::from_str(ini_opts[++x], config::gbe_key_b);
 
-				//X
-				util::from_str(ini_opts[++x], config::gbe_key_x);
-
-				//Y
-				util::from_str(ini_opts[++x], config::gbe_key_y);
-
 				//START
 				util::from_str(ini_opts[++x], config::gbe_key_start);
 
@@ -1203,11 +1118,6 @@ bool parse_ini_file()
 				//DOWN
 				util::from_str(ini_opts[++x], config::gbe_key_down);
 
-				//LEFT TRIGGER
-				util::from_str(ini_opts[++x], config::gbe_key_l_trigger);
-
-				//RIGHT TRIGGER
-				util::from_str(ini_opts[++x], config::gbe_key_r_trigger);
 			}
 
 			else 
@@ -1228,12 +1138,6 @@ bool parse_ini_file()
 				//B
 				util::from_str(ini_opts[++x], config::gbe_joy_b);
 
-				//X
-				util::from_str(ini_opts[++x], config::gbe_joy_x);
-
-				//Y
-				util::from_str(ini_opts[++x], config::gbe_joy_y);
-
 				//START
 				util::from_str(ini_opts[++x], config::gbe_joy_start);
 
@@ -1252,11 +1156,6 @@ bool parse_ini_file()
 				//DOWN
 				util::from_str(ini_opts[++x], config::gbe_joy_down);
 
-				//LEFT TRIGGER
-				util::from_str(ini_opts[++x], config::gbe_joy_l_trigger);
-
-				//RIGHT TRIGGER
-				util::from_str(ini_opts[++x], config::gbe_joy_r_trigger);
 			}
 
 
@@ -1267,82 +1166,6 @@ bool parse_ini_file()
 			}
 		}
 
-		//Context keyboard controls
-		else if(ini_item == "#con_key_controls")
-		{
-			if((x + 6) < size)
-			{
-				//LEFT
-				util::from_str(ini_opts[++x], config::con_key_left);
-
-				//RIGHT
-				util::from_str(ini_opts[++x], config::con_key_right);
-
-				//UP
-				util::from_str(ini_opts[++x], config::con_key_up);
-
-				//DOWN
-				util::from_str(ini_opts[++x], config::con_key_down);
-
-				//CON1
-				util::from_str(ini_opts[++x], config::con_key_1);
-
-				//CON2
-				util::from_str(ini_opts[++x], config::con_key_2);
-			}
-
-			else 
-			{
-				std::cout<<"GBE::Error - Could not parse gbe.ini (#con_key_controls) \n";
-				return false;
-			}
-		}
-
-		//Context joystick controls
-		else if(ini_item == "#con_joy_controls")
-		{
-			if((x + 6) < size)
-			{
-				//LEFT
-				util::from_str(ini_opts[++x], config::con_joy_left);
-
-				//RIGHT
-				util::from_str(ini_opts[++x], config::con_joy_right);
-
-				//UP
-				util::from_str(ini_opts[++x], config::con_joy_up);
-
-				//DOWN
-				util::from_str(ini_opts[++x], config::con_joy_down);
-
-				//CON1
-				util::from_str(ini_opts[++x], config::con_joy_1);
-
-				//CON2
-				util::from_str(ini_opts[++x], config::con_joy_2);
-			}
-
-			else 
-			{
-				std::cout<<"GBE::Error - Could not parse gbe.ini (#con_joy_controls) \n";
-				return false;
-			}
-		}
-
-		//Battle Chip ID list
-		else if(ini_item == "#chip_list")
-		{
-			if((x + 6) < size)
-			{
-				for(u32 y = 0; y < 6; y++)
-				{
-					u32 val = 0;
-					util::from_str(ini_opts[++x], val);
-					config::chip_list[y] = val;
-				}
-			}
-		}
-	
 		//Hotkeys
 		else if(ini_item == "#hotkeys")
 		{
@@ -1353,147 +1176,11 @@ bool parse_ini_file()
 
 				//Mute
 				util::from_str(ini_opts[++x], config::hotkey_mute);
-
-				//GB Camera
-				util::from_str(ini_opts[++x], config::hotkey_camera);
-
-				//NDS swap screens
-				util::from_str(ini_opts[++x], config::hotkey_swap_screen);
-
-				//NDS vertical and landscape mode
-				util::from_str(ini_opts[++x], config::hotkey_shift_screen);
 			}
 
 			else 
 			{
 				std::cout<<"GBE::Error - Could not parse gbe.ini (#hotkeys) \n";
-				return false;
-			}
-		}
-
-		//NDS touch zone mappings
-		else if(ini_item == "#nds_touch_zone")
-		{
-			if(touch_zone_counter < 10)
-			{
-				if((x + 3) < size)
-				{
-
-					std::stringstream temp_stream;
-
-					//Pad mapping
-					temp_stream << ini_opts[++x];
-					temp_stream >> config::touch_zone_pad[touch_zone_counter];
-					temp_stream.clear();
-					temp_stream.str(std::string());
-
-					//X coordinate
-					temp_stream << ini_opts[++x];
-					temp_stream >> config::touch_zone_x[touch_zone_counter];
-					temp_stream.clear();
-					temp_stream.str(std::string());
-
-					//Y coordinate
-					temp_stream << ini_opts[++x];
-					temp_stream >> config::touch_zone_y[touch_zone_counter];
-					temp_stream.clear();
-					temp_stream.str(std::string());
-
-					touch_zone_counter++;
-				}
-
-				else 
-				{
-					std::cout<<"GBE::Error - Could not parse gbe.ini (#nds_touch_zone) \n";
-					return false;
-				}
-			}
-		}
-
-		//NDS touch mode
-		else if(ini_item == "#nds_touch_mode")
-		{
-			if((x + 1) < size)
-			{
-				util::from_str(ini_opts[++x], output);
-
-				config::touch_mode = output;
-			}
-
-			else
-			{
-				std::cout<<"GBE::Error - Could not parse gbe.ini (#touch_mode) \n";
-				return false;
-			}
-		}
-
-		//NDS virtual cursor enable
-		else if(ini_item == "#virtual_cursor_enable")
-		{
-			if((x + 1) < size) 
-			{
-				util::from_str(ini_opts[++x], output);
-
-				if(output == 1) { config::vc_enable = true; }
-				else { config::vc_enable = false; }
-			}
-
-			else 
-			{
-				std::cout<<"GBE::Error - Could not parse gbe.ini (#virtual_cursor_enable) \n";
-				return false;
-			}
-		}
-
-		//NDS virtual cursor file
-		else if(ini_item == "#virtual_cursor_file")
-		{
-			if((x + 1) < size) 
-			{
-				ini_item = ini_opts[++x];
-				std::string first_char = "";
-				first_char = ini_item[0];
-				
-				//When left blank, don't parse the next line item
-				if(first_char != "#") { config::vc_file = ini_item; }
-				else { config::vc_file = ""; x--;}
- 
-			}
-
-			else { config::vc_file = ""; }
-		}
-
-		//NDS virtual cursor opacity
-		else if(ini_item == "#virtual_cursor_opacity")
-		{
-			if((x + 1) < size) 
-			{
-				util::from_str(ini_opts[++x], output);
-
-				if((output >= 0) && (output <= 31)) { config::vc_opacity = output; }
-				else { config::vc_opacity = output; }
-			}
-
-			else 
-			{
-				std::cout<<"GBE::Error - Could not parse gbe.ini (#virtual_cursor_opacity) \n";
-				return false;
-			}
-		}
-
-		//NDS virtual cursor timeout
-		else if(ini_item == "#virtual_cursor_timeout")
-		{
-			if((x + 1) < size) 
-			{
-				util::from_str(ini_opts[++x], output);
-				config::vc_timeout = output;
-
-			}
-
-			else 
-			{
-				std::cout<<"GBE::Error - Could not parse gbe.ini (#virtual_cursor_timeout) \n";
 				return false;
 			}
 		}
@@ -1512,41 +1199,6 @@ bool parse_ini_file()
 			else 
 			{ 
 				std::cout<<"GBE::Error - Could not parse gbe.ini (#use_cgfx) \n";
-				return false;
-			}
-		}
-
-		//CGFX manifest path
-		else if(ini_item == "#cgfx_path")
-		{
-			if((x + 1) < size) 
-			{
-				ini_item = ini_opts[++x];
-				std::string first_char = "";
-				first_char = ini_item[0];
-				
-				//When left blank, don't parse the next line item
-				if(first_char != "#") { cgfx::cgfx_path = ini_item; }
-				else { cgfx::cgfx_path = ""; x--;}
- 
-			}
-
-			else { cgfx::cgfx_path = ""; }
-		}
-
-		//IR database index
-		else if(ini_item == "#ir_db_index")
-		{
-			if((x + 1) < size)
-			{
-				util::from_str(ini_opts[++x], output);
-				
-				if(output >= 0) { config::ir_db_index = output; }
-			}
-
-			else
-			{
-				std::cout<<"GBE::Error - Could not parse gbe.ini (#ir_db_index) \n";
 				return false;
 			}
 		}
@@ -1587,12 +1239,6 @@ bool save_ini_file()
 	int line_counter = 0;
 	int recent_count = config::recent_files.size();
 	std::string val;
-
-	//Emulated SIO device
-	output_lines.push_back("[#sio_device:" + util::to_str(config::sio_device) + "]");
-
-	//Emulated IR device
-	output_lines.push_back("[#ir_device:" + util::to_str(config::ir_device) + "]");
 
 	//Use cheats
 	val = (config::use_cheats) ? "1" : "0";
@@ -1705,75 +1351,33 @@ bool save_ini_file()
 	//Keyboard controls
 	val = util::to_str(config::gbe_key_a) + ":";
 	val += util::to_str(config::gbe_key_b) + ":";
-	val += util::to_str(config::gbe_key_x) + ":";
-	val += util::to_str(config::gbe_key_y) + ":";
 	val += util::to_str(config::gbe_key_start) + ":";
 	val += util::to_str(config::gbe_key_select) + ":";
 	val += util::to_str(config::gbe_key_left) + ":";
 	val += util::to_str(config::gbe_key_right) + ":";
 	val += util::to_str(config::gbe_key_up) + ":";
 	val += util::to_str(config::gbe_key_down) + ":";
-	val += util::to_str(config::gbe_key_l_trigger) + ":";
-	val += util::to_str(config::gbe_key_r_trigger);
 	output_lines.push_back("[#gbe_key_controls:" + val + "]");
 
 	//Gamepad controls
 	val = util::to_str(config::gbe_joy_a) + ":";
 	val += util::to_str(config::gbe_joy_b) + ":";
-	val += util::to_str(config::gbe_joy_x) + ":";
-	val += util::to_str(config::gbe_joy_y) + ":";
 	val += util::to_str(config::gbe_joy_start) + ":";
 	val += util::to_str(config::gbe_joy_select) + ":";
 	val += util::to_str(config::gbe_joy_left) + ":";
 	val += util::to_str(config::gbe_joy_right) + ":";
 	val += util::to_str(config::gbe_joy_up) + ":";
 	val += util::to_str(config::gbe_joy_down) + ":";
-	val += util::to_str(config::gbe_joy_l_trigger) + ":";
-	val += util::to_str(config::gbe_joy_r_trigger);
 	output_lines.push_back("[#gbe_joy_controls:" + val + "]");
-
-	//Context keyboard controls
-	val = util::to_str(config::con_key_left) + ":";
-	val += util::to_str(config::con_key_right) + ":";
-	val += util::to_str(config::con_key_up) + ":";
-	val += util::to_str(config::con_key_down) + ":";
-	val += util::to_str(config::con_key_1) + ":";
-	val += util::to_str(config::con_key_2);
-	output_lines.push_back("[#con_key_controls:" + val + "]");
-
-	//Context joystick controls
-	val = util::to_str(config::con_joy_left) + ":";
-	val += util::to_str(config::con_joy_right) + ":";
-	val += util::to_str(config::con_joy_up) + ":";
-	val += util::to_str(config::con_joy_down) + ":";
-	val += util::to_str(config::con_joy_1) + ":";
-	val += util::to_str(config::con_joy_2);
-	output_lines.push_back("[#con_joy_controls:" + val + "]");
-
-	//Battle Chip List
-	val = util::to_str(config::chip_list[0]) + ":";
-	val += util::to_str(config::chip_list[1]) + ":";
-	val += util::to_str(config::chip_list[2]) + ":";
-	val += util::to_str(config::chip_list[3]) + ":";
-	val += util::to_str(config::chip_list[4]) + ":";
-	val += util::to_str(config::chip_list[5]);
-	output_lines.push_back("[#chip_list:" + val + "]");
 
 	//Hotkeys
 	std::string val_1 = util::to_str(config::hotkey_turbo);
 	std::string val_2 = util::to_str(config::hotkey_mute);
-	std::string val_3 = util::to_str(config::hotkey_camera);
-	std::string val_4 = util::to_str(config::hotkey_swap_screen);
-	std::string val_5 = util::to_str(config::hotkey_shift_screen);
-	output_lines.push_back("[#hotkeys:" + val_1 + ":" + val_2 + ":" + val_3 + ":" + val_4 + ":" + val_5 + "]");
+	output_lines.push_back("[#hotkeys:" + val_1 + ":" + val_2 + "]");
 
 	//Use CGFX
 	val = (cgfx::load_cgfx) ? "1" : "0";
 	output_lines.push_back("[#use_cgfx:" + val + "]");
-
-	//IR database index
-	val = util::to_str(config::ir_db_index);
-	output_lines.push_back("[#ir_db_index:" + val + "]");
 
 	//Write contents to .ini file
 	std::ofstream out_file(ini_path.c_str(), std::ios::out);

@@ -41,8 +41,6 @@ class GB_core : virtual public core_emu
 
 		//CGFX interface
 		void read_cgfx();
-		u32* get_obj_palette(int pal_index);
-		u32* get_bg_palette(int pal_index);
 
 		//MMU related functions
 		bool read_file(std::string filename);

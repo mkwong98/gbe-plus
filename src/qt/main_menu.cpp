@@ -20,6 +20,8 @@
 /****** Main menu constructor ******/
 main_menu::main_menu(QWidget *parent) : QWidget(parent)
 {
+
+
 	//Setup actions
 	QAction* open = new QAction("Open...", this);
 	QAction* quit = new QAction ("Quit", this);
@@ -126,13 +128,6 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 	sw_screen = new soft_screen();
 	hw_screen = new hard_screen();
 
-	//Setup mouse tracking on the screens, for NDS touch support
-	sw_screen->setMouseTracking(true);
-	sw_screen->installEventFilter(this);
-
-	hw_screen->setMouseTracking(true);
-	hw_screen->installEventFilter(this);
-
 	QVBoxLayout* layout = new QVBoxLayout;
 	layout->setContentsMargins(0, 0, 0, -1);
 	layout->addWidget(sw_screen);
@@ -140,7 +135,7 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 	layout->setMenuBar(menu_bar);
 	setLayout(layout);
 
-	config::scaling_factor = 2;
+	config::scaling_factor = 1;
 
 	hw_screen->hide();
 	hw_screen->setEnabled(false);
@@ -248,7 +243,7 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 
 	QImage logo(QString::fromStdString(config::cfg_path + "data/icons/gbe_plus.png"));
 	logo = logo.scaled(128, 128);
-	QLabel* emu_desc = new QLabel("A GB/GBC/GBA/NDS emulator with enhancements");
+	QLabel* emu_desc = new QLabel("A GB/GBC emulator with enhancements");
 	QLabel* emu_copyright = new QLabel("Copyright D.S. Baxter 2014-2021");
 	QLabel* emu_proj_copyright = new QLabel("Copyright GBE+ Team 2014-2021");
 	QLabel* emu_license = new QLabel("This program is licensed under the GNU GPLv2");
@@ -281,6 +276,7 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 	display_height = QApplication::desktop()->screenGeometry().height();
 
 	fullscreen_mode = false;
+
 }
 
 
@@ -436,17 +432,6 @@ void main_menu::boot_game()
 	}
 
 	else { config::use_cheats = false; }
-
-	//Check special cart status
-	switch(settings->special_cart->currentIndex())
-	{
-		case 0x0: config::cart_type = NORMAL_CART; break;
-		case 0x1: config::cart_type = DMG_MBC1M; break;
-		case 0x2: config::cart_type = DMG_MBC1S; break;
-		case 0x3: config::cart_type = DMG_MMM01; break;
-		case 0x4: config::cart_type = DMG_MBC30; break;
-		case 0x5: config::cart_type = DMG_GBMEM; break;
-	}
 
 	//Check rumble status
 	if(settings->rumble_on->isChecked()) { config::use_haptics = true; }
@@ -669,13 +654,6 @@ void main_menu::reset()
 {
 	if(main_menu::gbe_plus != NULL) 
 	{
-		//When emulating the GB Memory Cartridge, let the DMG-GBC cores handle resetting
-		if((config::cart_type == DMG_GBMEM))
-		{
-			gbe_plus->feed_key_input(SDLK_F8, true);
-			return;
-		}
-
 		boot_game();
 	}
 }	

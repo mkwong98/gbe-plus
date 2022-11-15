@@ -22,11 +22,6 @@
 /****** General settings constructor ******/
 gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 {
-	init_chip_list[0] = config::chip_list[0];
-	init_chip_list[1] = config::chip_list[1];
-	init_chip_list[2] = config::chip_list[2];
-	init_chip_list[3] = config::chip_list[3];
-
 	//Set up tabs
 	tabs = new QTabWidget(this);
 	
@@ -48,32 +43,12 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	controls_combo->addItem("Standard Controls");
 	controls_combo->addItem("Advanced Controls");
 	controls_combo->addItem("Hotkey Controls");
-	controls_combo->addItem("Battle Chip Gate Controls");
-	controls_combo->addItem("Virtual Cursor Controls");
 
 	QHBoxLayout* button_layout = new QHBoxLayout;
 	button_layout->setAlignment(Qt::AlignTop | Qt::AlignRight);
 	button_layout->addWidget(controls_combo);
 	button_layout->addWidget(tabs_button);
 	button_set->setLayout(button_layout);
-
-	//General settings - Emulate specialty game carts
-	QWidget* special_cart_set = new QWidget(general);
-	QLabel* special_cart_label = new QLabel("Special ROM Type : ", special_cart_set);
-	special_cart = new QComboBox(special_cart_set);
-	special_cart->setToolTip("Emulates various special cart setups");
-	special_cart->addItem("None");
-	special_cart->addItem("DMG - MBC1M");
-	special_cart->addItem("DMG - MBC1S");
-	special_cart->addItem("DMG - MMM01");
-	special_cart->addItem("DMG - MBC30");
-	special_cart->addItem("DMG - GB Memory");
-
-	QHBoxLayout* special_cart_layout = new QHBoxLayout;
-	special_cart_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	special_cart_layout->addWidget(special_cart_label);
-	special_cart_layout->addWidget(special_cart);
-	special_cart_set->setLayout(special_cart_layout);
 
 	//General settings - Use cheats
 	QWidget* cheats_set = new QWidget(general);
@@ -129,7 +104,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 
 	QVBoxLayout* gen_layout = new QVBoxLayout;
 	gen_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	gen_layout->addWidget(special_cart_set);
 	gen_layout->addWidget(overclock_set);
 	gen_layout->addWidget(cheats_set);
 	gen_layout->addWidget(patch_set);
@@ -433,36 +407,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	input_b_layout->setContentsMargins(6, 0, 0, 0);
 	input_b_set->setLayout(input_b_layout);
 
-	//Control settings - X button
-	input_x_set = new QWidget(controls);
-	QLabel* input_x_label = new QLabel("Button X : ");
-	input_x = new QLineEdit(controls);
-	config_x = new QPushButton("Configure");
-	input_x->setMaximumWidth(100);
-	config_x->setMaximumWidth(100);
-
-	QHBoxLayout* input_x_layout = new QHBoxLayout;
-	input_x_layout->addWidget(input_x_label, 0, Qt::AlignLeft);
-	input_x_layout->addWidget(input_x, 0, Qt::AlignLeft);
-	input_x_layout->addWidget(config_x, 0, Qt::AlignLeft);
-	input_x_layout->setContentsMargins(6, 0, 0, 0);
-	input_x_set->setLayout(input_x_layout);
-
-	//Control settings - Y button
-	input_y_set = new QWidget(controls);
-	QLabel* input_y_label = new QLabel("Button Y : ");
-	input_y = new QLineEdit(controls);
-	config_y = new QPushButton("Configure");
-	input_y->setMaximumWidth(100);
-	config_y->setMaximumWidth(100);
-
-	QHBoxLayout* input_y_layout = new QHBoxLayout;
-	input_y_layout->addWidget(input_y_label, 0, Qt::AlignLeft);
-	input_y_layout->addWidget(input_y, 0, Qt::AlignLeft);
-	input_y_layout->addWidget(config_y, 0, Qt::AlignLeft);
-	input_y_layout->setContentsMargins(6, 0, 0, 0);
-	input_y_set->setLayout(input_y_layout);
-
 	//Control settings - START button
 	input_start_set = new QWidget(controls);
 	QLabel* input_start_label = new QLabel("START : ");
@@ -553,36 +497,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	input_down_layout->setContentsMargins(6, 0, 0, 0);
 	input_down_set->setLayout(input_down_layout);
 
-	//Control settings - Right Trigger
-	input_r_set = new QWidget(controls);
-	QLabel* input_r_label = new QLabel("Trigger R : ");
-	input_r = new QLineEdit(controls);
-	config_r = new QPushButton("Configure");
-	input_r->setMaximumWidth(100);
-	config_r->setMaximumWidth(100);
-
-	QHBoxLayout* input_r_layout = new QHBoxLayout;
-	input_r_layout->addWidget(input_r_label, 0, Qt::AlignLeft);
-	input_r_layout->addWidget(input_r, 0, Qt::AlignLeft);
-	input_r_layout->addWidget(config_r, 0, Qt::AlignLeft);
-	input_r_layout->setContentsMargins(6, 0, 0, 0);
-	input_r_set->setLayout(input_r_layout);
-
-	//Control settings - Left Trigger
-	input_l_set = new QWidget(controls);
-	QLabel* input_l_label = new QLabel("Trigger L : ");
-	input_l = new QLineEdit(controls);
-	config_l = new QPushButton("Configure");
-	input_l->setMaximumWidth(100);
-	config_l->setMaximumWidth(100);
-
-	QHBoxLayout* input_l_layout = new QHBoxLayout;
-	input_l_layout->addWidget(input_l_label, 0, Qt::AlignLeft);
-	input_l_layout->addWidget(input_l, 0, Qt::AlignLeft);
-	input_l_layout->addWidget(config_l, 0, Qt::AlignLeft);
-	input_l_layout->setContentsMargins(6, 0, 0, 0);
-	input_l_set->setLayout(input_l_layout);
-
 	//Advanced control settings - Enable rumble
 	rumble_set = new QWidget(controls);
 	QLabel* rumble_label = new QLabel("Enable rumble", rumble_set);
@@ -593,96 +507,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	rumble_layout->addWidget(rumble_on);
 	rumble_layout->addWidget(rumble_label);
 	rumble_set->setLayout(rumble_layout);
-
-	//Advanced control settings - Context left
-	con_left_set = new QWidget(controls);
-	QLabel* con_left_label = new QLabel("Context Left : ");
-	input_con_left = new QLineEdit(controls);
-	config_con_left = new QPushButton("Configure");
-	input_con_left->setMaximumWidth(100);
-	config_con_left->setMaximumWidth(100);
-
-	QHBoxLayout* con_left_layout = new QHBoxLayout;
-	con_left_layout->addWidget(con_left_label, 1, Qt::AlignLeft);
-	con_left_layout->addWidget(input_con_left, 1, Qt::AlignLeft);
-	con_left_layout->addWidget(config_con_left, 1, Qt::AlignLeft);
-	con_left_layout->setContentsMargins(6, 0, 0, 0);
-	con_left_set->setLayout(con_left_layout);
-
-	//Advanced control settings - Context right
-	con_right_set = new QWidget(controls);
-	QLabel* con_right_label = new QLabel("Context Right : ");
-	input_con_right = new QLineEdit(controls);
-	config_con_right = new QPushButton("Configure");
-	input_con_right->setMaximumWidth(100);
-	config_con_right->setMaximumWidth(100);
-
-	QHBoxLayout* con_right_layout = new QHBoxLayout;
-	con_right_layout->addWidget(con_right_label, 1, Qt::AlignLeft);
-	con_right_layout->addWidget(input_con_right, 1, Qt::AlignLeft);
-	con_right_layout->addWidget(config_con_right, 1, Qt::AlignLeft);
-	con_right_layout->setContentsMargins(6, 0, 0, 0);
-	con_right_set->setLayout(con_right_layout);
-
-	//Advanced control settings - Context up
-	con_up_set = new QWidget(controls);
-	QLabel* con_up_label = new QLabel("Context Up : ");
-	input_con_up = new QLineEdit(controls);
-	config_con_up = new QPushButton("Configure");
-	input_con_up->setMaximumWidth(100);
-	config_con_up->setMaximumWidth(100);
-
-	QHBoxLayout* con_up_layout = new QHBoxLayout;
-	con_up_layout->addWidget(con_up_label, 1, Qt::AlignLeft);
-	con_up_layout->addWidget(input_con_up, 1, Qt::AlignLeft);
-	con_up_layout->addWidget(config_con_up, 1, Qt::AlignLeft);
-	con_up_layout->setContentsMargins(6, 0, 0, 0);
-	con_up_set->setLayout(con_up_layout);
-
-	//Advanced control settings - Context down
-	con_down_set = new QWidget(controls);
-	QLabel* con_down_label = new QLabel("Context Down : ");
-	input_con_down = new QLineEdit(controls);
-	config_con_down = new QPushButton("Configure");
-	input_con_down->setMaximumWidth(100);
-	config_con_down->setMaximumWidth(100);
-
-	QHBoxLayout* con_down_layout = new QHBoxLayout;
-	con_down_layout->addWidget(con_down_label, 1, Qt::AlignLeft);
-	con_down_layout->addWidget(input_con_down, 1, Qt::AlignLeft);
-	con_down_layout->addWidget(config_con_down, 1, Qt::AlignLeft);
-	con_down_layout->setContentsMargins(6, 0, 0, 0);
-	con_down_set->setLayout(con_down_layout);
-
-	//Advanced control settings - Context 1
-	con_1_set = new QWidget(controls);
-	QLabel* con_1_label = new QLabel("Context 1 : ");
-	input_con_1 = new QLineEdit(controls);
-	config_con_1 = new QPushButton("Configure");
-	input_con_1->setMaximumWidth(100);
-	config_con_1->setMaximumWidth(100);
-
-	QHBoxLayout* con_1_layout = new QHBoxLayout;
-	con_1_layout->addWidget(con_1_label, 1, Qt::AlignLeft);
-	con_1_layout->addWidget(input_con_1, 1, Qt::AlignLeft);
-	con_1_layout->addWidget(config_con_1, 1, Qt::AlignLeft);
-	con_1_layout->setContentsMargins(6, 0, 0, 0);
-	con_1_set->setLayout(con_1_layout);
-
-	//Advanced control settings - Context 2
-	con_2_set = new QWidget(controls);
-	QLabel* con_2_label = new QLabel("Context 2 : ");
-	input_con_2 = new QLineEdit(controls);
-	config_con_2 = new QPushButton("Configure");
-	input_con_2->setMaximumWidth(100);
-	config_con_2->setMaximumWidth(100);
-
-	QHBoxLayout* con_2_layout = new QHBoxLayout;
-	con_2_layout->addWidget(con_2_label, 1, Qt::AlignLeft);
-	con_2_layout->addWidget(input_con_2, 1, Qt::AlignLeft);
-	con_2_layout->addWidget(config_con_2, 1, Qt::AlignLeft);
-	con_2_layout->setContentsMargins(6, 0, 0, 0);
-	con_2_set->setLayout(con_2_layout);
 
 	//Hotkey settings - Turbo
 	hotkey_turbo_set = new QWidget(controls);
@@ -714,143 +538,33 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	hotkey_mute_layout->setContentsMargins(6, 0, 0, 0);
 	hotkey_mute_set->setLayout(hotkey_mute_layout);
 
-	//Hotkey settings - Camera
-	hotkey_camera_set = new QWidget(controls);
-	QLabel* hotkey_camera_label = new QLabel("GB Camera File : ");
-	input_camera = new QLineEdit(controls);
-	config_camera = new QPushButton("Configure");
-	input_camera->setMaximumWidth(100);
-	config_camera->setMaximumWidth(100);
-
-	QHBoxLayout* hotkey_camera_layout = new QHBoxLayout;
-	hotkey_camera_layout->addWidget(hotkey_camera_label, 1, Qt::AlignLeft);
-	hotkey_camera_layout->addWidget(input_camera, 1, Qt::AlignLeft);
-	hotkey_camera_layout->addWidget(config_camera, 1, Qt::AlignLeft);
-	hotkey_camera_layout->setContentsMargins(6, 0, 0, 0);
-	hotkey_camera_set->setLayout(hotkey_camera_layout);
-
-	//Battle Chip Gate settings - Type
-	bcg_gate_set = new QWidget(controls);
-	QLabel* bcg_gate_label = new QLabel("Battle Chip Gate Type : ");
-	chip_gate_type = new QComboBox(bcg_gate_set);
-	chip_gate_type->setToolTip("Selects the list of available chips for each Battle Chip Gate");
-	chip_gate_type->addItem("Battle Chip Gate");
-	chip_gate_type->addItem("Progress Chip Gate");
-	chip_gate_type->addItem("Beast Link Gate");
-
-	QHBoxLayout* bcg_gate_layout = new QHBoxLayout;
-	bcg_gate_layout->addWidget(bcg_gate_label, 1, Qt::AlignLeft);
-	bcg_gate_layout->addWidget(chip_gate_type, 1, Qt::AlignLeft);
-	bcg_gate_layout->setContentsMargins(6, 0, 0, 0);
-	bcg_gate_set->setLayout(bcg_gate_layout);
-
-	//Battle Chip Gate settings - Chip 1
-	bcg_chip_1_set = new QWidget(controls);
-	QLabel* bcg_chip_1_label = new QLabel("Battle Chip 1 : ");
-	battle_chip_1 = new QComboBox(bcg_chip_1_set);
-	battle_chip_1->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-
-	QHBoxLayout* bcg_chip_1_layout = new QHBoxLayout;
-	bcg_chip_1_layout->addWidget(bcg_chip_1_label, 1, Qt::AlignLeft);
-	bcg_chip_1_layout->addWidget(battle_chip_1, 1, Qt::AlignLeft);
-	bcg_chip_1_layout->setContentsMargins(6, 0, 0, 0);
-	bcg_chip_1_set->setLayout(bcg_chip_1_layout);
-
-	//Battle Chip Gate settings - Chip 2
-	bcg_chip_2_set = new QWidget(controls);
-	QLabel* bcg_chip_2_label = new QLabel("Battle Chip 2 : ");
-	battle_chip_2 = new QComboBox(bcg_chip_2_set);
-	battle_chip_2->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-
-	QHBoxLayout* bcg_chip_2_layout = new QHBoxLayout;
-	bcg_chip_2_layout->addWidget(bcg_chip_2_label, 1, Qt::AlignLeft);
-	bcg_chip_2_layout->addWidget(battle_chip_2, 1, Qt::AlignLeft);
-	bcg_chip_2_layout->setContentsMargins(6, 0, 0, 0);
-	bcg_chip_2_set->setLayout(bcg_chip_2_layout);
-
-	//Battle Chip Gate settings - Chip 3
-	bcg_chip_3_set = new QWidget(controls);
-	QLabel* bcg_chip_3_label = new QLabel("Battle Chip 3 : ");
-	battle_chip_3 = new QComboBox(bcg_chip_3_set);
-	battle_chip_3->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-
-	QHBoxLayout* bcg_chip_3_layout = new QHBoxLayout;
-	bcg_chip_3_layout->addWidget(bcg_chip_3_label, 1, Qt::AlignLeft);
-	bcg_chip_3_layout->addWidget(battle_chip_3, 1, Qt::AlignLeft);
-	bcg_chip_3_layout->setContentsMargins(6, 0, 0, 0);
-	bcg_chip_3_set->setLayout(bcg_chip_3_layout);
-
-	//Battle Chip Gate settings - Chip 4
-	bcg_chip_4_set = new QWidget(controls);
-	QLabel* bcg_chip_4_label = new QLabel("Battle Chip 4 : ");
-	battle_chip_4 = new QComboBox(bcg_chip_4_set);
-	battle_chip_4->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-
-	QHBoxLayout* bcg_chip_4_layout = new QHBoxLayout;
-	bcg_chip_4_layout->addWidget(bcg_chip_4_label, 1, Qt::AlignLeft);
-	bcg_chip_4_layout->addWidget(battle_chip_4, 1, Qt::AlignLeft);
-	bcg_chip_4_layout->setContentsMargins(6, 0, 0, 0);
-	bcg_chip_4_set->setLayout(bcg_chip_4_layout);
-
 	controls_layout = new QVBoxLayout;
 	controls_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
 	controls_layout->addWidget(input_device_set);
 	controls_layout->addWidget(input_a_set);
 	controls_layout->addWidget(input_b_set);
-	controls_layout->addWidget(input_x_set);
-	controls_layout->addWidget(input_y_set);
 	controls_layout->addWidget(input_start_set);
 	controls_layout->addWidget(input_select_set);
 	controls_layout->addWidget(input_left_set);
 	controls_layout->addWidget(input_right_set);
 	controls_layout->addWidget(input_up_set);
 	controls_layout->addWidget(input_down_set);
-	controls_layout->addWidget(input_l_set);
-	controls_layout->addWidget(input_r_set);
 	controls_layout->addWidget(dead_zone_set);
 	controls->setLayout(controls_layout);
 
 	advanced_controls_layout = new QVBoxLayout;
 	advanced_controls_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
 	advanced_controls_layout->addWidget(rumble_set);
-	advanced_controls_layout->addWidget(con_up_set);
-	advanced_controls_layout->addWidget(con_down_set);
-	advanced_controls_layout->addWidget(con_left_set);
-	advanced_controls_layout->addWidget(con_right_set);
-	advanced_controls_layout->addWidget(con_1_set);
-	advanced_controls_layout->addWidget(con_2_set);
 
 	hotkey_controls_layout = new QVBoxLayout;
 	hotkey_controls_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
 	hotkey_controls_layout->addWidget(hotkey_turbo_set);
 	hotkey_controls_layout->addWidget(hotkey_mute_set);
-	hotkey_controls_layout->addWidget(hotkey_camera_set);
 	
-	bcg_controls_layout = new QVBoxLayout;
-	bcg_controls_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	bcg_controls_layout->addWidget(bcg_gate_set);
-	bcg_controls_layout->addWidget(bcg_chip_1_set);
-	bcg_controls_layout->addWidget(bcg_chip_2_set);
-	bcg_controls_layout->addWidget(bcg_chip_3_set);
-	bcg_controls_layout->addWidget(bcg_chip_4_set);
-
 	rumble_set->setVisible(false);
-	con_up_set->setVisible(false);
-	con_down_set->setVisible(false);
-	con_left_set->setVisible(false);
-	con_right_set->setVisible(false);
-	con_1_set->setVisible(false);
-	con_2_set->setVisible(false);
 
 	hotkey_turbo_set->setVisible(false);
 	hotkey_mute_set->setVisible(false);
-	hotkey_camera_set->setVisible(false);
-
-	bcg_gate_set->setVisible(false);
-	bcg_chip_1_set->setVisible(false);
-	bcg_chip_2_set->setVisible(false);
-	bcg_chip_3_set->setVisible(false);
-	bcg_chip_4_set->setVisible(false);
 
 	//Path settings - Screenshot
 	QWidget* screenshot_set = new QWidget(paths);
@@ -929,11 +643,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	connect(dead_zone, SIGNAL(valueChanged(int)), this, SLOT(dead_zone_change()));
 	connect(input_device, SIGNAL(currentIndexChanged(int)), this, SLOT(input_device_change()));
 	connect(controls_combo, SIGNAL(currentIndexChanged(int)), this, SLOT(switch_control_layout()));
-	connect(chip_gate_type, SIGNAL(currentIndexChanged(int)), this, SLOT(get_chip_list()));
-	connect(battle_chip_1, SIGNAL(currentIndexChanged(int)), this, SLOT(set_battle_chip()));
-	connect(battle_chip_2, SIGNAL(currentIndexChanged(int)), this, SLOT(set_battle_chip()));
-	connect(battle_chip_3, SIGNAL(currentIndexChanged(int)), this, SLOT(set_battle_chip()));
-	connect(battle_chip_4, SIGNAL(currentIndexChanged(int)), this, SLOT(set_battle_chip()));
 	connect(data_folder, SIGNAL(accepted()), this, SLOT(select_folder()));
 	connect(data_folder, SIGNAL(rejected()), this, SLOT(reject_folder()));
 
@@ -950,47 +659,25 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	QSignalMapper* button_config = new QSignalMapper(this);
 	connect(config_a, SIGNAL(clicked()), button_config, SLOT(map()));
 	connect(config_b, SIGNAL(clicked()), button_config, SLOT(map()));
-	connect(config_x, SIGNAL(clicked()), button_config, SLOT(map()));
-	connect(config_y, SIGNAL(clicked()), button_config, SLOT(map()));
 	connect(config_start, SIGNAL(clicked()), button_config, SLOT(map()));
 	connect(config_select, SIGNAL(clicked()), button_config, SLOT(map()));
 	connect(config_left, SIGNAL(clicked()), button_config, SLOT(map()));
 	connect(config_right, SIGNAL(clicked()), button_config, SLOT(map()));
 	connect(config_up, SIGNAL(clicked()), button_config, SLOT(map()));
 	connect(config_down, SIGNAL(clicked()), button_config, SLOT(map()));
-	connect(config_l, SIGNAL(clicked()), button_config, SLOT(map()));
-	connect(config_r, SIGNAL(clicked()), button_config, SLOT(map()));
-	connect(config_con_up, SIGNAL(clicked()), button_config, SLOT(map()));
-	connect(config_con_down, SIGNAL(clicked()), button_config, SLOT(map()));
-	connect(config_con_left, SIGNAL(clicked()), button_config, SLOT(map()));
-	connect(config_con_right, SIGNAL(clicked()), button_config, SLOT(map()));
-	connect(config_con_1, SIGNAL(clicked()), button_config, SLOT(map()));
-	connect(config_con_2, SIGNAL(clicked()), button_config, SLOT(map()));
 	connect(config_turbo, SIGNAL(clicked()), button_config, SLOT(map()));
 	connect(config_mute, SIGNAL(clicked()), button_config, SLOT(map()));
-	connect(config_camera, SIGNAL(clicked()), button_config, SLOT(map()));
 	
 	button_config->setMapping(config_a, 0);
 	button_config->setMapping(config_b, 1);
-	button_config->setMapping(config_x, 2);
-	button_config->setMapping(config_y, 3);
 	button_config->setMapping(config_start, 4);
 	button_config->setMapping(config_select, 5);
 	button_config->setMapping(config_left, 6);
 	button_config->setMapping(config_right, 7);
 	button_config->setMapping(config_up, 8);
 	button_config->setMapping(config_down, 9);
-	button_config->setMapping(config_l, 10);
-	button_config->setMapping(config_r, 11);
-	button_config->setMapping(config_con_up, 12);
-	button_config->setMapping(config_con_down, 13);
-	button_config->setMapping(config_con_left, 14);
-	button_config->setMapping(config_con_right, 15);
-	button_config->setMapping(config_con_1, 16);
-	button_config->setMapping(config_con_2, 17);
 	button_config->setMapping(config_turbo, 18);
 	button_config->setMapping(config_mute, 19);
-	button_config->setMapping(config_camera, 20);
 	connect(button_config, SIGNAL(mapped(int)), this, SLOT(configure_button(int))) ;
 
 	//Final tab layout
@@ -1002,135 +689,71 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	//Config button formatting
 	config_a->setMinimumWidth(150);
 	config_b->setMinimumWidth(150);
-	config_x->setMinimumWidth(150);
-	config_y->setMinimumWidth(150);
 	config_start->setMinimumWidth(150);
 	config_select->setMinimumWidth(150);
 	config_left->setMinimumWidth(150);
 	config_right->setMinimumWidth(150);
 	config_up->setMinimumWidth(150);
 	config_down->setMinimumWidth(150);
-	config_l->setMinimumWidth(150);
-	config_r->setMinimumWidth(150);
-	config_con_up->setMinimumWidth(150);
-	config_con_down->setMinimumWidth(150);
-	config_con_left->setMinimumWidth(150);
-	config_con_right->setMinimumWidth(150);
-	config_con_1->setMinimumWidth(150);
-	config_con_2->setMinimumWidth(150);
 	config_turbo->setMinimumWidth(150);
 	config_mute->setMinimumWidth(150);
-	config_camera->setMinimumWidth(150);
 
 	input_a->setReadOnly(true);
 	input_b->setReadOnly(true);
-	input_x->setReadOnly(true);
-	input_y->setReadOnly(true);
 	input_start->setReadOnly(true);
 	input_select->setReadOnly(true);
 	input_left->setReadOnly(true);
 	input_right->setReadOnly(true);
 	input_up->setReadOnly(true);
 	input_down->setReadOnly(true);
-	input_l->setReadOnly(true);
-	input_r->setReadOnly(true);
-	input_con_up->setReadOnly(true);
-	input_con_down->setReadOnly(true);
-	input_con_left->setReadOnly(true);
-	input_con_right->setReadOnly(true);
 	input_turbo->setReadOnly(true);
 	input_mute->setReadOnly(true);
-	input_camera->setReadOnly(true);
 
 	//Install event filters
 	config_a->installEventFilter(this);
 	config_b->installEventFilter(this);
-	config_x->installEventFilter(this);
-	config_y->installEventFilter(this);
 	config_start->installEventFilter(this);
 	config_select->installEventFilter(this);
 	config_left->installEventFilter(this);
 	config_right->installEventFilter(this);
 	config_up->installEventFilter(this);
 	config_down->installEventFilter(this);
-	config_l->installEventFilter(this);
-	config_r->installEventFilter(this);
-	config_con_up->installEventFilter(this);
-	config_con_down->installEventFilter(this);
-	config_con_left->installEventFilter(this);
-	config_con_right->installEventFilter(this);
-	config_con_1->installEventFilter(this);
-	config_con_2->installEventFilter(this);
 	config_turbo->installEventFilter(this);
 	config_mute->installEventFilter(this);
-	config_camera->installEventFilter(this);
 
 	input_a->installEventFilter(this);
 	input_b->installEventFilter(this);
-	input_x->installEventFilter(this);
-	input_y->installEventFilter(this);
 	input_start->installEventFilter(this);
 	input_select->installEventFilter(this);
 	input_left->installEventFilter(this);
 	input_right->installEventFilter(this);
 	input_up->installEventFilter(this);
 	input_down->installEventFilter(this);
-	input_l->installEventFilter(this);
-	input_r->installEventFilter(this);
-	input_con_up->installEventFilter(this);
-	input_con_down->installEventFilter(this);
-	input_con_left->installEventFilter(this);
-	input_con_right->installEventFilter(this);
-	input_con_1->installEventFilter(this);
-	input_con_2->installEventFilter(this);
 	input_turbo->installEventFilter(this);
 	input_mute->installEventFilter(this);
-	input_camera->installEventFilter(this);
 
 	//Set focus policies
 	config_a->setFocusPolicy(Qt::NoFocus);
 	config_b->setFocusPolicy(Qt::NoFocus);
-	config_x->setFocusPolicy(Qt::NoFocus);
-	config_y->setFocusPolicy(Qt::NoFocus);
 	config_start->setFocusPolicy(Qt::NoFocus);
 	config_select->setFocusPolicy(Qt::NoFocus);
 	config_left->setFocusPolicy(Qt::NoFocus);
 	config_right->setFocusPolicy(Qt::NoFocus);
 	config_up->setFocusPolicy(Qt::NoFocus);
 	config_down->setFocusPolicy(Qt::NoFocus);
-	config_l->setFocusPolicy(Qt::NoFocus);
-	config_r->setFocusPolicy(Qt::NoFocus);
-	config_con_up->setFocusPolicy(Qt::NoFocus);
-	config_con_down->setFocusPolicy(Qt::NoFocus);
-	config_con_left->setFocusPolicy(Qt::NoFocus);
-	config_con_right->setFocusPolicy(Qt::NoFocus);
-	config_con_1->setFocusPolicy(Qt::NoFocus);
-	config_con_2->setFocusPolicy(Qt::NoFocus);
 	config_turbo->setFocusPolicy(Qt::NoFocus);
 	config_mute->setFocusPolicy(Qt::NoFocus);
-	config_camera->setFocusPolicy(Qt::NoFocus);
 
 	input_a->setFocusPolicy(Qt::NoFocus);
 	input_b->setFocusPolicy(Qt::NoFocus);
-	input_x->setFocusPolicy(Qt::NoFocus);
-	input_y->setFocusPolicy(Qt::NoFocus);
 	input_start->setFocusPolicy(Qt::NoFocus);
 	input_select->setFocusPolicy(Qt::NoFocus);
 	input_left->setFocusPolicy(Qt::NoFocus);
 	input_right->setFocusPolicy(Qt::NoFocus);
 	input_up->setFocusPolicy(Qt::NoFocus);
 	input_down->setFocusPolicy(Qt::NoFocus);
-	input_l->setFocusPolicy(Qt::NoFocus);
-	input_r->setFocusPolicy(Qt::NoFocus);
-	input_con_up->setFocusPolicy(Qt::NoFocus);
-	input_con_down->setFocusPolicy(Qt::NoFocus);
-	input_con_left->setFocusPolicy(Qt::NoFocus);
-	input_con_right->setFocusPolicy(Qt::NoFocus);
-	input_con_1->setFocusPolicy(Qt::NoFocus);
-	input_con_2->setFocusPolicy(Qt::NoFocus);
 	input_turbo->setFocusPolicy(Qt::NoFocus);
 	input_mute->setFocusPolicy(Qt::NoFocus);
-	input_camera->setFocusPolicy(Qt::NoFocus);
 
 	//Joystick handling
 	jstick = SDL_JoystickOpen(0);
@@ -1151,13 +774,7 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 
 	dmg_cheat_menu = new cheat_menu;
 	real_time_clock_menu = new rtc_menu;
-	pokemon_pikachu_menu = new pp2_menu;
-	pocket_sakura_menu = new ps_menu;
-	full_changer_menu = new zzh_menu;
-
 	turbo_file_menu = new tbf_menu;
-
-	get_chip_list();
 
 	resize(450, 450);
 	setWindowTitle(tr("GBE+ Settings"));
@@ -1182,18 +799,6 @@ void gen_settings::set_ini_options()
 	real_time_clock_menu->mins_offset->setValue(config::rtc_offset[1]);
 	real_time_clock_menu->hours_offset->setValue(config::rtc_offset[2]);
 	real_time_clock_menu->days_offset->setValue(config::rtc_offset[3]);
-
-	//Full Changer
-	if(config::ir_db_index < 70) { full_changer_menu->cosmic_character->setCurrentIndex(config::ir_db_index); }
-	else { full_changer_menu->cosmic_character->setCurrentIndex(0); }
-
-	//Pokemon Pikachu 2
-	if(config::ir_db_index < 6) { pokemon_pikachu_menu->watts->setCurrentIndex(config::ir_db_index); }
-	else { pokemon_pikachu_menu->watts->setCurrentIndex(0); }
-
-	//Pocket Sakura
-	if(config::ir_db_index < 4) { pocket_sakura_menu->points->setCurrentIndex(config::ir_db_index); }
-	else { pocket_sakura_menu->points->setCurrentIndex(0); }
 
 	//Screen scale options
 	screen_scale->setCurrentIndex(config::scaling_factor - 1);
@@ -1298,25 +903,14 @@ void gen_settings::set_ini_options()
 	//Keyboard controls
 	input_a->setText(QString::number(config::gbe_key_a));
 	input_b->setText(QString::number(config::gbe_key_b));
-	input_x->setText(QString::number(config::gbe_key_x));
-	input_y->setText(QString::number(config::gbe_key_y));
 	input_start->setText(QString::number(config::gbe_key_start));
 	input_select->setText(QString::number(config::gbe_key_select));
 	input_left->setText(QString::number(config::gbe_key_left));
 	input_right->setText(QString::number(config::gbe_key_right));
 	input_up->setText(QString::number(config::gbe_key_up));
 	input_down->setText(QString::number(config::gbe_key_down));
-	input_l->setText(QString::number(config::gbe_key_l_trigger));
-	input_r->setText(QString::number(config::gbe_key_r_trigger));
-	input_con_up->setText(QString::number(config::con_key_up));
-	input_con_down->setText(QString::number(config::con_key_down));
-	input_con_left->setText(QString::number(config::con_key_left));
-	input_con_right->setText(QString::number(config::con_key_right));
-	input_con_1->setText(QString::number(config::con_key_1));
-	input_con_2->setText(QString::number(config::con_key_2));
 	input_turbo->setText(QString::number(config::hotkey_turbo));
 	input_mute->setText(QString::number(config::hotkey_mute));
-	input_camera->setText(QString::number(config::hotkey_camera));
 
 	//BIOS, Boot ROM and Manifest paths
 	QString path_6(QString::fromStdString(config::ss_path));
@@ -1326,18 +920,6 @@ void gen_settings::set_ini_options()
 	//Rumble
 	if(config::use_haptics) { rumble_on->setChecked(true); }
 	else { rumble_on->setChecked(false); }
-
-	//Battle Gate Type
-	chip_gate_type->setCurrentIndex(0);
-
-	//Battle Chips 1-4
-	for(u32 x = 0; x < 512; x++)
-	{
-		if(chip_list[x] == init_chip_list[0]) { battle_chip_1->setCurrentIndex(x); }
-		if(chip_list[x] == init_chip_list[1]) { battle_chip_2->setCurrentIndex(x); }
-		if(chip_list[x] == init_chip_list[2]) { battle_chip_3->setCurrentIndex(x); }
-		if(chip_list[x] == init_chip_list[3]) { battle_chip_4->setCurrentIndex(x); }
-	}
 
 	screenshot->setText(path_6);
 	game_saves->setText(path_9);
@@ -1657,44 +1239,24 @@ void gen_settings::input_device_change()
 	{
 		input_a->setText(QString::number(config::gbe_key_a));
 		input_b->setText(QString::number(config::gbe_key_b));
-		input_x->setText(QString::number(config::gbe_key_x));
-		input_y->setText(QString::number(config::gbe_key_y));
 		input_start->setText(QString::number(config::gbe_key_start));
 		input_select->setText(QString::number(config::gbe_key_select));
 		input_left->setText(QString::number(config::gbe_key_left));
 		input_right->setText(QString::number(config::gbe_key_right));
 		input_up->setText(QString::number(config::gbe_key_up));
 		input_down->setText(QString::number(config::gbe_key_down));
-		input_l->setText(QString::number(config::gbe_key_l_trigger));
-		input_r->setText(QString::number(config::gbe_key_r_trigger));
-		input_con_up->setText(QString::number(config::con_key_up));
-		input_con_down->setText(QString::number(config::con_key_down));
-		input_con_left->setText(QString::number(config::con_key_left));
-		input_con_right->setText(QString::number(config::con_key_right));
-		input_con_1->setText(QString::number(config::con_key_1));
-		input_con_2->setText(QString::number(config::con_key_2));
 	}
 
 	else
 	{
 		input_a->setText(QString::number(config::gbe_joy_a));
 		input_b->setText(QString::number(config::gbe_joy_b));
-		input_x->setText(QString::number(config::gbe_joy_x));
-		input_y->setText(QString::number(config::gbe_joy_y));
 		input_start->setText(QString::number(config::gbe_joy_start));
 		input_select->setText(QString::number(config::gbe_joy_select));
 		input_left->setText(QString::number(config::gbe_joy_left));
 		input_right->setText(QString::number(config::gbe_joy_right));
 		input_up->setText(QString::number(config::gbe_joy_up));
 		input_down->setText(QString::number(config::gbe_joy_down));
-		input_l->setText(QString::number(config::gbe_joy_l_trigger));
-		input_r->setText(QString::number(config::gbe_joy_r_trigger));
-		input_con_up->setText(QString::number(config::con_joy_up));
-		input_con_down->setText(QString::number(config::con_joy_down));
-		input_con_left->setText(QString::number(config::con_joy_left));
-		input_con_right->setText(QString::number(config::con_joy_right));
-		input_con_1->setText(QString::number(config::con_joy_1));
-		input_con_2->setText(QString::number(config::con_joy_2));
 
 		//Use new joystick id
 		config::joy_id = input_device->currentIndex() - 1;
@@ -1707,64 +1269,6 @@ void gen_settings::input_device_change()
 
 /****** Dynamically changes the core pad's dead-zone ******/
 void gen_settings::dead_zone_change() { config::dead_zone = dead_zone->value(); }
-
-/****** Updates the current Battle Chip list ******/
-void gen_settings::get_chip_list()
-{
-	std::string list_file = config::data_path + "chip_gate/";
-	std::string input_line = "";
-	u32 line_count = 0;
-	u32 chip_count = 0;
-
-	switch(chip_gate_type->currentIndex())
-	{
-		case 0: list_file += "bcg_list.txt"; break;
-		case 1: list_file += "pcg_list.txt"; break;
-		case 2: list_file += "blg_list.txt"; break;
-	}
-
-	//Clear current combo-boxes for Battle Chips 1-4
-	battle_chip_1->clear();
-	battle_chip_2->clear();
-	battle_chip_3->clear();
-	battle_chip_4->clear();
-
-	//Open text file and grab all lines
-	std::ifstream file(list_file.c_str(), std::ios::in);
-
-	if(!file.is_open()) { return; }
-
-	while(getline(file, input_line))
-	{
-		line_count++;
-
-		//Add chip 
-		if(!input_line.empty())
-		{
-			chip_list[chip_count++] = line_count;
-			battle_chip_1->addItem(QString::fromStdString(input_line));
-			battle_chip_2->addItem(QString::fromStdString(input_line));
-			battle_chip_3->addItem(QString::fromStdString(input_line));
-			battle_chip_4->addItem(QString::fromStdString(input_line));
-		}
-	}
-}
-
-/****** Sets Battle Chip ID based on chip list ******/
-void gen_settings::set_battle_chip()
-{
-	u16 index = battle_chip_1->currentIndex();
-	config::chip_list[0] = chip_list[index];
-
-	index = battle_chip_2->currentIndex();
-	config::chip_list[1] = chip_list[index];
-
-	index = battle_chip_3->currentIndex();
-	config::chip_list[2] = chip_list[index];
-
-	index = battle_chip_4->currentIndex();
-	config::chip_list[3] = chip_list[index];
-}
 
 /****** Prepares GUI to receive input for controller configuration ******/
 void gen_settings::configure_button(int button)
@@ -1785,18 +1289,6 @@ void gen_settings::configure_button(int button)
 			input_delay(config_b);
 			input_b->setFocus();
 			input_index = 1;
-			break;
-
-		case 2: 
-			input_delay(config_x);
-			input_x->setFocus();
-			input_index = 2;
-			break;
-
-		case 3: 
-			input_delay(config_y);
-			input_y->setFocus();
-			input_index = 3;
 			break;
 
 		case 4: 
@@ -1835,54 +1327,6 @@ void gen_settings::configure_button(int button)
 			input_index = 9;
 			break;
 
-		case 10: 
-			input_delay(config_l);
-			input_l->setFocus();
-			input_index = 10;
-			break;
-
-		case 11: 
-			input_delay(config_r);
-			input_r->setFocus();
-			input_index = 11;
-			break;
-
-		case 12: 
-			input_delay(config_con_up);
-			input_con_up->setFocus();
-			input_index = 12;
-			break;
-
-		case 13: 
-			input_delay(config_con_down);
-			input_con_down->setFocus();
-			input_index = 13;
-			break;
-
-		case 14: 
-			input_delay(config_con_left);
-			input_con_left->setFocus();
-			input_index = 14;
-			break;
-
-		case 15: 
-			input_delay(config_con_right);
-			input_con_right->setFocus();
-			input_index = 15;
-			break;
-
-		case 16: 
-			input_delay(config_con_1);
-			input_con_1->setFocus();
-			input_index = 16;
-			break;
-
-		case 17: 
-			input_delay(config_con_2);
-			input_con_2->setFocus();
-			input_index = 17;
-			break;
-
 		case 18:
 			input_delay(config_turbo);
 			input_turbo->setFocus();
@@ -1893,12 +1337,6 @@ void gen_settings::configure_button(int button)
 			input_delay(config_mute);
 			input_turbo->setFocus();
 			input_index = 19;
-			break;
-
-		case 20:
-			input_delay(config_camera);
-			input_turbo->setFocus();
-			input_index = 20;
 			break;
 	}
 
@@ -2002,28 +1440,6 @@ void gen_settings::process_joystick_event()
 			input_b->clearFocus();
 			break;
 
-		case 2:
-			if(pad != 0)
-			{
-				config::gbe_joy_x = pad;
-				input_x->setText(QString::number(pad));
-			}
-
-			config_x->setText("Configure");
-			input_x->clearFocus();
-			break;
-
-		case 3:
-			if(pad != 0)
-			{
-				config::gbe_joy_y = pad;
-				input_y->setText(QString::number(pad));
-			}
-
-			config_y->setText("Configure");
-			input_y->clearFocus();
-			break;
-
 		case 4:
 			if(pad != 0)
 			{
@@ -2090,93 +1506,6 @@ void gen_settings::process_joystick_event()
 			input_down->clearFocus();
 			break;
 
-		case 10: 
-			if(pad != 0)
-			{
-				config::gbe_joy_l_trigger = pad;
-				input_l->setText(QString::number(pad));
-			}
-
-			config_l->setText("Configure");
-			input_l->clearFocus();
-			break;
-
-		case 11:
-			if(pad != 0)
-			{
-				config::gbe_joy_r_trigger = pad;
-				input_r->setText(QString::number(pad));
-			}
-
-			config_r->setText("Configure");
-			input_r->clearFocus();
-			break;
-
-		case 12:
-			if(pad != 0)
-			{
-				config::con_joy_up = pad;
-				input_con_up->setText(QString::number(pad));
-			}
-
-			config_con_up->setText("Configure");
-			input_con_up->clearFocus();
-			break;
-
-		case 13:
-			if(pad != 0)
-			{
-				config::con_joy_down = pad;
-				input_con_down->setText(QString::number(pad));
-			}
-
-			config_con_down->setText("Configure");
-			input_con_down->clearFocus();
-			break;
-
-		case 14:
-			if(pad != 0)
-			{
-				config::con_joy_left = pad;
-				input_con_left->setText(QString::number(pad));
-			}
-
-			config_con_left->setText("Configure");
-			input_con_left->clearFocus();
-			break;
-
-		case 15:
-			if(pad != 0)
-			{
-				config::con_joy_right = pad;
-				input_con_right->setText(QString::number(pad));
-			}
-
-			config_con_right->setText("Configure");
-			input_con_right->clearFocus();
-			break;
-
-		case 16:
-			if(pad != 0)
-			{
-				config::con_joy_1 = pad;
-				input_con_1->setText(QString::number(pad));
-			}
-
-			config_con_1->setText("Configure");
-			input_con_1->clearFocus();
-			break;
-
-		case 17:
-			if(pad != 0)
-			{
-				config::con_joy_2 = pad;
-				input_con_2->setText(QString::number(pad));
-			}
-
-			config_con_2->setText("Configure");
-			input_con_2->clearFocus();
-			break;
 	}
 
 	input_index = -1;
@@ -2189,25 +1518,14 @@ void gen_settings::close_input()
 {
 	config_a->setText("Configure");
 	config_b->setText("Configure");
-	config_x->setText("Configure");
-	config_y->setText("Configure");
 	config_start->setText("Configure");
 	config_select->setText("Configure");
 	config_left->setText("Configure");
 	config_right->setText("Configure");
 	config_up->setText("Configure");
 	config_down->setText("Configure");
-	config_l->setText("Configure");
-	config_r->setText("Configure");
-	config_con_up->setText("Configure");
-	config_con_down->setText("Configure");
-	config_con_left->setText("Configure");
-	config_con_right->setText("Configure");
-	config_con_1->setText("Configure");
-	config_con_2->setText("Configure");
 	config_turbo->setText("Configure");
 	config_mute->setText("Configure");
-	config_camera->setText("Configure");
 
 	input_index = -1;
 	grab_input = false;
@@ -2241,12 +1559,6 @@ void gen_settings::switch_control_layout()
 			hotkey_controls_layout->itemAt(x)->widget()->setVisible(false);
 		}
 
-		//Set all Battle Chip Gate control widgets to invisible
-		for(int x = 0; x < bcg_controls_layout->count(); x++)
-		{
-			bcg_controls_layout->itemAt(x)->widget()->setVisible(false);
-		}
-
 		delete controls->layout();
 		advanced_controls_layout->insertWidget(0, input_device_set);
 		controls->setLayout(advanced_controls_layout);
@@ -2274,12 +1586,6 @@ void gen_settings::switch_control_layout()
 		for(int x = 0; x < hotkey_controls_layout->count(); x++)
 		{
 			hotkey_controls_layout->itemAt(x)->widget()->setVisible(false);
-		}
-
-		//Set all Battle Chip Gate control widgets to invisible
-		for(int x = 0; x < bcg_controls_layout->count(); x++)
-		{
-			bcg_controls_layout->itemAt(x)->widget()->setVisible(false);
 		}
 
 		delete controls->layout();
@@ -2311,51 +1617,9 @@ void gen_settings::switch_control_layout()
 			hotkey_controls_layout->itemAt(x)->widget()->setVisible(true);
 		}
 
-		//Set all Battle Chip Gate control widgets to invisible
-		for(int x = 0; x < bcg_controls_layout->count(); x++)
-		{
-			bcg_controls_layout->itemAt(x)->widget()->setVisible(false);
-		}
-
 		delete controls->layout();
 		hotkey_controls_layout->insertWidget(0, input_device_set);
 		controls->setLayout(hotkey_controls_layout);
-
-		input_device_set->setVisible(true);
-		input_device_set->setEnabled(false);
-		input_device->setCurrentIndex(0);
-	}
-
-	//Switch to Battle Chip Gate layout
-	else if(controls_combo->currentIndex() == 3)
-	{
-		//Set all advanced control widgets to invisible
-		for(int x = 0; x < advanced_controls_layout->count(); x++)
-		{
-			advanced_controls_layout->itemAt(x)->widget()->setVisible(false);
-		}
-
-		//Set all standard control widgets to invisible
-		for(int x = 0; x < controls_layout->count(); x++)
-		{
-			controls_layout->itemAt(x)->widget()->setVisible(false);
-		}
-
-		//Set all Battle Chip Gate control widgets to visible
-		for(int x = 0; x < bcg_controls_layout->count(); x++)
-		{
-			bcg_controls_layout->itemAt(x)->widget()->setVisible(true);
-		}
-
-		//Set all hotkey control widgets to invisible
-		for(int x = 0; x < hotkey_controls_layout->count(); x++)
-		{
-			hotkey_controls_layout->itemAt(x)->widget()->setVisible(false);
-		}
-
-		delete controls->layout();
-		bcg_controls_layout->insertWidget(0, input_device_set);
-		controls->setLayout(bcg_controls_layout);
 
 		input_device_set->setVisible(true);
 		input_device_set->setEnabled(false);
@@ -2377,12 +1641,6 @@ void gen_settings::switch_control_layout()
 			controls_layout->itemAt(x)->widget()->setVisible(false);
 		}
 
-		//Set all Battle Chip Gate control widgets to visible
-		for(int x = 0; x < bcg_controls_layout->count(); x++)
-		{
-			bcg_controls_layout->itemAt(x)->widget()->setVisible(false);
-		}
-
 		//Set all hotkey control widgets to invisible
 		for(int x = 0; x < hotkey_controls_layout->count(); x++)
 		{
@@ -2402,16 +1660,12 @@ void gen_settings::switch_control_layout()
 			controls_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
 			controls_layout->addWidget(input_a_set);
 			controls_layout->addWidget(input_b_set);
-			controls_layout->addWidget(input_x_set);
-			controls_layout->addWidget(input_y_set);
 			controls_layout->addWidget(input_start_set);
 			controls_layout->addWidget(input_select_set);
 			controls_layout->addWidget(input_left_set);
 			controls_layout->addWidget(input_right_set);
 			controls_layout->addWidget(input_up_set);
 			controls_layout->addWidget(input_down_set);
-			controls_layout->addWidget(input_l_set);
-			controls_layout->addWidget(input_r_set);
 			controls_layout->addWidget(dead_zone_set);
 			break;
 
@@ -2419,12 +1673,6 @@ void gen_settings::switch_control_layout()
 			advanced_controls_layout = new QVBoxLayout;
 			advanced_controls_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
 			advanced_controls_layout->addWidget(rumble_set);
-			advanced_controls_layout->addWidget(con_up_set);
-			advanced_controls_layout->addWidget(con_down_set);
-			advanced_controls_layout->addWidget(con_left_set);
-			advanced_controls_layout->addWidget(con_right_set);
-			advanced_controls_layout->addWidget(con_1_set);
-			advanced_controls_layout->addWidget(con_2_set);
 			break;
 
 		case 2:
@@ -2432,18 +1680,8 @@ void gen_settings::switch_control_layout()
 			hotkey_controls_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
 			hotkey_controls_layout->addWidget(hotkey_turbo_set);
 			hotkey_controls_layout->addWidget(hotkey_mute_set);
-			hotkey_controls_layout->addWidget(hotkey_camera_set);
 			break;
 
-		case 3:
-			bcg_controls_layout = new QVBoxLayout;
-			bcg_controls_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-			bcg_controls_layout->addWidget(bcg_gate_set);
-			bcg_controls_layout->addWidget(bcg_chip_1_set);
-			bcg_controls_layout->addWidget(bcg_chip_2_set);
-			bcg_controls_layout->addWidget(bcg_chip_3_set);
-			bcg_controls_layout->addWidget(bcg_chip_4_set);
-			break;
 	}
 
 	last_control_id = controls_combo->currentIndex();
@@ -2493,28 +1731,6 @@ void gen_settings::keyPressEvent(QKeyEvent* event)
 
 				config_b->setText("Configure");
 				input_b->clearFocus();
-				break;
-
-			case 2:
-				if(last_key != -1)
-				{
-					config::gbe_key_x = last_key;
-					input_x->setText(QString::number(last_key));
-				}
-
-				config_x->setText("Configure");
-				input_x->clearFocus();
-				break;
-
-			case 3:
-				if(last_key != -1)
-				{
-					config::gbe_key_y = last_key;
-					input_y->setText(QString::number(last_key));
-				}
-
-				config_y->setText("Configure");
-				input_y->clearFocus();
 				break;
 
 			case 4:
@@ -2583,94 +1799,6 @@ void gen_settings::keyPressEvent(QKeyEvent* event)
 				input_down->clearFocus();
 				break;
 
-			case 10: 
-				if(last_key != -1)
-				{
-					config::gbe_key_l_trigger = last_key;
-					input_l->setText(QString::number(last_key));
-				}
-
-				config_l->setText("Configure");
-				input_l->clearFocus();
-				break;
-
-			case 11:
-				if(last_key != -1)
-				{
-					config::gbe_key_r_trigger = last_key;
-					input_r->setText(QString::number(last_key));
-				}
-
-				config_r->setText("Configure");
-				input_r->clearFocus();
-				break;
-
-			case 12:
-				if(last_key != -1)
-				{
-					config::con_key_up = last_key;
-					input_con_up->setText(QString::number(last_key));
-				}
-
-				config_con_up->setText("Configure");
-				input_con_up->clearFocus();
-				break;
-
-			case 13:
-				if(last_key != -1)
-				{
-					config::con_key_down = last_key;
-					input_con_down->setText(QString::number(last_key));
-				}
-
-				config_con_down->setText("Configure");
-				input_con_down->clearFocus();
-				break;
-
-			case 14:
-				if(last_key != -1)
-				{
-					config::con_key_left = last_key;
-					input_con_left->setText(QString::number(last_key));
-				}
-
-				config_con_left->setText("Configure");
-				input_con_left->clearFocus();
-				break;
-
-			case 15:
-				if(last_key != -1)
-				{
-					config::con_key_right = last_key;
-					input_con_right->setText(QString::number(last_key));
-				}
-
-				config_con_right->setText("Configure");
-				input_con_right->clearFocus();
-				break;
-
-			case 16:
-				if(last_key != -1)
-				{
-					config::con_key_1 = last_key;
-					input_con_1->setText(QString::number(last_key));
-				}
-
-				config_con_1->setText("Configure");
-				input_con_1->clearFocus();
-				break;
-
-			case 17:
-				if(last_key != -1)
-				{
-					config::con_key_2 = last_key;
-					input_con_2->setText(QString::number(last_key));
-				}
-
-				config_con_2->setText("Configure");
-				input_con_2->clearFocus();
-				break;
-
 			case 18:
 				if(last_key != -1)
 				{
@@ -2691,17 +1819,6 @@ void gen_settings::keyPressEvent(QKeyEvent* event)
 
 				config_mute->setText("Configure");
 				input_mute->clearFocus();
-				break;
-
-			case 20:
-				if(last_key != -1)
-				{
-					config::hotkey_camera = last_key;
-					input_camera->setText(QString::number(last_key));
-				}
-
-				config_camera->setText("Configure");
-				input_camera->clearFocus();
 				break;
 
 		}
