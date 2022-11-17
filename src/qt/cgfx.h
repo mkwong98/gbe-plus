@@ -52,14 +52,6 @@ class gbe_cgfx : public QDialog
 	QCheckBox* ext_vram;
 	QCheckBox* ext_bright;
 
-	QLabel* dest_label;
-	QLineEdit* dest_folder;
-	QPushButton* dest_browse;
-
-	QLabel* name_label;
-	QLineEdit* dest_name;
-	QPushButton* name_browse;
-
 	QDialogButtonBox* advanced_buttons;
 	QPushButton* cancel_button;
 	QPushButton* dump_button;
@@ -115,7 +107,6 @@ class gbe_cgfx : public QDialog
 	protected:
 	void closeEvent(QCloseEvent* event);
 	bool eventFilter(QObject* target, QEvent* event);
-	void paintEvent(QPaintEvent* event);
 
 	QWidget* layers_set;
 
@@ -161,10 +152,7 @@ class gbe_cgfx : public QDialog
 	void close_cgfx();
 	void redump_tile();
 	void dump_selection();
-	void browse_advanced_dir();
 	void layer_change();
-	void select_folder();
-	void reject_folder();
 	void update_selection();
 	void ignore_manifest_criticals();
 	void advance_next_frame();

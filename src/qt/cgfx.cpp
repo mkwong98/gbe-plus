@@ -418,19 +418,6 @@ gbe_cgfx::gbe_cgfx(QWidget *parent) : QDialog(parent)
 	advanced_box->setWindowTitle("Advanced Tile Dumping");
 	advanced_box->hide();
 
-	//Advanced menu widgets
-	QWidget* dest_set = new QWidget(advanced_box);
-	dest_label = new QLabel("Destination Folder :  ");
-	dest_browse = new QPushButton("Browse");
-	dest_folder = new QLineEdit(dest_set);
-	dest_folder->setReadOnly(true);
-	dest_label->resize(100, dest_label->height());
-
-	QWidget* name_set = new QWidget(advanced_box);
-	name_label = new QLabel("Tile Name :  ");
-	name_browse = new QPushButton("Browse");
-	dest_name = new QLineEdit(name_set);
-
 	QWidget* ext_vram_set = new QWidget(advanced_box);
 	QLabel* ext_vram_label = new QLabel("EXT_VRAM_ADDR", ext_vram_set);
 	ext_vram = new QCheckBox(ext_vram_set);
@@ -448,19 +435,6 @@ gbe_cgfx::gbe_cgfx(QWidget *parent) : QDialog(parent)
 	advanced_buttons->addButton(cancel_button, QDialogButtonBox::ActionRole);
 
 	//Advanced menu layouts
-	QHBoxLayout* dest_layout = new QHBoxLayout;
-	dest_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	dest_layout->addWidget(dest_label);
-	dest_layout->addWidget(dest_folder);
-	dest_layout->addWidget(dest_browse);
-	dest_set->setLayout(dest_layout);
-
-	QHBoxLayout* name_layout = new QHBoxLayout;
-	name_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	name_layout->addWidget(name_label);
-	name_layout->addWidget(dest_name);
-	name_layout->addWidget(name_browse);
-	name_set->setLayout(name_layout);
 
 	QHBoxLayout* ext_vram_layout = new QHBoxLayout;
 	ext_vram_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
@@ -476,8 +450,6 @@ gbe_cgfx::gbe_cgfx(QWidget *parent) : QDialog(parent)
 
 	QVBoxLayout* advanced_box_layout = new QVBoxLayout;
 	advanced_box_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	advanced_box_layout->addWidget(dest_set);
-	advanced_box_layout->addWidget(name_set);
 	advanced_box_layout->addWidget(ext_vram_set);
 	advanced_box_layout->addWidget(ext_bright_set);
 	advanced_box_layout->addWidget(advanced_buttons);
@@ -508,8 +480,6 @@ gbe_cgfx::gbe_cgfx(QWidget *parent) : QDialog(parent)
 	
 	connect(dump_button, SIGNAL(clicked()), this, SLOT(write_manifest_entry()));
 	connect(cancel_button, SIGNAL(clicked()), this, SLOT(close_advanced()));
-	connect(dest_browse, SIGNAL(clicked()), this, SLOT(browse_advanced_dir()));
-	connect(name_browse, SIGNAL(clicked()), this, SLOT(browse_advanced_file()));
 	connect(manifest_write_fail_ignore, SIGNAL(clicked()), this, SLOT(ignore_manifest_criticals()));
 	connect(redump_hash_ok, SIGNAL(clicked()), this, SLOT(redump_tile()));
 
@@ -903,12 +873,6 @@ bool gbe_cgfx::eventFilter(QObject* target, QEvent* event)
 	return QDialog::eventFilter(target, event);
 }
 
-/****** Updates the settings window ******/
-void gbe_cgfx::paintEvent(QPaintEvent* event)
-{
-	//Update GUI elements of the advanced menu
-	name_label->setMinimumWidth(dest_label->width());
-}
 
 /****** Updates the dumping selection for multiple tiles in the layer tab ******/
 void gbe_cgfx::update_selection()
@@ -1000,8 +964,8 @@ void gbe_cgfx::dump_selection()
 	}
 
 	//create a blank image
-	SDL_Surface* s = SDL_CreateRGBSurfaceWithFormat(0, 160, 144, 32, SDL_PIXELFORMAT_ARGB8888);
-	SDL_Surface* s2 = SDL_CreateRGBSurfaceWithFormat(0, 160, 144, 32, SDL_PIXELFORMAT_ARGB8888);
+	SDL_Surface* s = SDL_CreateRGBSurfaceWithFormat(0, 160, 320, 32, SDL_PIXELFORMAT_ARGB8888);
+	SDL_Surface* s2 = SDL_CreateRGBSurfaceWithFormat(0, 160, 320, 32, SDL_PIXELFORMAT_ARGB8888);
 
 	file << "\n<img>" << cgfx::meta_dump_name << ".png";
 	if (layer_select->currentIndex() <= 1)
@@ -1075,7 +1039,6 @@ void gbe_cgfx::dump_selection()
 							}
 							fillpt += 152;
 						}
-						u16 pIdx = 0;
 						SDL_UnlockSurface(s);
 
 						//copy to bottom layer
@@ -1092,9 +1055,8 @@ void gbe_cgfx::dump_selection()
 									fillpt++;
 									srcpt++;
 								}
-								fillpt += 160;
+								fillpt += 152;
 							}
-							u16 pIdx = 0;
 							SDL_UnlockSurface(s2);
 						}
 
@@ -1113,17 +1075,32 @@ void gbe_cgfx::dump_selection()
 			}
 		}
 	}
+	//add screen as reference
+	drawY += 16;
+
+	SDL_LockSurface(s);
+	u32* fillpt = (u32*)(s->pixels) + (drawY * 160);
+	std::copy(rawImageData, rawImageData + (160 * 144), fillpt);
+	SDL_UnlockSurface(s);
+
+	drawY += 144;
 	file.close();
 
-	SDL_Surface* ims = SDL_CreateRGBSurfaceWithFormat(0, 160 * (cgfx_scale->currentIndex() + 1), 144 * (cgfx_scale->currentIndex() + 1), 32, SDL_PIXELFORMAT_ARGB8888);
-	SDL_BlitScaled(s, NULL, ims, NULL);
+	SDL_Rect r;
+	r.x = 0;
+	r.y = 0;
+	r.w = 160;
+	r.h = drawY;
+
+	SDL_Surface* ims = SDL_CreateRGBSurfaceWithFormat(0, 160 * (cgfx_scale->currentIndex() + 1), drawY * (cgfx_scale->currentIndex() + 1), 32, SDL_PIXELFORMAT_ARGB8888);
+	SDL_BlitScaled(s, &r, ims, NULL);
 	IMG_SavePNG(ims, (get_game_cgfx_folder() + cgfx::meta_dump_name + ".png").c_str());
 	SDL_FreeSurface(ims);
 
 	if (layer_select->currentIndex() <= 1)
 	{
-		SDL_Surface* ims2 = SDL_CreateRGBSurfaceWithFormat(0, 160 * (cgfx_scale->currentIndex() + 1), 144 * (cgfx_scale->currentIndex() + 1), 32, SDL_PIXELFORMAT_ARGB8888);
-		SDL_BlitScaled(s2, NULL, ims2, NULL);
+		SDL_Surface* ims2 = SDL_CreateRGBSurfaceWithFormat(0, 160 * (cgfx_scale->currentIndex() + 1), drawY * (cgfx_scale->currentIndex() + 1), 32, SDL_PIXELFORMAT_ARGB8888);
+		SDL_BlitScaled(s2, &r, ims2, NULL);
 		IMG_SavePNG(ims2, (get_game_cgfx_folder() + cgfx::meta_dump_name + "b.png").c_str());
 		SDL_FreeSurface(ims2);
 	}
@@ -1131,6 +1108,8 @@ void gbe_cgfx::dump_selection()
 	SDL_FreeSurface(s);
 	SDL_FreeSurface(s2);
 
+	//signal the core to reload the pack
+	main_menu::gbe_plus->get_core_data(4);
 }
 
 

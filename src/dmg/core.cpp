@@ -599,13 +599,16 @@ void* GB_core::get_core_data(u32 core_index)
 {
 	switch(core_index)
 	{
-	case 0: //bg layer
+	case 0: // bg layer
 	case 1: // win layer
 	case 2: // obj layer
 		return core_cpu->controllers.video->render_raw_layer(core_index);
 		break;
 	case 3: // pack data
 		return &(core_cpu->controllers.video->cgfx_stat);
+		break;
+	case 4: // reload pack
+		cgfx::loaded = core_cpu->controllers.video->load_manifest(get_manifest_file());
 		break;
 	}
 	return NULL;

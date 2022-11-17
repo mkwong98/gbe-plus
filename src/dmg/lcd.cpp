@@ -424,8 +424,8 @@ void GB_LCD::clear_HD_strip(SDL_Surface* src, SDL_Rect* srcr, SDL_Surface* dst, 
 			u8 pixelsToClear = ((dstr->x + (8 * cgfx::scaling_factor)) < dst->w ? 8 * cgfx::scaling_factor : dst->w - dstr->x);
 			u32 offset = ((dstr->y + cy) * dst->w + dstr->x) * 4;
 			u32 offset2 = ((srcr->y + cy2) * src->w + srcr->x) * 4;
-			u8* dpixel = (u8*)(dst->pixels) + offset;
-			u8* spixel = (u8*)(src->pixels) + offset2;
+			u8* dpixel = (u8*)(dst->pixels) + offset + 3;
+			u8* spixel = (u8*)(src->pixels) + offset2 + 3;
 			for (u8 ci = 0; ci < pixelsToClear; ci++)
 			{
 				if (*spixel >= *dpixel) *dpixel = 0;
@@ -872,7 +872,7 @@ void DMG_LCD::render_obj_scanline(bool raw)
 		if (hdTile)
 		{
 			hdrect.x = p.x * cgfx::scaling_factor;
-			hdsrcrect.y = hdTile->y + p.graphicsLine * cgfx::scaling_factor;
+			hdsrcrect.y = hdTile->y + (p.graphicsLine >= 8 ? p.graphicsLine - 8 : p.graphicsLine) * cgfx::scaling_factor;
 			if (p.hflip)
 			{
 				hdsrcrect.x = cgfx_stat.himgs[hdTile->imgIdx][0]->w - hdTile->x - hdsrcrect.w;
