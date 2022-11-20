@@ -23,33 +23,12 @@ gbe_cgfx::gbe_cgfx(QWidget *parent) : QDialog(parent)
 	//Set up tabs
 	tabs = new QTabWidget(this);
 	
-	QDialog* config_tab = new QDialog;
 	QDialog* layers_tab = new QDialog;
-	QDialog* manifest_tab = new QDialog;
-	QDialog* obj_meta_tab = new QDialog;
 
 	tabs->addTab(layers_tab, tr("Layers Viewer"));
-	tabs->addTab(obj_meta_tab, tr("Meta Tile Editor"));
-	tabs->addTab(manifest_tab, tr("Manifest"));
-	tabs->addTab(config_tab, tr("Configure"));
-
 	tabs_button = new QDialogButtonBox(QDialogButtonBox::Close);
 
-	//Setup Configure widgets
-	QWidget* blank_set = new QWidget(config_tab);
-	QLabel* blank_label = new QLabel("Ignore blank/empty tiles when dumping", blank_set);
-	blank = new QCheckBox(blank_set);
-
-	QWidget* advanced_set = new QWidget(config_tab);
-	QLabel* advanced_label = new QLabel("Use advanced menu", advanced_set);
-	advanced = new QCheckBox(advanced_set);
-
-	QWidget* auto_trans_set = new QWidget(config_tab);
-	QLabel* auto_trans_label = new QLabel("Automatically add transparency color when dumping OBJs", auto_trans_set);
-	auto_trans = new QCheckBox(auto_trans_set);
-
 	layers_set = new QWidget(layers_tab);
-	layers_layout = new QGridLayout;
 
 	//Setup Layers widgets
 	QImage temp_img(320, 288, QImage::Format_ARGB32);
@@ -190,144 +169,16 @@ gbe_cgfx::gbe_cgfx(QWidget *parent) : QDialog(parent)
 
 	//Layer GroupBox for section
 	QGroupBox* section_set = new QGroupBox(tr("Selection"));
-	QPushButton* copy_section_button = new QPushButton("Copy to meta tile editor");
 	QPushButton* dump_section_button = new QPushButton("Dump new tiles in current selection");
+	QPushButton* copy_section_button = new QPushButton("Copy to clipboard");
 	QVBoxLayout* section_final_layout = new QVBoxLayout;
 	section_final_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
 	section_final_layout->setSpacing(0);
 	section_final_layout->addWidget(section_x_set);
 	section_final_layout->addWidget(section_y_set);
 	section_final_layout->addWidget(dump_section_button);
+	section_final_layout->addWidget(copy_section_button);
 	section_set->setLayout(section_final_layout);
-
-	//OBJ Meta Tile widgets
-	QWidget* obj_meta_preview_set = new QWidget(obj_meta_tab);
-
-	QWidget* obj_size_set_1 = new QWidget(obj_meta_tab);
-	QWidget* obj_size_set_2 = new QWidget(obj_meta_tab);
-	QLabel* obj_meta_width_label = new QLabel("Tile Width :\t");
-	QLabel* obj_meta_height_label = new QLabel("Tile Height :\t");
-	
-	obj_meta_width = new QSpinBox;
-	obj_meta_width->setRange(1, 20);
-	
-	obj_meta_height = new QSpinBox;
-	obj_meta_height->setRange(1, 20);
-
-	QImage temp_obj(320, 320, QImage::Format_ARGB32);
-	temp_obj.fill(qRgb(255, 255, 255));
-	obj_meta_pixel_data = temp_obj;
-
-	obj_meta_img = new QLabel;
-	obj_meta_img->setPixmap(QPixmap::fromImage(temp_obj));
-	obj_meta_img->installEventFilter(this);
-	obj_meta_img->setMouseTracking(true);
-
-	QHBoxLayout* obj_size_layout_1 = new QHBoxLayout;
-	obj_size_layout_1->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	obj_size_layout_1->addWidget(obj_meta_width_label);
-	obj_size_layout_1->addWidget(obj_meta_width);
-	obj_size_set_1->setLayout(obj_size_layout_1);
-
-	QHBoxLayout* obj_size_layout_2 = new QHBoxLayout;
-	obj_size_layout_2->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	obj_size_layout_2->addWidget(obj_meta_height_label);
-	obj_size_layout_2->addWidget(obj_meta_height);
-	obj_size_set_2->setLayout(obj_size_layout_2);
-
-	QPushButton* dump_obj_meta_button = new QPushButton("Dump OBJ Meta Tile");
-
-	QWidget* obj_name_set = new QWidget(obj_meta_tab);
-	obj_name_set->setMaximumWidth(320);
-	QLabel* obj_name_label = new QLabel("Meta Tile Name: ");
-	obj_meta_name = new QLineEdit;
-
-	QHBoxLayout* obj_name_layout = new QHBoxLayout;
-	obj_name_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	obj_name_layout->addWidget(obj_name_label);
-	obj_name_layout->addWidget(obj_meta_name);
-	obj_name_set->setLayout(obj_name_layout);
-
-	QWidget* obj_option_set = new QWidget(obj_meta_tab);
-	obj_meta_vram_addr = new QCheckBox;
-	obj_meta_auto_bright = new QCheckBox;
-
-	QLabel* obj_vram_text = new QLabel("EXT_VRAM_ADDR");
-	QLabel* obj_bright_text = new QLabel("EXT_AUTO_BRIGHT");
-
-	QHBoxLayout* obj_option_layout = new QHBoxLayout;
-	obj_option_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	obj_option_layout->addWidget(obj_vram_text);
-	obj_option_layout->addWidget(obj_meta_vram_addr);
-	obj_option_layout->addWidget(obj_bright_text);
-	obj_option_layout->addWidget(obj_meta_auto_bright);
-	obj_option_set->setLayout(obj_option_layout);
-
-	QVBoxLayout* obj_meta_preview_layout = new QVBoxLayout;
-	obj_meta_preview_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	obj_meta_preview_layout->addWidget(obj_size_set_1);
-	obj_meta_preview_layout->addWidget(obj_size_set_2);
-	obj_meta_preview_layout->addWidget(obj_meta_img);
-	obj_meta_preview_layout->addWidget(obj_name_set);
-	obj_meta_preview_layout->addWidget(obj_option_set);
-	obj_meta_preview_layout->addWidget(dump_obj_meta_button);
-	obj_meta_preview_set->setLayout(obj_meta_preview_layout);
-
-	QWidget* obj_resource_set = new QWidget(obj_meta_tab);
-	obj_meta_index = new QSpinBox(obj_resource_set);
-	obj_meta_index->setRange(0, 39);
-	QLabel* obj_meta_index_label = new QLabel("OBJ Index :\t");
-
-	QHBoxLayout* obj_resource_layout = new QHBoxLayout;
-	obj_resource_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	obj_resource_layout->addWidget(obj_meta_index_label);
-	obj_resource_layout->addWidget(obj_meta_index);
-	obj_resource_set->setLayout(obj_resource_layout);
-
-	QWidget* obj_data_set = new QWidget(obj_meta_tab);
-	obj_select_img = new QLabel;
-	obj_select_img->setPixmap(QPixmap::fromImage(temp_obj.scaled(256, 256)));
-
-	QVBoxLayout* obj_data_layout = new QVBoxLayout;
-	obj_data_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	obj_data_layout->addWidget(obj_resource_set);
-	obj_data_layout->addWidget(obj_select_img);
-	obj_data_set->setLayout(obj_data_layout);
-
-	//OBJ Meta Tile layout
-	QGridLayout* obj_meta_layout = new QGridLayout;
-	obj_meta_layout->addWidget(obj_meta_preview_set, 0, 0, 1, 1);
-	obj_meta_layout->addWidget(obj_data_set, 0, 1, 1, 1);
-	obj_meta_tab->setLayout(obj_meta_layout);
-
-	//Manifest widgets
-	manifest_display = new QScrollArea(manifest_tab);
-
-	//Configure Tab layout
-	QHBoxLayout* advanced_layout = new QHBoxLayout;
-	advanced_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	advanced_layout->addWidget(advanced);
-	advanced_layout->addWidget(advanced_label);
-	advanced_set->setLayout(advanced_layout);
-
-	QHBoxLayout* blank_layout = new QHBoxLayout;
-	blank_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	blank_layout->addWidget(blank);
-	blank_layout->addWidget(blank_label);
-	blank_set->setLayout(blank_layout);
-
-	QHBoxLayout* auto_trans_layout = new QHBoxLayout;
-	auto_trans_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	auto_trans_layout->addWidget(auto_trans);
-	auto_trans_layout->addWidget(auto_trans_label);
-	auto_trans_set->setLayout(auto_trans_layout);
-
-	QVBoxLayout* config_tab_layout = new QVBoxLayout;
-	config_tab_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	config_tab_layout->addWidget(advanced_set);
-	config_tab_layout->addWidget(blank_set);
-	config_tab_layout->addWidget(auto_trans_set);
-	config_tab->setLayout(config_tab_layout);
 
 	//Layers Tab layout
 	QGridLayout* layers_tab_layout = new QGridLayout;
@@ -340,12 +191,6 @@ gbe_cgfx::gbe_cgfx(QWidget *parent) : QDialog(parent)
 	layers_tab_layout->addWidget(section_set, 2, 1, 1, 1);
 	layers_tab->setLayout(layers_tab_layout);
 
-	//Manifest tab layout
-	QHBoxLayout* manifest_layout = new QHBoxLayout;
-	manifest_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	manifest_layout->addWidget(manifest_display);
-	manifest_tab->setLayout(manifest_layout);
-	
 	//Display settings - CGFX scale
 	QWidget* cgfx_scale_set = new QWidget(this);
 	QLabel* cgfx_scale_label = new QLabel("Custom Graphics (CGFX) Scale : ");
@@ -378,19 +223,14 @@ gbe_cgfx::gbe_cgfx(QWidget *parent) : QDialog(parent)
 	connect(tabs_button, SIGNAL(accepted()), this, SLOT(accept()));
 	connect(tabs_button, SIGNAL(rejected()), this, SLOT(reject()));
 	connect(tabs_button->button(QDialogButtonBox::Close), SIGNAL(clicked()), this, SLOT(close_cgfx()));
-	connect(blank, SIGNAL(stateChanged(int)), this, SLOT(set_blanks()));
-	connect(auto_trans, SIGNAL(stateChanged(int)), this, SLOT(set_auto_trans()));
 	connect(layer_select, SIGNAL(currentIndexChanged(int)), this, SLOT(layer_change()));
 	connect(rect_x, SIGNAL(valueChanged(int)), this, SLOT(update_selection()));
 	connect(rect_y, SIGNAL(valueChanged(int)), this, SLOT(update_selection()));
 	connect(rect_w, SIGNAL(valueChanged(int)), this, SLOT(update_selection()));
 	connect(rect_h, SIGNAL(valueChanged(int)), this, SLOT(update_selection()));
 	connect(dump_section_button, SIGNAL(clicked()), this, SLOT(dump_selection()));
+	connect(copy_section_button, SIGNAL(clicked()), this, SLOT(copy_selection()));
 	connect(next_frame, SIGNAL(clicked()), this, SLOT(advance_next_frame()));
-	connect(obj_meta_width, SIGNAL(valueChanged(int)), this, SLOT(update_obj_meta_size()));
-	connect(obj_meta_height, SIGNAL(valueChanged(int)), this, SLOT(update_obj_meta_size()));
-	connect(obj_meta_index, SIGNAL(valueChanged(int)), this, SLOT(select_obj()));
-	connect(dump_obj_meta_button, SIGNAL(clicked()), this, SLOT(dump_obj_meta_tile()));
 
 	QSignalMapper* input_signal = new QSignalMapper(this);
 	connect(a_input, SIGNAL(clicked()), input_signal, SLOT(map()));
@@ -412,104 +252,16 @@ gbe_cgfx::gbe_cgfx(QWidget *parent) : QDialog(parent)
 	input_signal->setMapping(down_input, 7);
 	connect(input_signal, SIGNAL(mapped(int)), this, SLOT(update_input_control(int))) ;
 
-	//CGFX advanced dumping pop-up box
-	advanced_box = new QDialog();
-	advanced_box->resize(500, 250);
-	advanced_box->setWindowTitle("Advanced Tile Dumping");
-	advanced_box->hide();
-
-	QWidget* ext_vram_set = new QWidget(advanced_box);
-	QLabel* ext_vram_label = new QLabel("EXT_VRAM_ADDR", ext_vram_set);
-	ext_vram = new QCheckBox(ext_vram_set);
-
-	QWidget* ext_bright_set = new QWidget(advanced_box);
-	QLabel* ext_bright_label = new QLabel("EXT_AUTO_BRIGHT", ext_bright_set);
-	ext_bright = new QCheckBox(ext_bright_set);
-
-	dump_button = new QPushButton("Dump Tile", advanced_box);
-	cancel_button = new QPushButton("Cancel", advanced_box);
-
-	advanced_buttons = new QDialogButtonBox(advanced_box);
-	advanced_buttons->setOrientation(Qt::Horizontal);
-	advanced_buttons->addButton(dump_button, QDialogButtonBox::ActionRole);
-	advanced_buttons->addButton(cancel_button, QDialogButtonBox::ActionRole);
-
-	//Advanced menu layouts
-
-	QHBoxLayout* ext_vram_layout = new QHBoxLayout;
-	ext_vram_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	ext_vram_layout->addWidget(ext_vram);
-	ext_vram_layout->addWidget(ext_vram_label);
-	ext_vram_set->setLayout(ext_vram_layout);
-
-	QHBoxLayout* ext_bright_layout = new QHBoxLayout;
-	ext_bright_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	ext_bright_layout->addWidget(ext_bright);
-	ext_bright_layout->addWidget(ext_bright_label);
-	ext_bright_set->setLayout(ext_bright_layout);
-
-	QVBoxLayout* advanced_box_layout = new QVBoxLayout;
-	advanced_box_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-	advanced_box_layout->addWidget(ext_vram_set);
-	advanced_box_layout->addWidget(ext_bright_set);
-	advanced_box_layout->addWidget(advanced_buttons);
-	advanced_box->setLayout(advanced_box_layout);
-
-	//Manifest write entry failure pop-up
-	manifest_write_fail = new QMessageBox;
-	QPushButton* manifest_write_fail_ok = manifest_write_fail->addButton("OK", QMessageBox::AcceptRole);
-	QPushButton* manifest_write_fail_ignore = manifest_write_fail->addButton("Do not show this message again", QMessageBox::AcceptRole);
-	manifest_write_fail->setText("Could not access the manifest file! Manifest entry was not written, please check file path and permissions");
-	manifest_write_fail->setIcon(QMessageBox::Critical);
-	manifest_write_fail->hide();
-
-	//Graphics dump failure pop-up
-	save_fail = new QMessageBox;
-	QPushButton* save_fail_ok = save_fail->addButton("OK", QMessageBox::AcceptRole);
-	save_fail->setText("Error - Could not write PNG to destination file. Check file path and permissions");
-	save_fail->setIcon(QMessageBox::Warning);
-	save_fail->hide();
-
-	//Redump existing hash
-	redump_hash = new QMessageBox;
-	QPushButton* redump_hash_ok = redump_hash->addButton("Redump Tile", QMessageBox::AcceptRole);
-	QPushButton* redump_hash_cancel = redump_hash->addButton("Cancel", QMessageBox::RejectRole);
-	redump_hash->setText("You are attempting to dump a tile that you have already dumped recently.\nWould you like to dump this tile again?");
-	redump_hash->setIcon(QMessageBox::Warning);
-	redump_hash->hide();
-	
-	connect(dump_button, SIGNAL(clicked()), this, SLOT(write_manifest_entry()));
-	connect(cancel_button, SIGNAL(clicked()), this, SLOT(close_advanced()));
-	connect(manifest_write_fail_ignore, SIGNAL(clicked()), this, SLOT(ignore_manifest_criticals()));
-	connect(redump_hash_ok, SIGNAL(clicked()), this, SLOT(redump_tile()));
-
-	estimated_palette.resize(384, 0);
-	estimated_vram_bank.resize(384, 0);
-
 	resize(800, 450);
 	setWindowTitle(tr("Custom Graphics"));
 
-	dump_type = 0;
-	advanced_index = 0;
-	last_custom_path = "";
-
-	min_x_rect = min_y_rect = max_x_rect = max_y_rect = 255;
 	render_stop_line->setValue(0x90);
 
 	pause = false;
 	hash_text->setScaledContents(true);
 
-	enable_manifest_critical = true;
-	redump = false;
-
 	mouse_start_x = mouse_start_y = 0;
 	mouse_drag = false;
-
-	obj_meta_width->setValue(20);
-	obj_meta_height->setValue(20);
-
-	obj_meta_str.resize(400, "");
-	obj_meta_addr.resize(400, 0);
 
 	pack_data = (dmg_cgfx_data*)(main_menu::gbe_plus->get_core_data(3));
 }
@@ -527,12 +279,7 @@ void gbe_cgfx::close_cgfx()
 
 	pause = false;
 	config::pause_emu = false;
-	last_custom_path = "";
-	advanced_box->hide();
 }
-
-/****** Sets flag to redump a tile ******/
-void gbe_cgfx::redump_tile() { redump = true; }
 
 /****** Changes the current viewable layer for dumping ******/
 void gbe_cgfx::layer_change()
@@ -779,63 +526,9 @@ bool gbe_cgfx::eventFilter(QObject* target, QEvent* event)
 			}
 		}
 
-		//OBJ Meta Tile tab
-		else if(target == obj_meta_img)
-		{
-			//Highlight selected OBJ tile
-			if((x < 320) && (y < 320))
-			{
-				//Make sure X and Y coordinates are within proper range
-				if(x >= (obj_meta_width->value() * 16)) { return QDialog::eventFilter(target, event); }
-				if(y >= (obj_meta_height->value() * 16)) { return QDialog::eventFilter(target, event); }
 
-				u8 obj_height = (main_menu::gbe_plus->ex_read_u8(REG_LCDC) & 0x04) ? 16 : 8;
-
-				//Grab affected X and Y coordinates
-				x &= ~0xF;
-				y &= (obj_height == 16) ? ~0x1F : ~0xF;
-
-				obj_height *= 2;
-
-				QImage highlight = obj_meta_pixel_data;
-
-				//Cycle scanline by scanline
-				for(int sy = y; sy < (y + obj_height); sy++)
-				{
-					u32* pixel_data = (u32*)highlight.scanLine(sy);
-
-					//Highlight affected parts of the scanline
-					for(int sx = x; sx < (x + 16); sx++)
-					{	
-						pixel_data[sx] += 0x00808080;
-					}
-				}
-
-				int w = obj_meta_width->value() * 16;
-				int h = obj_meta_height->value() * 16;
-
-				obj_meta_img->setPixmap(QPixmap::fromImage(highlight).copy(0, 0, w, h));
-
-				meta_highlight = true;
-			}
-
-			//Return image to original state
-			else if(meta_highlight)
-			{
-				int w = obj_meta_width->value() * 16;
-				int h = obj_meta_height->value() * 16;
-
-				obj_meta_img->setPixmap(QPixmap::fromImage(obj_meta_pixel_data).copy(0, 0, w, h));
-			}
-		}
 	}
 	
-	//Double-Click
-	else if(event->type() == QEvent::MouseButtonDblClick)
-	{
-
-	}
-
 	//Single click
 	else if(event->type() == QEvent::MouseButtonPress)
 	{
@@ -855,11 +548,7 @@ bool gbe_cgfx::eventFilter(QObject* target, QEvent* event)
 			rect_h->setValue(0);
 		}
 
-		//OBJ Meta Tile tab
-		else if(target == obj_meta_img)
-		{
 
-		}
 	}
 
 	//Check to see if mouse is released from single-click over current layer
@@ -1112,9 +801,61 @@ void gbe_cgfx::dump_selection()
 	main_menu::gbe_plus->get_core_data(4);
 }
 
+void gbe_cgfx::copy_selection()
+{
+	if (main_menu::gbe_plus == NULL) { return; }
+	if ((rect_w->value() == 0) || (rect_h->value() == 0)) { return; }
 
-/****** Ignores manifest criticals until program quits ******/
-void gbe_cgfx::ignore_manifest_criticals() { enable_manifest_critical = false; }
+	std::vector<pack_tile> addedTile;
+	std::string content = "";
+
+	for (u16 y = 0; y < 144; y++)
+	{
+		std::vector<tile_strip> strips;
+		switch (layer_select->currentIndex())
+		{
+		case 0: strips = screenInfo.scanline[y].rendered_bg; break;
+		case 1: strips = screenInfo.scanline[y].rendered_win; break;
+		case 2: strips = screenInfo.scanline[y].rendered_obj; break;
+		}
+		for (u16 i = 0; i < strips.size(); i++)
+		{
+			//test strip belongs to a tile within the selected area
+			if ((strips[i].x + 7) >= rect_x->value() && strips[i].x <= (rect_x->value() + rect_w->value())
+				&& (y - (strips[i].line >= 8 ? strips[i].line - 8 : strips[i].line) + 7) >= rect_y->value()
+				&& (y - (strips[i].line >= 8 ? strips[i].line - 8 : strips[i].line)) <= (rect_y->value() + rect_h->value()))
+			{
+				pack_tile t;
+				t.tileStr = "";
+				for (u8 l = 0; l < 8; l++) {
+					t.tileStr += util::to_hex_strXXXX(screenInfo.rendered_tile[strips[i].pattern_id].tile.line[l]);
+				}
+				t.palStr = get_palette_code(strips[i].palette_id);
+				t.x = strips[i].x;
+				t.y = y - strips[i].line;
+
+				bool added = false;
+				//check to see if the tile has been added in current selection
+				for (u16 j = 0; j < addedTile.size() && !added; j++)
+				{
+					if (addedTile[j].tileStr == t.tileStr && addedTile[j].palStr == t.palStr && addedTile[j].x == t.x && addedTile[j].y == t.y)
+					{
+						added = true;
+					}
+				}
+				if (!added)
+				{
+					//add to txt
+					content += t.tileStr + "," + t.palStr + "," + util::to_str(t.x) + "," + util::to_str(t.y) + "\n";
+					addedTile.push_back(t);
+				}
+			}
+		}
+	}
+	QClipboard* clipboard = QGuiApplication::clipboard();
+	QString originalText = clipboard->text();
+	clipboard->setText(QString(content.c_str()));
+}
 
 /****** Advances to the next frame from within the CGFX screen ******/
 void gbe_cgfx::advance_next_frame()
@@ -1271,34 +1012,6 @@ void gbe_cgfx::reset_inputs()
 	main_menu::gbe_plus->feed_key_input(config::gbe_key_left, false);
 	main_menu::gbe_plus->feed_key_input(config::gbe_key_right, false);
 }
-
-/****** Updates the OBJ Meta Tile preview size ******/
-void gbe_cgfx::update_obj_meta_size()
-{
-	//Limit height to even numbers only when in 8x16 mode
-	if(main_menu::gbe_plus != NULL)
-	{
-		u8 obj_height = (main_menu::gbe_plus->ex_read_u8(REG_LCDC) & 0x04) ? 16 : 8;
-
-		if(obj_height == 16)
-		{
-			obj_meta_height->setSingleStep(2);
-			obj_meta_height->setRange(2, 20);
-		}
-
-		else
-		{
-			obj_meta_height->setSingleStep(1);
-			obj_meta_height->setRange(1, 20);
-		}
-	}
-	
-	int w = obj_meta_width->value() * 16;
-	int h = obj_meta_height->value() * 16;
-
-	obj_meta_img->setPixmap(QPixmap::fromImage(obj_meta_pixel_data).copy(0, 0, w, h));
-}
-
 
 void gbe_cgfx::init()
 {

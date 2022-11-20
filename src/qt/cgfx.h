@@ -42,22 +42,7 @@ class gbe_cgfx : public QDialog
 	QTabWidget* tabs;
 	QDialogButtonBox* tabs_button;
 
-	//Configure tab widgets
-	QCheckBox* advanced;
-	QCheckBox* blank;
-	QCheckBox* auto_trans;
-
-	//Advanced menu
-	QWidget* advanced_box;
-	QCheckBox* ext_vram;
-	QCheckBox* ext_bright;
-
-	QDialogButtonBox* advanced_buttons;
-	QPushButton* cancel_button;
-	QPushButton* dump_button;
-
 	QComboBox* cgfx_scale;
-
 
 	//Layers tab widgets
 	QComboBox* layer_select;
@@ -72,34 +57,7 @@ class gbe_cgfx : public QDialog
 	QSpinBox* rect_y;
 	QSpinBox* rect_h;
 
-	//OBJ Meta tile tab widgets
-	QSpinBox* obj_meta_width;
-	QSpinBox* obj_meta_height;
-	QSpinBox* obj_meta_index;
-
-	QLabel* obj_meta_img;
-	QLabel* obj_select_img;
-	QImage obj_meta_pixel_data;
-
-	QCheckBox* obj_meta_vram_addr;
-	QCheckBox* obj_meta_auto_bright;
-
-	QLineEdit* obj_meta_name;
-
-	std::vector<std::string> obj_meta_str;
-	std::vector<u16> obj_meta_addr;
-
-	//Manifest tab widgets
-	QScrollArea* manifest_display;
-
-	//Pop-ups
-	QMessageBox* manifest_write_fail;
-	QMessageBox* save_fail;
-	QMessageBox* redump_hash;
-
 	bool pause;
-	bool enable_manifest_critical;
-	bool redump;
 
 	u32 rawImageData[160 * 144];
 	rendered_screen screenInfo;
@@ -110,8 +68,6 @@ class gbe_cgfx : public QDialog
 
 	QWidget* layers_set;
 
-	QGridLayout* obj_layout;
-	QGridLayout* bg_layout;
 	QGridLayout* layers_layout;
 
 	QPushButton* a_input;
@@ -123,9 +79,6 @@ class gbe_cgfx : public QDialog
 	QPushButton* up_input;
 	QPushButton* down_input;
 
-	std::vector<u8> estimated_palette;
-	std::vector<u8> estimated_vram_bank;
-
 	QLabel* current_layer;
 	QLabel* current_tile;
 
@@ -133,14 +86,6 @@ class gbe_cgfx : public QDialog
 	virtual std::string get_palette_code(u16 p) = 0;
 	virtual void renderTile(u16 tileID, u16 palId, u8 palSel, u8 layer, std::vector<u32>* top, std::vector<u32>* bottom) = 0;
 	QImage renderTileToImage(u16 tileID, u16 palId, u8 palSel, u8 layer);
-
-	u8 dump_type;
-	int advanced_index;
-
-	std::string last_custom_path;
-
-	u8 min_x_rect, max_x_rect;
-	u8 min_y_rect, max_y_rect;
 
 	u32 mouse_start_x, mouse_start_y;
 	bool mouse_drag;
@@ -150,14 +95,12 @@ class gbe_cgfx : public QDialog
 
 	protected slots:
 	void close_cgfx();
-	void redump_tile();
 	void dump_selection();
+	void copy_selection();
 	void layer_change();
 	void update_selection();
-	void ignore_manifest_criticals();
 	void advance_next_frame();
 	void update_input_control(int index);
-	void update_obj_meta_size();
 };
 
 class dmg_cgfx : public gbe_cgfx

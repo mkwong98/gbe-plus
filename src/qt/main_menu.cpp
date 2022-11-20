@@ -456,7 +456,6 @@ void main_menu::boot_game()
 
 	//Set up custom graphics dialog
 	cgfx->hide();
-	cgfx->advanced->setChecked(true);
 
 	//Read specified ROM file
 	main_menu::gbe_plus->read_file(get_rom_file());
