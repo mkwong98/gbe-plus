@@ -421,9 +421,26 @@ void GB_LCD::clear_HD_strip(SDL_Surface* src, SDL_Rect* srcr, SDL_Surface* dst, 
 		u16 cy2 = vflip ? cgfx::scaling_factor - 1 - cy : cy;
 		if (dstr->y + cy < dst->h)
 		{
-			u8 pixelsToClear = ((dstr->x + (8 * cgfx::scaling_factor)) < dst->w ? 8 * cgfx::scaling_factor : dst->w - dstr->x);
-			u32 offset = ((dstr->y + cy) * dst->w + dstr->x) * 4;
-			u32 offset2 = ((srcr->y + cy2) * src->w + srcr->x) * 4;
+			u8 pixelsToClear;
+			u32 offset;
+			u32 offset2;
+
+			if (dstr->x < 0)
+			{
+				pixelsToClear = dstr->x + (8 * cgfx::scaling_factor);
+				offset = ((dstr->y + cy) * dst->w) * 4;
+				offset2 = ((srcr->y + cy2) * src->w + (srcr->x - dstr->x)) * 4;
+			}
+			else
+			{
+				if (dstr->x + (8 * cgfx::scaling_factor) < dst->w)
+					pixelsToClear = 8 * cgfx::scaling_factor;
+				else
+					pixelsToClear = dst->w - dstr->x;
+				offset = ((dstr->y + cy) * dst->w + dstr->x) * 4;
+				offset2 = ((srcr->y + cy2) * src->w + srcr->x) * 4;
+			}
+
 			u8* dpixel = (u8*)(dst->pixels) + offset + 3;
 			u8* spixel = (u8*)(src->pixels) + offset2 + 3;
 			for (u8 ci = 0; ci < pixelsToClear; ci++)
@@ -672,7 +689,8 @@ void DMG_LCD::render_bg_scanline(bool raw)
 	for (u8 i = 0; i < cgfx_stat.screen_data.scanline[scanline].rendered_bg.size(); i++) {
 		u8 tile_pixel = 0;
 		tile_strip p = cgfx_stat.screen_data.scanline[scanline].rendered_bg[i];
-		u8 pixel_counter = p.x;
+		s16 pixel_counter = p.x;
+		if (pixel_counter >= 249) pixel_counter -= 256;
 		srcrect.x = cgfx::scaling_factor * pixel_counter;
 		rawrect.x = pixel_counter;
 
@@ -702,7 +720,7 @@ void DMG_LCD::render_bg_scanline(bool raw)
 				tile_pixel = ((p.pattern_data >> 8) & (1 << y)) ? 2 : 0;
 				tile_pixel |= (p.pattern_data & (1 << y)) ? 1 : 0;
 
-				if (pixel_counter < 160)
+				if (pixel_counter >= 0 && pixel_counter < 160)
 				{
 					if (tile_pixel != 0) {
 						SDL_FillRect(buffers[2], r, config::DMG_BG_PAL[cgfx_stat.screen_data.rendered_palette[p.palette_id].colour[tile_pixel]]);
@@ -726,25 +744,61 @@ void GBC_LCD::render_bg_scanline(bool raw)
 	SDL_Rect* r = raw ? &rawrect : &srcrect;
 	bool lowP = (cgfx_stat.screen_data.scanline[scanline].lcdc & 0x01) == 0;
 	u8 layer;
+	pack_tile* hdTile;
 	for (u8 i = 0; i < cgfx_stat.screen_data.scanline[scanline].rendered_bg.size(); i++) {
 		u8 tile_pixel = 0;
 		tile_strip p = cgfx_stat.screen_data.scanline[scanline].rendered_bg[i];
-		u8 pixel_counter;
+		s16 pixel_counter;
 
-		for (int y = 7; y >= 0; y--)
+		//look for hd 
+		if (!raw) hdTile = get_tile_match(&p, lcd_stat.current_scanline);
+		else hdTile = NULL;
+
+		if (hdTile)
 		{
-			//Calculate raw value of the tile's pixel
-			tile_pixel = ((p.pattern_data >> 8) & (1 << y)) ? 2 : 0;
-			tile_pixel |= (p.pattern_data & (1 << y)) ? 1 : 0;
-			pixel_counter = (p.hflip ? p.x + y : p.x + 7 - y);
-			if (pixel_counter < 160)
+			if(p.x >= 249)
+				hdrect.x = (p.x - 256) * cgfx::scaling_factor;
+			else
+				hdrect.x = p.x * cgfx::scaling_factor;
+			hdsrcrect.y = hdTile->y + p.graphicsLine * cgfx::scaling_factor;
+			if (p.hflip)
 			{
-				srcrect.x = pixel_counter * cgfx::scaling_factor;
-				rawrect.x = pixel_counter;
-				if (lowP || tile_pixel == 0) layer = 0;
-				else if (p.priority) layer = 4;
-				else layer = 2;
-				SDL_FillRect(buffers[layer], r, cgfx_stat.screen_data.rendered_palette[p.palette_id].renderColour[tile_pixel]);
+				hdsrcrect.x = cgfx_stat.himgs[hdTile->imgIdx][0]->w - hdTile->x - hdsrcrect.w;
+				if (cgfx_stat.himgs[hdTile->imgIdx].size() > 1)
+				{
+					render_HD_strip(cgfx_stat.himgs[hdTile->imgIdx][1], &hdsrcrect, buffers[0], &hdrect, hdTile->brightness, p.vflip);
+				}
+				render_HD_strip(cgfx_stat.himgs[hdTile->imgIdx][0], &hdsrcrect, lowP ? buffers[0] : (p.priority ? buffers[4] : buffers[2]), &hdrect, hdTile->brightness, p.vflip);
+			}
+			else
+			{
+				hdsrcrect.x = hdTile->x;
+				if (cgfx_stat.imgs[hdTile->imgIdx].size() > 1)
+				{
+					render_HD_strip(cgfx_stat.imgs[hdTile->imgIdx][1], &hdsrcrect, buffers[0], &hdrect, hdTile->brightness, p.vflip);
+				}
+				render_HD_strip(cgfx_stat.imgs[hdTile->imgIdx][0], &hdsrcrect, lowP ? buffers[0] : (p.priority ? buffers[4] : buffers[2]), &hdrect, hdTile->brightness, p.vflip);
+			}
+		}
+		else
+		{
+			for (int y = 7; y >= 0; y--)
+			{
+				//Calculate raw value of the tile's pixel
+				tile_pixel = ((p.pattern_data >> 8) & (1 << y)) ? 2 : 0;
+				tile_pixel |= (p.pattern_data & (1 << y)) ? 1 : 0;
+				pixel_counter = (p.hflip ? p.x + y : p.x + 7 - y);
+				if (pixel_counter >= 249) pixel_counter -= 256;
+				if (pixel_counter >=0 && pixel_counter < 160)
+				{
+					srcrect.x = pixel_counter * cgfx::scaling_factor;
+					rawrect.x = pixel_counter;
+
+					if (lowP || tile_pixel == 0) layer = 0;
+					else if (p.priority) layer = 4;
+					else layer = 2;
+					SDL_FillRect(buffers[layer], r, cgfx_stat.screen_data.rendered_palette[p.palette_id].renderColour[tile_pixel]);
+				}
 			}
 		}
 	}
@@ -822,31 +876,92 @@ void GBC_LCD::render_win_scanline(bool raw)
 	SDL_Rect* r = raw ? &rawrect : &srcrect;
 	bool lowP = (cgfx_stat.screen_data.scanline[scanline].lcdc & 0x01) == 0;
 	u8 layer;
+
+	pack_tile* hdTile;
 	for (u8 i = 0; i < cgfx_stat.screen_data.scanline[scanline].rendered_win.size(); i++) {
 		u8 tile_pixel = 0;
 		tile_strip p = cgfx_stat.screen_data.scanline[scanline].rendered_win[i];
 		u8 pixel_counter;
 
-		for (int y = 7; y >= 0; y--)
+		//look for hd 
+		if (!raw) hdTile = get_tile_match(&p, lcd_stat.current_scanline);
+		else hdTile = NULL;
+
+		if (hdTile)
 		{
-			//Calculate raw value of the tile's pixel
-			tile_pixel = ((p.pattern_data >> 8) & (1 << y)) ? 2 : 0;
-			tile_pixel |= (p.pattern_data & (1 << y)) ? 1 : 0;
-			pixel_counter = (p.hflip ? p.x + y : p.x + 7 - y);
-			if (pixel_counter < 160)
+			hdrect.x = p.x * cgfx::scaling_factor;
+			hdsrcrect.y = hdTile->y + p.graphicsLine * cgfx::scaling_factor;
+
+			//clear bg pixels
+			SDL_FillRect(buffers[2], r, 0x00000000);
+			SDL_FillRect(buffers[4], r, 0x00000000);
+
+			if (lowP || tile_pixel == 0) layer = 0;
+			else if (p.priority) layer = 4;
+			else layer = 2;
+
+			if (p.hflip)
 			{
-				srcrect.x = pixel_counter * cgfx::scaling_factor;
-				rawrect.x = pixel_counter;
+				hdsrcrect.x = cgfx_stat.himgs[hdTile->imgIdx][0]->w - hdTile->x - hdsrcrect.w;
+				if (cgfx_stat.himgs[hdTile->imgIdx].size() > 1)
+				{
+					clear_HD_strip(cgfx_stat.himgs[hdTile->imgIdx][1], &hdsrcrect, buffers[4], &hdrect, p.vflip);
+					clear_HD_strip(cgfx_stat.himgs[hdTile->imgIdx][1], &hdsrcrect, buffers[2], &hdrect, p.vflip);
+					render_HD_strip(cgfx_stat.himgs[hdTile->imgIdx][1], &hdsrcrect, buffers[0], &hdrect, hdTile->brightness, p.vflip);
+				}
+				if (layer < 4)
+					clear_HD_strip(cgfx_stat.himgs[hdTile->imgIdx][0], &hdsrcrect, buffers[4], &hdrect, p.vflip);
+				if (layer < 2)
+					clear_HD_strip(cgfx_stat.himgs[hdTile->imgIdx][0], &hdsrcrect, buffers[2], &hdrect, p.vflip);
+				render_HD_strip(cgfx_stat.himgs[hdTile->imgIdx][0], &hdsrcrect, buffers[layer], &hdrect, hdTile->brightness, p.vflip);
+			}
+			else
+			{
+				hdsrcrect.x = hdTile->x;
+				if (cgfx_stat.imgs[hdTile->imgIdx].size() > 1)
+				{
+					clear_HD_strip(cgfx_stat.imgs[hdTile->imgIdx][1], &hdsrcrect, buffers[4], &hdrect, p.vflip);
+					clear_HD_strip(cgfx_stat.imgs[hdTile->imgIdx][1], &hdsrcrect, buffers[2], &hdrect, p.vflip);
+					render_HD_strip(cgfx_stat.imgs[hdTile->imgIdx][1], &hdsrcrect, buffers[0], &hdrect, hdTile->brightness, p.vflip);
+				}
+				if (layer < 4)
+					clear_HD_strip(cgfx_stat.imgs[hdTile->imgIdx][0], &hdsrcrect, buffers[4], &hdrect, p.vflip);
+				if (layer < 2)
+					clear_HD_strip(cgfx_stat.imgs[hdTile->imgIdx][0], &hdsrcrect, buffers[2], &hdrect, p.vflip);
+				render_HD_strip(cgfx_stat.imgs[hdTile->imgIdx][0], &hdsrcrect, buffers[layer], &hdrect, hdTile->brightness, p.vflip);
+			}
 
-				//clear bg pixels
-				SDL_FillRect(buffers[0], r, 0xFFFFFFFF);
-				SDL_FillRect(buffers[2], r, 0x00000000);
-				SDL_FillRect(buffers[4], r, 0x00000000);
+			if(p.x >= 152) return;
+		}
+		else
+		{
+			for (int y = 7; y >= 0; y--)
+			{
+				//Calculate raw value of the tile's pixel
+				tile_pixel = ((p.pattern_data >> 8) & (1 << y)) ? 2 : 0;
+				tile_pixel |= (p.pattern_data & (1 << y)) ? 1 : 0;
+				pixel_counter = (p.hflip ? p.x + y : p.x + 7 - y);
+				if (pixel_counter < 160)
+				{
+					srcrect.x = pixel_counter * cgfx::scaling_factor;
+					rawrect.x = pixel_counter;
 
-				if (lowP || tile_pixel == 0) layer = 0;
-				else if (p.priority) layer = 4;
-				else layer = 2;
-				SDL_FillRect(buffers[layer], r, cgfx_stat.screen_data.rendered_palette[p.palette_id].renderColour[tile_pixel]);
+					//clear bg pixels
+					if (lowP || tile_pixel == 0)
+					{
+						layer = 0;
+						SDL_FillRect(buffers[2], r, 0x00000000);
+						SDL_FillRect(buffers[4], r, 0x00000000);
+					}
+					else if (p.priority) 
+						layer = 4;
+					else
+					{
+						layer = 2;
+						SDL_FillRect(buffers[4], r, 0x00000000);
+					}
+					SDL_FillRect(buffers[layer], r, cgfx_stat.screen_data.rendered_palette[p.palette_id].renderColour[tile_pixel]);
+				}
 			}
 		}
 		if (p.x + 8 >= 160) return;
@@ -876,13 +991,15 @@ void DMG_LCD::render_obj_scanline(bool raw)
 			if (p.hflip)
 			{
 				hdsrcrect.x = cgfx_stat.himgs[hdTile->imgIdx][0]->w - hdTile->x - hdsrcrect.w;
-				clear_HD_strip(cgfx_stat.himgs[hdTile->imgIdx][0], &hdsrcrect, p.bg_priority == 0 ? buffers[1] : buffers[3], &hdrect, p.vflip);
+				if (p.bg_priority == 1)
+					clear_HD_strip(cgfx_stat.himgs[hdTile->imgIdx][0], &hdsrcrect, buffers[3], &hdrect, p.vflip);
 				render_HD_strip(cgfx_stat.himgs[hdTile->imgIdx][0], &hdsrcrect, p.bg_priority == 0 ? buffers[3] : buffers[1], &hdrect, hdTile->brightness, p.vflip);
 			}
 			else
 			{
 				hdsrcrect.x = hdTile->x;
-				clear_HD_strip(cgfx_stat.imgs[hdTile->imgIdx][0], &hdsrcrect, p.bg_priority == 0 ? buffers[1] : buffers[3], &hdrect, p.vflip);
+				if (p.bg_priority == 1)
+					clear_HD_strip(cgfx_stat.imgs[hdTile->imgIdx][0], &hdsrcrect, buffers[3], &hdrect, p.vflip);
 				render_HD_strip(cgfx_stat.imgs[hdTile->imgIdx][0], &hdsrcrect, p.bg_priority == 0 ? buffers[3] : buffers[1], &hdrect, hdTile->brightness, p.vflip);
 			}
 		}
@@ -894,7 +1011,7 @@ void DMG_LCD::render_obj_scanline(bool raw)
 				tile_pixel = ((p.pattern_data >> 8) & (1 << y)) ? 2 : 0;
 				tile_pixel |= (p.pattern_data & (1 << y)) ? 1 : 0;
 				pixel_counter = (p.hflip ? p.x + y : p.x + 7 - y);
-				if (pixel_counter < 160)
+				if (pixel_counter >= 0 && pixel_counter < 160)
 				{
 					if (tile_pixel != 0) {
 						srcrect.x = pixel_counter * cgfx::scaling_factor;
@@ -902,7 +1019,6 @@ void DMG_LCD::render_obj_scanline(bool raw)
 
 						if (p.bg_priority == 0)
 						{
-							SDL_FillRect(buffers[1], r, 0x00000000);
 							SDL_FillRect(buffers[3], r, config::DMG_OBJ_PAL[cgfx_stat.screen_data.rendered_palette[p.palette_id].colour[tile_pixel]][p.palette_sel]);
 						}
 						else
@@ -924,39 +1040,64 @@ void GBC_LCD::render_obj_scanline(bool raw)
 	u16 scanline = raw ? rawrect.y : lcd_stat.current_scanline;
 	SDL_Rect* r = raw ? &rawrect : &srcrect;
 
+	pack_tile* hdTile;
 	rendered_screen::rendered_line* l = &(cgfx_stat.screen_data.scanline[scanline]);
 	for (u8 i = 0; i < l->rendered_obj.size(); i++) {
 		u8 tile_pixel = 0;
 		tile_strip p = l->rendered_obj[i];
 		u8 pixel_counter = p.x;
 
-		for (int y = 7; y >= 0; y--)
-		{
-			//Calculate raw value of the tile's pixel
-			tile_pixel = ((p.pattern_data >> 8) & (1 << y)) ? 2 : 0;
-			tile_pixel |= (p.pattern_data & (1 << y)) ? 1 : 0;
-			pixel_counter = (p.hflip ? p.x + y : p.x + 7 - y);
-			if (pixel_counter < 160)
-			{
-				if (tile_pixel != 0) {
-					srcrect.x = pixel_counter * cgfx::scaling_factor;
-					rawrect.x = pixel_counter;
+		//look for hd 
+		if (!raw) hdTile = get_tile_match(&p, lcd_stat.current_scanline);
+		else hdTile = NULL;
 
-					SDL_FillRect(buffers[1], r, 0x00000000);
-					SDL_FillRect(buffers[3], r, 0x00000000);
-					if (p.bg_priority == 0)
-					{
-						SDL_FillRect(buffers[3], r, cgfx_stat.screen_data.rendered_palette[p.palette_id].renderColour[tile_pixel]);
-					}
-					else
-					{
-						SDL_FillRect(buffers[1], r, cgfx_stat.screen_data.rendered_palette[p.palette_id].renderColour[tile_pixel]);
+		if (hdTile)
+		{
+			hdrect.x = p.x * cgfx::scaling_factor;
+			hdsrcrect.y = hdTile->y + (p.graphicsLine >= 8 ? p.graphicsLine - 8 : p.graphicsLine) * cgfx::scaling_factor;
+			if (p.hflip)
+			{
+				hdsrcrect.x = cgfx_stat.himgs[hdTile->imgIdx][0]->w - hdTile->x - hdsrcrect.w;
+				if (p.bg_priority == 1)
+					clear_HD_strip(cgfx_stat.himgs[hdTile->imgIdx][0], &hdsrcrect, buffers[3], &hdrect, p.vflip);
+				render_HD_strip(cgfx_stat.himgs[hdTile->imgIdx][0], &hdsrcrect, p.bg_priority == 0 ? buffers[3] : buffers[1], &hdrect, hdTile->brightness, p.vflip);
+			}
+			else
+			{
+				hdsrcrect.x = hdTile->x;
+				if (p.bg_priority == 1)
+					clear_HD_strip(cgfx_stat.imgs[hdTile->imgIdx][0], &hdsrcrect, buffers[3], &hdrect, p.vflip);
+				render_HD_strip(cgfx_stat.imgs[hdTile->imgIdx][0], &hdsrcrect, p.bg_priority == 0 ? buffers[3] : buffers[1], &hdrect, hdTile->brightness, p.vflip);
+			}
+		}
+		else
+		{
+			for (int y = 7; y >= 0; y--)
+			{
+				//Calculate raw value of the tile's pixel
+				tile_pixel = ((p.pattern_data >> 8) & (1 << y)) ? 2 : 0;
+				tile_pixel |= (p.pattern_data & (1 << y)) ? 1 : 0;
+				pixel_counter = (p.hflip ? p.x + y : p.x + 7 - y);
+				if (pixel_counter < 160)
+				{
+					if (tile_pixel != 0) {
+						srcrect.x = pixel_counter * cgfx::scaling_factor;
+						rawrect.x = pixel_counter;
+
+						if (p.bg_priority == 0)
+						{
+							SDL_FillRect(buffers[3], r, cgfx_stat.screen_data.rendered_palette[p.palette_id].renderColour[tile_pixel]);
+						}
+						else
+						{
+							SDL_FillRect(buffers[3], r, 0x00000000);
+							SDL_FillRect(buffers[1], r, cgfx_stat.screen_data.rendered_palette[p.palette_id].renderColour[tile_pixel]);
+						}
 					}
 				}
+				pixel_counter++;
 			}
-			pixel_counter++;
 		}
-
 	}
 }
 
@@ -1440,7 +1581,7 @@ void DMG_LCD::collect_scanline_tiles(u16 map_addr, u16 tile_lower_range, u16 til
 
 		//Calculate the address of the 8x1 pixel data based on map entry
 		u16 tile_head = lcd_stat.bg_tile_addr + (map_entry << 4);
-		if (lcd_stat.scanline_pixel_counter < 160 || lcd_stat.scanline_pixel_counter >= 250)
+		if (lcd_stat.scanline_pixel_counter < 160 || lcd_stat.scanline_pixel_counter >= 249)
 		{
 			//add to screen data
 			tile_strip t;
@@ -1496,7 +1637,7 @@ void GBC_LCD::collect_scanline_tiles(u16 map_addr, u16 tile_lower_range, u16 til
 	//Generate background pixel data for selected tiles
 	for (int x = tile_lower_range; x < tile_upper_range; x++)
 	{
-		if (lcd_stat.scanline_pixel_counter < 160 || lcd_stat.scanline_pixel_counter >= 250) {
+		if (lcd_stat.scanline_pixel_counter < 160 || lcd_stat.scanline_pixel_counter >= 249) {
 			//Always read CHR data from Bank 0
 			((GBC_MMU*)mem)->vram_bank = 0;
 
@@ -1663,12 +1804,8 @@ void GBC_LCD::collect_obj_scanline() {
 }
 
 void GB_LCD::render_full_screen() {
-	if (lcd_stat.frame_delay)
-	{
-		//Draw blank screen for 1 frame after LCD enabled
-		SDL_FillRect(buffers[0], NULL, 0xFFFFFFFF);
-	}
-	else
+	SDL_FillRect(finalscreen, NULL, 0xFFFFFFFF);
+	if (!lcd_stat.frame_delay)
 	{
 		for (u8 i = 0; i < 5; i++)
 		{

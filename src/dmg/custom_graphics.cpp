@@ -201,6 +201,7 @@ bool GB_LCD::load_manifest(std::string filename)
 						himgs.push_back(img);
 					}
 					cgfx_stat.imgs.push_back(imgs);
+					cgfx_stat.himgs.push_back(himgs);
 				}
 				else if (tagName == "tile")
 				{
