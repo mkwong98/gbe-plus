@@ -58,8 +58,6 @@ struct pack_condition
 	//mem compare
 	u16 address1;
 	u16 address2;
-	u8 bank;
-	u8 bank2;
 	u8 opType;
 	u8 value;
 	u8 mask;
@@ -95,9 +93,10 @@ struct pack_tile
 struct pack_background
 {
 	std::vector <pack_cond_app> condApps;
-	SDL_Surface* img;
+	s16 imgIdx;
 	float brightness;
 	float hscroll;
+	float vscroll;
 	u16 offsetX;
 	u16 offsetY;
 	u8 priority;
@@ -112,7 +111,7 @@ struct dmg_cgfx_data
 	std::vector <std::vector <SDL_Surface*>> himgs;
 	std::vector <pack_condition> conds;
 	std::vector <pack_tile> tiles;
-	std::vector <pack_background> bgs;
+	std::array <pack_background, 60> bgs;
 	SDL_Surface* brightnessMod;
 	SDL_Surface* tempStrip;
 	u32 frameCnt;

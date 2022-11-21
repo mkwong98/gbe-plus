@@ -39,14 +39,13 @@ void GB_LCD::clear_manifest() {
 		cgfx_stat.himgs[i].clear();
 	}
 	cgfx_stat.himgs.clear();
-
 	cgfx_stat.conds.clear();
 	cgfx_stat.tiles.clear();
-	for (u16 i = 0; i < cgfx_stat.bgs.size(); i++)
+	for (u8 i = 0; i < 60; i++)
 	{
-		SDL_FreeSurface(cgfx_stat.bgs[i].img);
+		cgfx_stat.bgs[i].imgIdx = -1;
 	}
-	cgfx_stat.bgs.clear();
+
 	SDL_FreeSurface(cgfx_stat.brightnessMod);
 	SDL_FreeSurface(cgfx_stat.tempStrip);
 }
@@ -343,7 +342,7 @@ bool GB_LCD::load_manifest(std::string filename)
 								break;
 							case pack_condition::MEMORYCHECK:
 							case pack_condition::MEMORYCHECKCONSTANT:
-								pc.bank = stoi(token);
+								pc.opType = getOpType(token);
 								break;
 							case pack_condition::FRAMERANGE:
 								pc.compareVal = stoi(token);
@@ -365,8 +364,10 @@ bool GB_LCD::load_manifest(std::string filename)
 								}
 								break;
 							case pack_condition::MEMORYCHECK:
+								pc.address2 = std::stoul(token, nullptr, 16);
+								break;
 							case pack_condition::MEMORYCHECKCONSTANT:
-								pc.opType = getOpType(token);
+								pc.value = std::stoul(token, nullptr, 16);
 								break;
 							default:
 								break;
@@ -392,32 +393,7 @@ bool GB_LCD::load_manifest(std::string filename)
 								}
 								break;
 							case pack_condition::MEMORYCHECK:
-								pc.address2 = std::stoul(token, nullptr, 16);
-								break;
 							case pack_condition::MEMORYCHECKCONSTANT:
-								pc.value = std::stoul(token, nullptr, 16);
-								break;
-							default:
-								break;
-							}
-							break;
-						case 6:
-							switch (pc.type)
-							{
-							case pack_condition::MEMORYCHECK:
-								pc.bank2 = stoi(token);
-								break;
-							case pack_condition::MEMORYCHECKCONSTANT:
-								pc.mask = std::stoul(token, nullptr, 16);
-								break;
-							default:
-								break;
-							}
-							break;
-						case 7:
-							switch (pc.type)
-							{
-							case pack_condition::MEMORYCHECK:
 								pc.mask = std::stoul(token, nullptr, 16);
 								break;
 							default:
@@ -433,6 +409,67 @@ bool GB_LCD::load_manifest(std::string filename)
 					cgfx_stat.conds.push_back(pc);
 
 
+				}
+				else if (tagName == "background")
+				{
+					pack_background bg;
+					bg.brightness = 1;
+					bg.hscroll = 0;
+					bg.vscroll = 0;
+					bg.priority = 10;
+					bg.offsetX = 0;
+					bg.offsetY = 0;
+
+					std::string token;
+					u8 tokenCnt = 0;
+					while (strRest.length() > 0)
+					{
+						pos = strRest.find(",");
+						if (pos != std::string::npos)
+						{
+							token = util::trimfnc(strRest.substr(0, pos));
+							strRest = strRest.substr(pos + 1, std::string::npos);
+						}
+						else
+						{
+							token = util::trimfnc(strRest);
+							strRest = "";
+						}
+
+						switch (tokenCnt)
+						{
+						case 0:
+							bg.imgIdx = stoi(token);
+							break;
+						case 1:
+							bg.brightness = stof(token);
+							break;
+						case 2:
+							bg.hscroll = stof(token);
+							break;
+						case 3:
+							bg.vscroll = stof(token);
+							break;
+						case 4:
+							bg.priority = stoi(token);
+							break;
+						case 5:
+							bg.offsetX = stoi(token);
+							break;
+						case 6:
+							bg.offsetY = stoi(token);
+							break;
+
+						default:
+							break;
+						}
+
+						tokenCnt++;
+					}
+					if (condNames != "") {
+						processConditionNames(condNames, &(bg.condApps));
+					}
+					cgfx_stat.bgs[bg.priority] = bg;
 				}
 			}
 		}
