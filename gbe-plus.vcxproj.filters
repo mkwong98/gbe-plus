@@ -141,6 +141,9 @@
     <ClCompile Include="src\qt\tbf_menu.cpp">
       <Filter>Source Files\qt</Filter>
     </ClCompile>
+    <ClCompile Include="src\qt\debug_dmg.cpp">
+      <Filter>Source Files\qt</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dmg\apu.h">
@@ -233,6 +236,9 @@
       <Filter>Header Files\qt</Filter>
     </CustomBuild>
     <CustomBuild Include="src\qt\tbf_menu.h">
+      <Filter>Header Files\qt</Filter>
+    </CustomBuild>
+    <CustomBuild Include="src\qt\debug_dmg.h">
       <Filter>Header Files\qt</Filter>
     </CustomBuild>
   </ItemGroup>

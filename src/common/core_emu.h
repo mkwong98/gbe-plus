@@ -55,6 +55,29 @@ class core_emu
 
 	bool running;
 	SDL_Event event;
+
+	struct debugging
+	{
+		bool debug_mode;
+		bool display_cycles;
+		bool print_all;
+		bool print_pc;
+		std::vector <u32> breakpoints;
+		std::vector <u32> watchpoint_addr;
+		std::vector <u32> watchpoint_val;
+		std::vector <u32> watchpoint_old_val;
+		std::string last_command;
+		std::string last_mnemonic;
+		u32 last_pc;
+		u32 run_count;
+		u8 vb_count;
+
+		//Advanced debugging
+#ifdef GBE_DEBUG
+		std::vector <u32> write_addr;
+		std::vector <u32> read_addr;
+#endif
+	} db_unit;
 };
 
 #endif // CORE_EMU

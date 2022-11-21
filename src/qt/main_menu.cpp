@@ -38,6 +38,7 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 	QAction* paths = new QAction("Paths", this);
 
 	QAction* custom_gfx = new QAction("Custom Graphics...", this);
+	QAction* debugging = new QAction("Memory viewer", this);
 
 	QAction* about = new QAction("About", this);
 
@@ -46,6 +47,7 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 	quit->setShortcut(tr("CTRL+Q"));
 
 	pause->setShortcut(tr("CTRL+P"));
+	debugging->setShortcut(tr("F7"));
 	reset->setShortcut(tr("F8"));
 	fullscreen->setShortcut(tr("F12"));
 	screenshot->setShortcut(tr("F9"));
@@ -55,8 +57,10 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 	fullscreen->setCheckable(true);
 	fullscreen->setObjectName("fullscreen_action");
 	custom_gfx->setObjectName("custom_gfx_action");
+	debugging->setObjectName("debugging_action");
 
 	custom_gfx->setEnabled(false);
+	debugging->setEnabled(false);
 
 	menu_bar = new QMenuBar(this);
 
@@ -101,6 +105,7 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 
 	advanced = new QMenu(tr("Advanced"), this);
 	advanced->addAction(custom_gfx);
+	advanced->addAction(debugging);
 	menu_bar->addMenu(advanced);
 
 	//Setup Help menu
@@ -123,6 +128,7 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 	connect(controls, SIGNAL(triggered()), this, SLOT(show_control_settings()));
 	connect(paths, SIGNAL(triggered()), this, SLOT(show_paths_settings()));
 	connect(custom_gfx, SIGNAL(triggered()), this, SLOT(show_cgfx()));
+	connect(debugging, SIGNAL(triggered()), this, SLOT(show_debugger()));
 	connect(about, SIGNAL(triggered()), this, SLOT(show_about()));
 
 	sw_screen = new soft_screen();
@@ -457,6 +463,9 @@ void main_menu::boot_game()
 	//Set up custom graphics dialog
 	cgfx->hide();
 
+	dmg_debugger = new dmg_debug();
+	dmg_debugger->hide();
+
 	//Read specified ROM file
 	main_menu::gbe_plus->read_file(get_rom_file());
 	//Read manifest
@@ -480,6 +489,8 @@ void main_menu::boot_game()
 	//Enable CGFX menu
 	findChild<QAction*>("custom_gfx_action")->setEnabled(true);
 
+	//Enable debugging menu
+	findChild<QAction*>("debugging_action")->setEnabled(true);
 
 	//If the fullscreen command-line argument was passed, be sure to boot into fullscreen mode
 	if(config::flags & SDL_WINDOW_FULLSCREEN_DESKTOP)
@@ -614,7 +625,7 @@ void main_menu::pause()
 		//Unpause
 		if(config::pause_emu) 
 		{
-			if(cgfx->pause) { return; }
+			if(cgfx->pause || dmg_debugger->pause) { return; }
 
 			config::pause_emu = false; 
 		}
@@ -641,8 +652,8 @@ void main_menu::pause_emu()
 
 	SDL_PauseAudio(0);
 
-	//If CGFX is open, continue pause
-	if(cgfx->pause) { pause(); }
+	//If CGFX or debugger is open, continue pause
+	if(cgfx->pause || dmg_debugger->pause) { pause(); }
 
 	//Continue pause if GUI option is still selected - Check this when closing CGFX
 	if(findChild<QAction*>("pause_action")->isChecked()) { pause(); }
@@ -791,6 +802,26 @@ void main_menu::show_cgfx()
 	cgfx->show();
 	cgfx->pause = true;
 	
+	pause();
+}
+
+/****** Shows the debugger ******/
+void main_menu::show_debugger()
+{
+	if (main_menu::gbe_plus != NULL)
+	{
+		//Show DMG-GBC debugger
+		findChild<QAction*>("pause_action")->setEnabled(false);
+
+		SDL_PauseAudio(1);
+		main_menu::dmg_debugger->old_pause = config::pause_emu;
+		main_menu::dmg_debugger->pause = true;
+		config::pause_emu = false;
+
+		main_menu::dmg_debugger->auto_refresh();
+		main_menu::dmg_debugger->show();
+		main_menu::gbe_plus->db_unit.debug_mode = true;
+	}
 	pause();
 }
 
