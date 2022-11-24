@@ -43,7 +43,7 @@ void GB_LCD::clear_manifest() {
 	cgfx_stat.tiles.clear();
 	for (u8 i = 0; i < 60; i++)
 	{
-		cgfx_stat.bgs[i].imgIdx = -1;
+		cgfx_stat.bgs[i].clear();
 	}
 
 	SDL_FreeSurface(cgfx_stat.brightnessMod);
@@ -307,7 +307,7 @@ bool GB_LCD::load_manifest(std::string filename)
 								pc.type = pack_condition::MEMORYCHECK;
 							else if (token == "memoryCheckConstant")
 								pc.type = pack_condition::MEMORYCHECKCONSTANT;
-							else if (token == "frameRange ")
+							else if (token == "frameRange")
 								pc.type = pack_condition::FRAMERANGE;
 							break;
 						case 2:
@@ -466,10 +466,39 @@ bool GB_LCD::load_manifest(std::string filename)
 
 						tokenCnt++;
 					}
-					if (condNames != "") {
+					if (condNames != "") 
+					{
 						processConditionNames(condNames, &(bg.condApps));
 					}
-					cgfx_stat.bgs[bg.priority] = bg;
+					if (bg.brightness < 1)
+					{
+						//create a darken copy
+						SDL_Surface* brightnessMod = SDL_CreateRGBSurfaceWithFormat(0, cgfx_stat.imgs[bg.imgIdx][0]->w, cgfx_stat.imgs[bg.imgIdx][0]->h, 32, SDL_PIXELFORMAT_ARGB8888);
+						SDL_Surface* img = SDL_CreateRGBSurfaceWithFormat(0, cgfx_stat.imgs[bg.imgIdx][0]->w, cgfx_stat.imgs[bg.imgIdx][0]->h, 32, SDL_PIXELFORMAT_ARGB8888);
+						u8 c = 255 * bg.brightness;
+						u32 brightnessC = 0xFF000000 | c << 16 | c << 8 | c;
+						cgfx_stat.imgs[bg.imgIdx][0]->w;
+
+						SDL_FillRect(brightnessMod, NULL, brightnessC);
+						SDL_FillRect(img, NULL, 0x00000000);
+						SDL_SetSurfaceBlendMode(cgfx_stat.imgs[bg.imgIdx][0], SDL_BLENDMODE_NONE);
+						SDL_BlitSurface(cgfx_stat.imgs[bg.imgIdx][0], NULL, img, NULL);
+						SDL_SetSurfaceBlendMode(cgfx_stat.imgs[bg.imgIdx][0], SDL_BLENDMODE_BLEND);
+						SDL_SetSurfaceBlendMode(brightnessMod, SDL_BLENDMODE_MOD);
+						SDL_BlitSurface(brightnessMod, NULL, img, NULL);
+						SDL_FreeSurface(brightnessMod);
+
+						std::vector<SDL_Surface*> imgs;
+						std::vector<SDL_Surface*> himgs;
+						imgs.push_back(img);
+						img = h_flip_image(img);
+						himgs.push_back(img);
+
+						bg.imgIdx = cgfx_stat.imgs.size();
+						cgfx_stat.imgs.push_back(imgs);
+						cgfx_stat.himgs.push_back(himgs);
+					}
+					cgfx_stat.bgs[bg.priority].push_back(bg);
 				}
 			}
 		}

@@ -111,7 +111,7 @@ struct dmg_cgfx_data
 	std::vector <std::vector <SDL_Surface*>> himgs;
 	std::vector <pack_condition> conds;
 	std::vector <pack_tile> tiles;
-	std::array <pack_background, 60> bgs;
+	std::array < std::vector <pack_background>, 60> bgs;
 	SDL_Surface* brightnessMod;
 	SDL_Surface* tempStrip;
 	u32 frameCnt;

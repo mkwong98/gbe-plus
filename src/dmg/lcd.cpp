@@ -1870,26 +1870,26 @@ void GB_LCD::render_full_screen() {
 	{
 		for (u8 i = 0; i < 60; i++)
 		{
-			if (cgfx::loaded && cgfx_stat.bgs[i].imgIdx >= 0)
+			for (u16 n = 0; n < cgfx_stat.bgs[i].size(); n++)
 			{
 				//check for conditions
 				bool allCondPassed = true;
-				for (u16 j = 0; j < cgfx_stat.bgs[i].condApps.size(); j++)
+				for (u16 j = 0; j < cgfx_stat.bgs[i][n].condApps.size(); j++)
 				{
-					pack_condition* c = &(cgfx_stat.conds[cgfx_stat.bgs[i].condApps[j].condIdx]);
+					pack_condition* c = &(cgfx_stat.conds[cgfx_stat.bgs[i][n].condApps[j].condIdx]);
 					bool matchResult = c->latest_result;
-					if (cgfx_stat.bgs[i].condApps[j].negate) matchResult = !matchResult;
+					if (cgfx_stat.bgs[i][n].condApps[j].negate) matchResult = !matchResult;
 					allCondPassed = allCondPassed && matchResult;
 				}
 				if (allCondPassed)
 				{
 					SDL_Rect srcR;
-					srcR.x = cgfx_stat.bgs[i].offsetX + (lcd_stat.bg_scroll_x * cgfx_stat.bgs[i].hscroll);
-					srcR.y = cgfx_stat.bgs[i].offsetY + (lcd_stat.bg_scroll_y * cgfx_stat.bgs[i].vscroll);
-					srcR.w = cgfx_stat.imgs[cgfx_stat.bgs[i].imgIdx][0]->w;
-					srcR.h = cgfx_stat.imgs[cgfx_stat.bgs[i].imgIdx][0]->h;
+					srcR.x = cgfx_stat.bgs[i][n].offsetX + (lcd_stat.bg_scroll_x * cgfx_stat.bgs[i][n].hscroll);
+					srcR.y = cgfx_stat.bgs[i][n].offsetY + (lcd_stat.bg_scroll_y * cgfx_stat.bgs[i][n].vscroll);
+					srcR.w = cgfx_stat.imgs[cgfx_stat.bgs[i][n].imgIdx][0]->w;
+					srcR.h = cgfx_stat.imgs[cgfx_stat.bgs[i][n].imgIdx][0]->h;
 
-					SDL_BlitSurface(cgfx_stat.imgs[cgfx_stat.bgs[i].imgIdx][0], &srcR, finalscreen, NULL);
+					SDL_BlitSurface(cgfx_stat.imgs[cgfx_stat.bgs[i][n].imgIdx][0], &srcR, finalscreen, NULL);
 				}
 			}
 			if (i == 9)
