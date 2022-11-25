@@ -200,4 +200,19 @@ const u32 JB_REG_0E = 0xB0E0000;
 const u32 JB_REG_10 = 0xB100000;
 const u32 JB_REG_12 = 0xB120000;
 
+/* Play-Yan IO */
+const u32 PY_INIT_DATA = 0x9000000;
+const u32 PY_STAT = 0x9000006;
+
+const u32 PY_FIRM_ADDR = 0xB000004;
+const u32 PY_ACCESS_MODE = 0xB000006;
+const u32 PY_ACCESS_PARAM = 0xB000010;
+const u32 PY_FIRM_STAT = 0xB000012;
+const u32 PY_IN = 0xB000100;
+const u32 PY_OUT = 0xB000300;
+
+
+const u32 PY_UNK_00 = 0xB000000;
+const u32 PY_UNK_02 = 0xB000002;
+
 #endif // GBA_COMMON

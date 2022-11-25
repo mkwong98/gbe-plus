@@ -9,6 +9,8 @@
 // Reads and writes to the P1 register
 // Handles input from keyboard using SDL events
 
+#include "SDL2/SDL_sensor.h"
+
 #include "gamepad.h"
 
 /****** GamePad Constructor *******/
@@ -25,6 +27,8 @@ DMG_GamePad::DMG_GamePad()
 	con_update = false;
 	joypad_irq = false;
 	joy_init = false;
+	sensor_init = false;
+	gc_sensor = NULL;
 }
 
 /****** Initialize GamePad ******/
@@ -66,6 +70,30 @@ void DMG_GamePad::init()
 			SDL_HapticRumbleInit(rumble);
 			std::cout<<"JOY::Rumble initialized\n";
 		}
+	}
+
+	if(config::use_motion)
+	{
+		if(SDL_Init(SDL_INIT_GAMECONTROLLER | SDL_INIT_SENSOR) == 0)
+		{
+			gc_sensor = SDL_GameControllerOpen(config::joy_id);
+
+			SDL_GameControllerSetSensorEnabled(gc_sensor, SDL_SENSOR_ACCEL, SDL_TRUE);
+
+			if(!SDL_GameControllerHasSensor(gc_sensor, SDL_SENSOR_ACCEL))
+			{
+				std::cout<<"JOY::Controller does not have an accelerometer \n";
+				gc_sensor = NULL;
+			}
+
+			else
+			{
+				std::cout<<"JOY::Controller sensor detected\n";
+				sensor_init = true;
+			}
+		}
+
+		else { std::cout<<"JOY::Could not initialize SDL sensors\n"; }
 	}
 }
 
@@ -178,6 +206,17 @@ void DMG_GamePad::handle_input(SDL_Event &event)
 				process_joystick(pad, false);
 				process_joystick(pad+2, false);
 				break;
+		}
+	}
+
+	//Controller accelerometer
+	else if(event.type == SDL_CONTROLLERSENSORUPDATE)
+	{
+		if(gc_sensor != NULL)
+		{
+			float motion_data[3] = { 0.0, 0.0, 0.0 };
+			SDL_GameControllerGetSensorData(gc_sensor, SDL_SENSOR_ACCEL, motion_data, 3);
+			process_gyroscope(motion_data[0], motion_data[2]);
 		}
 	}
 
@@ -595,6 +634,9 @@ void DMG_GamePad::process_joystick(int pad, bool pressed)
 /****** Process gyroscope sensors - Only used for MBC7 ******/
 void DMG_GamePad::process_gyroscope()
 {
+	//If using real motion controls, abort this function to avoid interference
+	if(sensor_init) { return; }
+
 	//When pressing left, increase sensor_x
 	if(gyro_flags & 0x1) 
 	{
@@ -664,6 +706,44 @@ void DMG_GamePad::process_gyroscope()
     		sensor_y += 2;
     		if(sensor_y > 2047) { sensor_y = 2047; }
   	}
+}
+
+/****** Process gyroscope sensors - Only used for MBC7 - Use real controller sensors ******/
+void DMG_GamePad::process_gyroscope(float x, float y)
+{
+	float x_abs = (x < 0) ? -x : x;
+	float y_abs = (y < 0) ? -y : y;
+	float scaler = config::motion_scaler;
+	float deadzone = config::motion_dead_zone;
+
+	//When not tilting, put the sensors in neutral
+	if((x_abs < deadzone) && (sensor_x > 2047)) { sensor_x = 2047; }
+	else if((x_abs < deadzone) && (sensor_x < 2047)) { sensor_x = 2047; }
+
+	else if(x_abs >= deadzone)
+	{
+		if(x > 0) { sensor_x = 2047 + (x_abs * scaler); }
+		else { sensor_x = 2047 - (x_abs * scaler); }
+
+		//Limit X min-max
+    		if(sensor_x < 1897) { sensor_x = 1897; }
+    		if(sensor_x > 2197) { sensor_x = 2197; }
+	}
+
+	//When not tilting, put the sensors in neutral
+	if((y_abs < deadzone) && (sensor_y > 2047)) { sensor_y = 2047; }
+	else if((y_abs < deadzone) && (sensor_y < 2047)) { sensor_y = 2047; }
+
+	else if(y_abs >= deadzone)
+	{
+		if(y > 0) { sensor_y = 2047 + (y_abs * scaler); }
+		else { sensor_y = 2047 - (y_abs * scaler); }
+
+		//Limit Y min-max
+    		if(sensor_y < 1897) { sensor_y = 1897; }
+    		if(sensor_y > 2197) { sensor_y = 2197; }
+	}
+
 }
 
 /****** Start haptic force-feedback on joypad ******/

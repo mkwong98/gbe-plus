@@ -6,7 +6,7 @@ Shonumi aka D.S. Baxter
 1. Introduction
 ***************************************************
 
-The Game Boy Music Recorder is a cartridge for the Game Boy Advance capable of playing MP3s, recording audio, and performing karaoke. Designed and developed by Kemco, it was released on November 15, 2002 in Japan. A year later, Radica Games became the distributor for the product in North America and released it as the Game Boy Advance Jukebox. It marked the first time an officially licensed product could playback media of the user's choosing on the Game Boy.
+The Game Boy Advance Music Recorder is a cartridge for the Game Boy Advance capable of playing MP3s, recording audio, and performing karaoke. Designed and developed by Kemco, it was released on November 15, 2002 in Japan. A year later, Radica Games became the distributor for the product in North America and released it as the Game Boy Advance Jukebox. It marked the first time an officially licensed product could playback media of the user's choosing on the Game Boy.
 
 
 ***************************************************
@@ -22,7 +22,7 @@ The Game Boy Music Recorder is a cartridge for the Game Boy Advance capable of p
 - Supports audio output through a headphone jack.
 - Supports playing MP3 files, recording voice memos as WAV files, and recording music/karaoke as custom GB3 files.
 - Capable of operating independently from the Game Boy Advance. Has physical buttons to control playback.
-- 
+
 
 ***************************************************
 3. I/O Registers
@@ -52,7 +52,7 @@ Registers 0xB000000, 0xB020000, and 0xB100000 appear to be used by the software 
 
 
 ***************************************************
-4. Command Overview & Usage
+4. Command Overview
 ***************************************************
 
 The major functions of the Music Recorder/Jukebox are controlled from the software by sending a series of commands. Complex tasks such as reading the CompactFlash memory card or even deciding when to decode MP3 files are largely abstracted away from the CPU by a simple, high-level interface. To issue a command, software must follow the proceedure listed below:
@@ -382,3 +382,44 @@ Index Range	| R/W	| Description
 For the string data at 0x00A1 through 0x00CD, the string is terminated by a null character (value 0x00). The strings for the Jukebox use ASCII.
 
 When reading input/output audio data, the software accesses indices starting at 0x0102 and ends at the length specified by index 0x100. For example, if the Audio Index Length is 0x0004, the CPU reads indices 0x0102 through 0x0105 inclusive. Note that the 0x0102 and 0x0103 are also used for other purposes. Depending on the context, it may represent audio sample data or a Karaoke file number.
+
+
+***************************************************
+7. Recording File Formats
+***************************************************
+
+The Music Recorder/Jukebox uses 2 different file formats for recording. For Voice Memos and Karaoke, the device encodes audio via IMA ADPCM into a WAV file. This format uses a 11025Hz sample rate, 16-bits per sample, and just one channel.
+
+For Music recorded via the Line-In jack, an MP3 file is generated. Depending on the user's settings, it will have a bit-rate of 128Kbps, 96Kbps, or 64Kbps. It uses ID3v1 to store metadata at the very last 128 bytes of the file. Instead of regular MP3 files, the Music Recorder/Jukebox produces "GB3" files. However, these GB3 files appear to be normal MP3s without a header. This design prevents music from being recorded and copied to a PC and may have been intended to deter piracy.
+
+
+***************************************************
+8. CompactFlash File & Directory Structure
+***************************************************
+
+The CompactFlash card used by the Music Recorder/Jukebox contains a FAT-12 filesystem. The hardware is capable of formatting the card as necessary without the need of a PC or any other kind of media writing device. By default, it has a volume label that reads "AGB-MP3    ". 4 folders and 1 file in the root directory are created after a formatting the card:
+
+-----------------------------------------------------------
+Name		| Description
+-----------------------------------------------------------
+ADPCM		| Folder - Holds all Voice Memo recordings
+GB3		| Folder - Holds all Music recordings
+MP3		| Folder - Holds all user MP3s for playback
+SONG		| Folder - Holds all Karaoke recordings
+INFO.AGB	| File - Contains filenames for content in the above folders
+
+Despite its name, INFO.AGB contains no executable code intended to run on the GBA. Instead, simply has a list of all the files present for each category of audio. Additionally, it links MP3 and GB3 files to a given Karaoke recording. INFO.AGB is always 15KB exactly and is divided into the following 4 sections:
+
+-----------------------------------------------------------
+Offset 		| Description
+-----------------------------------------------------------
+0x0000		| MP3 + GB3 Folder File List
+0x1800		| ADPCM Folder File List
+0x2400		| Song Folder File List
+0x3000		| Karaoke Link Data
+
+For sections listing filenames, MP3 files use "8.3" DOS-style short names in ASCII. WAV and GB3 files (named sequentially e.g. 0001.WAV or 0002.WAV) use an even shorter "4.3" style in ASCII. Data is stored as strings with no terminating character or padding. The strings are formatted such that they use 16-bit pairs of characters that need to be read LSB first. Do note that the MP3 and GB3 files are listed together rather than separately.
+
+The Karaoke Link Data essentially points to the relevant MP3 or GB3 file that acted as the source of a Karaoke recording. The files here are ordered sequentially according to how the Music Recorder/Jukebox displays Karaoke files for playback. That is to say, the first file listed in INFO.AGB corresponds to the first file viewed from the Karaoke -> Play menu. This seems necessary for the Jukebox as it allows the software to pull up the 30 character song title and artist fields from the MP3 and GB3 files even though it plays the WAV Karaoke recording (which has no such metadata). If the Karaoke Link Data is corrupted or missing, the Music Recorder/Jukebox refuses to play any Karaoke recordings.
+
+The Music Recorder/Jukebox automatically updates INFO.AGB during various operations, such as deleting files. After a reformat, the Music Recorder/Jukebox inserts a blank INFO.AGB in the root directory.

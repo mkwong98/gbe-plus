@@ -22,6 +22,7 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 {
 	//Setup actions
 	QAction* open = new QAction("Open...", this);
+	QAction* open_am3_folder = new QAction("Open AM3 Folder", this);
 	QAction* boot_no_cart = new QAction("Boot Empty Slot", this);
 	QAction* select_card = new QAction("Select Card File", this);
 	QAction* select_cam = new QAction("Select GB Camera Photo", this);
@@ -79,6 +80,7 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 
 	file = new QMenu(tr("File"), this);
 	file->addAction(open);
+	file->addAction(open_am3_folder);
 	file->addAction(boot_no_cart);
 	file->addSeparator();
 	recent_list = file->addMenu(tr("Recent Files"));
@@ -140,6 +142,7 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 	//Setup signals
 	connect(quit, SIGNAL(triggered()), this, SLOT(quit()));
 	connect(open, SIGNAL(triggered()), this, SLOT(open_file()));
+	connect(open_am3_folder, SIGNAL(triggered()), this, SLOT(open_am3_fldr()));
 	connect(boot_no_cart, SIGNAL(triggered()), this, SLOT(open_no_cart()));
 	connect(select_card, SIGNAL(triggered()), this, SLOT(select_card_file()));
 	connect(select_cam, SIGNAL(triggered()), this, SLOT(select_cam_file()));
@@ -420,6 +423,36 @@ void main_menu::open_file()
 	boot_game();
 }
 
+/****** Boots system as AM3 folder ******/
+void main_menu::open_am3_fldr()
+{
+	//Close the core
+	if(main_menu::gbe_plus != NULL) 
+	{
+		main_menu::gbe_plus->shutdown();
+		main_menu::gbe_plus->core_emu::~core_emu();
+	}
+
+	config::sdl_render = false;
+	config::render_external_sw = render_screen_sw;
+	config::render_external_hw = render_screen_hw;
+	config::sample_rate = settings->sample_rate;
+
+	if(qt_gui::screen != NULL) { delete qt_gui::screen; }
+	qt_gui::screen = NULL;
+
+	QString folder_name = QFileDialog::getExistingDirectory(this, tr("Open"), "");
+	if(folder_name.isNull()) { SDL_PauseAudio(0); return; }
+
+	config::use_am3_folder = true;
+	config::cart_type = AGB_AM3;
+	settings->special_cart->setCurrentIndex(0x0C);
+
+	config::rom_file = folder_name.toStdString();
+
+	boot_game();
+}
+
 /****** Boots system without a cartridge ******/
 void main_menu::open_no_cart()
 {
@@ -533,8 +566,10 @@ void main_menu::quit()
 	config::use_cheats = (settings->cheats->isChecked()) ? true : false;
 	config::mute = (settings->sound_on->isChecked()) ? false : true;
 	config::use_stereo = (settings->stereo_enable->isChecked()) ? true : false;
+	config::use_microphone = (settings->mic_enable->isChecked()) ? true : false;
 	config::volume = settings->volume->value();
 	config::use_haptics = (settings->rumble_on->isChecked()) ? true : false;
+	config::use_motion = (settings->motion_on->isChecked()) ? true : false;
 	config::vc_enable = (settings->vc_on->isChecked()) ? true : false;
 	config::vc_opacity = settings->vc_opacity->value();
 	config::vc_timeout = settings->vc_timeout->value();
@@ -573,7 +608,7 @@ void main_menu::boot_game()
 	//Check to see if the ROM file actually exists
 	QFile test_file(QString::fromStdString(config::rom_file));
 	
-	if((config::rom_file != "NOCART") && (!test_file.exists()))
+	if((config::rom_file != "NOCART") && (!config::use_am3_folder) && (!test_file.exists()))
 	{
 		std::string mesg_text = "The specified file: '" + config::rom_file + "' could not be loaded"; 
 		warning_box->setText(QString::fromStdString(mesg_text));
@@ -656,6 +691,7 @@ void main_menu::boot_game()
 
 	config::sample_rate = settings->sample_rate;
 	config::use_stereo = (settings->stereo_enable->isChecked()) ? true : false;
+	config::use_microphone = (settings->mic_enable->isChecked()) ? true : false;
 	config::pause_emu = false;
 
 	//Check OpenGL status
@@ -703,12 +739,23 @@ void main_menu::boot_game()
 		case 0xB: config::cart_type = AGB_8M_DACS; break;
 		case 0xC: config::cart_type = AGB_AM3; break;
 		case 0xD: config::cart_type = AGB_JUKEBOX; break;
-		case 0xE: config::cart_type = NDS_IR_CART; break;
+		case 0xE: config::cart_type = AGB_PLAY_YAN; break;
+		case 0xF: config::cart_type = NDS_IR_CART; break;
 	}
 
 	//Check rumble status
 	if(settings->rumble_on->isChecked()) { config::use_haptics = true; }
 	else { config::use_haptics = false; }
+
+	//Check motion status
+	if(settings->motion_on->isChecked()) { config::use_haptics = true; }
+	else { config::use_motion = false; }
+
+	//Motion Controls Dead Zone
+	config::motion_dead_zone = settings->motion_dead_zone->value();
+
+	//Motion Controls Scaler
+	config::motion_scaler = settings->motion_scaler->value();
 
 	//Check Virtual Cursor enable
 	if(settings->vc_on->isChecked()) { config::vc_enable = true; }
@@ -729,7 +776,9 @@ void main_menu::boot_game()
 	if(config::rom_file != "NOCART")
 	{
 		std::size_t dot = config::rom_file.find_last_of(".");
-		std::string ext = config::rom_file.substr(dot);
+		std::string ext = "";
+
+		if(dot != std::string::npos) { ext = config::rom_file.substr(dot); }
 
 		config::gb_type = settings->sys_type->currentIndex();
 	
@@ -948,9 +997,11 @@ void main_menu::closeEvent(QCloseEvent* event)
 	config::use_cheats = (settings->cheats->isChecked()) ? true : false;
 	config::mute = (settings->sound_on->isChecked()) ? false : true;
 	config::use_stereo = (settings->stereo_enable->isChecked()) ? true : false;
+	config::use_microphone = (settings->mic_enable->isChecked()) ? true : false;
 	config::volume = settings->volume->value();
 	config::use_opengl = (settings->ogl->isChecked()) ? true : false;
 	config::use_haptics = (settings->rumble_on->isChecked()) ? true : false;
+	config::use_motion = (settings->motion_on->isChecked()) ? true : false;
 	config::vc_enable = (settings->vc_on->isChecked()) ? true : false;
 	config::vc_opacity = settings->vc_opacity->value();
 	config::vc_timeout = settings->vc_timeout->value();

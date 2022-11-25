@@ -57,6 +57,9 @@ void AGB_MMU::reset()
 	//Reset Jukebox data structure
 	jukebox_reset();
 
+	//Reset Play-Yan data structure
+	play_yan_reset();
+
 	gpio.data = 0;
 	gpio.prev_data = 0;
 	gpio.direction = 0;
@@ -174,7 +177,6 @@ u8 AGB_MMU::read_u8(u32 address)
 		case 0x4:
 		case 0x6:
 		case 0x8:
-		case 0x9:
 			break;
 
 		//Slow WRAM 256KB mirror
@@ -197,6 +199,11 @@ u8 AGB_MMU::read_u8(u32 address)
 			address &= 0x7007FFF;
 			break;
 
+		//ROM Waitstate 0
+		case 0x9:
+			if(config::cart_type == AGB_PLAY_YAN) { return read_play_yan(address); }
+			break;
+
 		//ROM Waitstate 1 (mirror of Waitstate 0)
 		case 0xA:
 		case 0xB:
@@ -205,6 +212,8 @@ u8 AGB_MMU::read_u8(u32 address)
 				if(address == JB_REG_0C) { return jukebox.out_hi; }
 				else if(address == JB_REG_0E) { return jukebox.out_lo; }
 			}
+
+			else if(config::cart_type == AGB_PLAY_YAN) { return read_play_yan(address); }
 
 			address -= 0x2000000;
 			break;
@@ -592,6 +601,7 @@ void AGB_MMU::write_u8(u32 address, u8 value)
 		case 0xA:
 		case 0xB:
 			if(config::cart_type == AGB_JUKEBOX) { write_jukebox(address, value); }
+			else if(config::cart_type == AGB_PLAY_YAN) { write_play_yan(address, value); }
 			address -= 0x2000000;
 			break;
 
@@ -2213,26 +2223,35 @@ bool AGB_MMU::read_file(std::string filename)
 
 		//Next read 16-byte SmartMedia ID from file
 		std::string smid_file = filename + ".smid";
-		if((!read_smid(smid_file)) && (!config::auto_gen_am3_id))
+		if((!config::use_am3_folder) && (!read_smid(smid_file)) && (!config::auto_gen_am3_id))
 		{
 			file.close();
 			return false;
 		}
 
-		//Read in all cart data for AM3 first
-		am3.card_data.clear();
-		am3.card_data.resize(file_size, 0x00);
-
-		u8* am_mem = &am3.card_data[0];
-		file.read((char*)am_mem, file_size);
-		file.seekg(0, file.beg);
-
-		//Check the FAT to grab
-		if(!check_am3_fat())
+		//Read AM3 files from folder
+		if(config::use_am3_folder)
 		{
-			std::cout<<"MMU::Error - AM3 SmartMedia card data has bad File Allocation Table\n";
-			file.close();
-			return false;
+			if(!am3_load_folder(filename)) { return false; }
+		}
+
+		//Read in all cart data for AM3 first
+		else
+		{
+			am3.card_data.clear();
+			am3.card_data.resize(file_size, 0x00);
+
+			u8* am_mem = &am3.card_data[0];
+			file.read((char*)am_mem, file_size);
+			file.seekg(0, file.beg);
+
+			//Check the FAT to grab
+			if(!check_am3_fat())
+			{
+				std::cout<<"MMU::Error - AM3 SmartMedia card data has bad File Allocation Table\n";
+				file.close();
+				return false;
+			}
 		}
 
 		file_size = 0x400;

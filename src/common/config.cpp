@@ -86,8 +86,12 @@ namespace config
 	int joy_id = 0;
 	int joy_sdl_id = 0;
 
-	//Default Haptic setting
+	//Default Haptic and Gyro setting
 	bool use_haptics = false;
+	bool use_motion = false;
+
+	float motion_dead_zone = 1.0;
+	float motion_scaler = 10.0;
 
 	u32 flags = 0x4;
 	bool pause_emu = false;
@@ -170,6 +174,7 @@ namespace config
 	bool mute = false;
 	bool use_stereo = false;
 	bool use_microphone = false;
+	std::string override_audio_driver = "";
 
 	//Virtual Cursor parameters for NDS
 	bool vc_enable = false;
@@ -237,6 +242,9 @@ namespace config
 
 	//AM3 SmartMedia ID Auto Generate Flag
 	bool auto_gen_am3_id = false;
+
+	//AM3 Folder flag
+	bool use_am3_folder = false;
 
 	//Total time (in seconds) for Jukebox recording
 	u32 jukebox_total_time = 0;
@@ -758,6 +766,18 @@ bool parse_cli_args()
 				}
 			}
 
+			//Override default audio driver
+			else if((config::cli_args[x] == "-ad") || (config::cli_args[x] == "--audio-driver"))
+			{
+				if((++x) == config::cli_args.size()) { std::cout<<"GBE::Error - No audio driver specified\n"; }
+
+				else
+				{
+					config::override_audio_driver = config::cli_args[x];
+					setenv("SDL_AUDIODRIVER", config::override_audio_driver.c_str(), 1);
+				}
+			}
+
 			//Enable fullscreen mode
 			else if((config::cli_args[x] == "-f") || (config::cli_args[x] == "--fullscreen")) { config::flags |= SDL_WINDOW_FULLSCREEN_DESKTOP; } 
 
@@ -799,6 +819,9 @@ bool parse_cli_args()
 
 			//Use GBA Music Recorder mapper
 			else if(config::cli_args[x] == "--agb-jukebox") { config::cart_type = AGB_JUKEBOX; }
+
+			//Use Play-Yan Cartridge
+			else if(config::cli_args[x] == "--agb-play-yan") { config::cart_type = AGB_PLAY_YAN; }
 
 			//Use Auto-Detect for GBA saves
 			else if(config::cli_args[x] == "--save-auto") { config::agb_save_type = AGB_AUTO_DETECT; }
@@ -886,6 +909,9 @@ bool parse_cli_args()
 			//Auto Generate AM3 SmartMedia ID
 			else if(config::cli_args[x] == "--auto-gen-smid") { config::auto_gen_am3_id = true; }
 
+			//Use AM3 Folder
+			else if(config::cli_args[x] == "--am3-folder") { config::use_am3_folder = true; }
+
 			//Print Help
 			else if((config::cli_args[x] == "-h") || (config::cli_args[x] == "--help")) 
 			{
@@ -931,6 +957,7 @@ bool parse_cli_args()
 				std::cout<<"--turbo-file-protect \t\t\t Enable write-proection for Turbo File\n";
 				std::cout<<"--ignore-illegal-opcodes \t\t\t Ignore Illegal CPU instructions when running\n";
 				std::cout<<"--auto-gen-smid \t\t\t\t Automatically generate 16-byte SmartMedia ID for AM3\n";
+				std::cout<<"--use-am3-folder \t\t\t\t Use folder of AM3 files instead of SmartMedia image\n";
 				std::cout<<"-h, --help \t\t\t\t Print these help messages\n";
 				return false;
 			}
@@ -1622,6 +1649,56 @@ bool parse_ini_file()
 			}
 		}
 
+		//Use controller gyroscopes
+		else if(ini_item == "#use_motion")
+		{
+			if((x + 1) < size) 
+			{
+				util::from_str(ini_opts[++x], output);
+
+				if(output == 1) { config::use_motion = true; }
+				else { config::use_motion = false; }
+			}
+
+			else 
+			{
+				std::cout<<"GBE::Error - Could not parse gbe.ini (#use_motion) \n";
+				return false;
+			}
+		}
+
+		//Motion deadzone
+		else if(ini_item == "#motion_dead_zone")
+		{
+			if((x + 1) < size)
+			{
+				float out = std::stof(ini_opts[++x]);
+				config::motion_dead_zone = out;
+			}
+
+			else 
+			{
+				std::cout<<"GBE::Error - Could not parse gbe.ini (#motion_dead_zone) \n";
+				return false;
+			}
+		}
+
+		//Motion scaler
+		else if(ini_item == "#motion_scaler")
+		{
+			if((x + 1) < size)
+			{
+				float out = std::stof(ini_opts[++x]);
+				if(out > 0) { config::motion_scaler = out; }
+			}
+
+			else 
+			{
+				std::cout<<"GBE::Error - Could not parse gbe.ini (#motion_scaler) \n";
+				return false;
+			}
+		}
+
 		//Volume settings
 		else if(ini_item == "#volume")
 		{
@@ -1688,6 +1765,33 @@ bool parse_ini_file()
 				std::cout<<"GBE::Error - Could not parse gbe.ini (#use_microphone) \n";
 				return false;
 			}
+		}
+
+		//Override default audio driver
+		else if(ini_item == "#override_audio_driver")
+		{
+			if((x + 1) < size) 
+			{
+				ini_item = ini_opts[++x];
+				std::string first_char = "";
+				first_char = ini_item[0];
+				
+				//When left blank, don't parse the next line item
+				if(first_char != "#")
+				{
+					config::override_audio_driver = ini_item;
+					setenv("SDL_AUDIODRIVER", config::override_audio_driver.c_str(), 1);
+				}
+
+				else
+				{
+					config::override_audio_driver = "";
+					x--;
+				}
+ 
+			}
+
+			else { config::override_audio_driver = ""; }
 		}
 
 		//Sample rate
@@ -1825,11 +1929,59 @@ bool parse_ini_file()
 					config::dmg_gbc_pal = output;
 					set_dmg_colors(config::dmg_gbc_pal);
 				}
+
+				else if(output == 16) { config::dmg_gbc_pal = output; }
 			}
 
 			else 
 			{
 				std::cout<<"GBE::Error - Could not parse gbe.ini (#dmg_on_gbc_pal) \n";
+				return false;
+			}
+		}
+
+		//Custom DMG palette (BG)
+		else if(ini_item == "#dmg_custom_bg_pal")
+		{
+			if((x + 4) < size)
+			{
+				if(config::dmg_gbc_pal == 16)
+				{
+					util::from_hex_str(ini_opts[++x].substr(2), config::DMG_BG_PAL[0]);
+					util::from_hex_str(ini_opts[++x].substr(2), config::DMG_BG_PAL[1]);
+					util::from_hex_str(ini_opts[++x].substr(2), config::DMG_BG_PAL[2]);
+					util::from_hex_str(ini_opts[++x].substr(2), config::DMG_BG_PAL[3]);
+				}
+			}
+
+			else 
+			{
+				std::cout<<"GBE::Error - Could not parse gbe.ini (#dmg_custom_bg_pal) \n";
+				return false;
+			}
+		}
+
+		//Custom DMG palette (OBJ)
+		else if(ini_item == "#dmg_custom_obj_pal")
+		{
+			if((x + 8) < size)
+			{
+				if(config::dmg_gbc_pal == 16)
+				{
+					util::from_hex_str(ini_opts[++x].substr(2), config::DMG_OBJ_PAL[0][0]);
+					util::from_hex_str(ini_opts[++x].substr(2), config::DMG_OBJ_PAL[1][0]);
+					util::from_hex_str(ini_opts[++x].substr(2), config::DMG_OBJ_PAL[2][0]);
+					util::from_hex_str(ini_opts[++x].substr(2), config::DMG_OBJ_PAL[3][0]);
+					util::from_hex_str(ini_opts[++x].substr(2), config::DMG_OBJ_PAL[0][1]);
+					util::from_hex_str(ini_opts[++x].substr(2), config::DMG_OBJ_PAL[1][1]);
+					util::from_hex_str(ini_opts[++x].substr(2), config::DMG_OBJ_PAL[2][1]);
+					util::from_hex_str(ini_opts[++x].substr(2), config::DMG_OBJ_PAL[3][1]);
+				}
+			}
+
+			else 
+			{
+				std::cout<<"GBE::Error - Could not parse gbe.ini (#dmg_custom_bg_pal) \n";
 				return false;
 			}
 		}
@@ -2952,6 +3104,31 @@ bool save_ini_file()
 			output_lines[line_pos] = "[#use_haptics:" + val + "]";
 		}
 
+		//Use controller gyros
+		else if(ini_item == "#use_motion")
+		{
+			line_pos = output_count[x];
+			std::string val = (config::use_motion) ? "1" : "0";
+
+			output_lines[line_pos] = "[#use_motion:" + val + "]";
+		}
+
+		//Motion deadzone
+		else if(ini_item == "#motion_dead_zone")
+		{
+			line_pos = output_count[x];
+
+			output_lines[line_pos] = "[#motion_dead_zone:" + util::to_strf(config::motion_dead_zone) + "]";
+		}
+
+		//Motion scaler
+		else if(ini_item == "#motion_scaler")
+		{
+			line_pos = output_count[x];
+
+			output_lines[line_pos] = "[#motion_scaler:" + util::to_strf(config::motion_scaler) + "]";
+		}
+
 		//Volume settings
 		else if(ini_item == "#volume")
 		{
@@ -2985,6 +3162,15 @@ bool save_ini_file()
 			std::string val = (config::use_microphone) ? "1" : "0";
 
 			output_lines[line_pos] = "[#use_microphone:" + val + "]";
+		}
+
+		//Override default audio driver
+		else if(ini_item == "#override_audio_driver")
+		{
+			line_pos = output_count[x];
+			std::string val = (config::override_audio_driver == "") ? "" : (":'" + config::override_audio_driver + "'");
+
+			output_lines[line_pos] = "[#override_audio_driver" + val + "]";
 		}
 
 		//Sample rate

@@ -179,6 +179,77 @@ class AGB_MMU
 		u32 spectrum_values[9];
 	} jukebox;
 
+	//Structure to handle Play-Yan
+	struct ags_006
+	{
+		std::vector<u8> firmware;
+		u32 firmware_addr;
+		u16 firmware_status;
+		u8 firmware_addr_count;
+
+		u8 status;
+		u8 op_state;
+
+		u16 access_mode;
+		u16 access_param;
+
+		u32 irq_count;
+		u32 irq_delay;
+		u32 irq_repeat;
+		u32 irq_repeat_id;
+		u32 delay_reload;
+
+		u32 sd_check_data[5][8];
+		u32 music_check_data[2][8];
+		u32 music_play_data[3][8];
+		u32 music_stop_data[2][8];
+
+		u32 video_check_data[4][8];
+		u32 video_play_data[2][8];
+		u32 video_stop_data[2][8];
+		u32 wake_data[8];
+
+		u32 irq_data[8];
+		bool irq_data_in_use;
+		bool start_irqs;
+		bool is_video_playing;
+		bool is_music_playing;
+
+		u32* irq_data_ptr;
+		u32 irq_len;
+
+		u8 cnt_data[12];
+		u32 cmd;
+		std::vector <u8> command_stream;
+		bool capture_command_stream;
+
+		std::vector<u8> card_data;
+		u32 card_addr;
+
+		std::vector<std::string> music_files;
+		std::vector<std::string> video_files;
+
+		std::vector<u32> music_times;
+		std::vector<u32> video_times;
+
+		std::vector< std::vector<u8> > video_thumbnails;
+		std::vector<u8> video_data;
+		u16 thumbnail_addr;
+		u32 video_data_addr; 
+
+		u32 video_progress;
+		u32 video_length;
+
+		u32 music_file_index;
+		u32 video_file_index;
+		u32 thumbnail_index;
+		u32 video_index;
+
+		u8 volume;
+		u8 bass_boost;
+		bool use_bass_boost;
+	} play_yan;
+
 	//Structure to handle GPIO reading and writing
 	struct gpio_controller
 	{
@@ -261,6 +332,7 @@ class AGB_MMU
 	void am3_reset();
 	void write_am3(u32 address, u8 value);
 	bool check_am3_fat();
+	bool am3_load_folder(std::string folder);
 
 	void jukebox_reset();
 	void write_jukebox(u32 address, u8 value);
@@ -271,6 +343,16 @@ class AGB_MMU
 	void jukebox_update_metadata();
 	bool jukebox_load_audio(std::string filename);
 	void process_jukebox();
+
+	void play_yan_reset();
+	void write_play_yan(u32 address, u8 value);
+	bool read_play_yan_file_list(std::string filename, u8 category);
+	bool read_play_yan_thumbnails(std::string filename);
+	u8 read_play_yan(u32 address);
+	void process_play_yan_irq();
+	void play_yan_set_music_file(u32 index);
+	void play_yan_set_video_file(u32 index);
+	void play_yan_wake();
 
 	//GPIO handling functions
 	void process_rtc();

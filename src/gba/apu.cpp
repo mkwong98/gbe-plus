@@ -586,7 +586,7 @@ void agb_microphone_callback(void* _apu, u8 *_stream, int _length)
 		{
 			std::string filename = config::data_path + "jukebox/" + apu_link->mem->jukebox.recorded_file;
 			std::ofstream file(filename.c_str(), std::ios::binary | std::ios::trunc);
-			u32 file_size = apu_link->mic_buffer.size() * 2;
+			u32 file_size = 0;
 
 			std::vector <u8> wav_header;
 
@@ -598,6 +598,41 @@ void agb_microphone_callback(void* _apu, u8 *_stream, int _length)
 
 			else
 			{
+				//Resample current microphone buffer at 11025Hz
+				//This matches output from a real GBA Music Recorder/Jukebox
+				double target_freq = (apu_link->mem->jukebox.current_category == 0) ? 44100.0 : 11025.0; 
+				double resample_rate = apu_link->microphone_spec.freq / target_freq;
+				u32 temp_pos = 0;
+				std::vector <s16> resampled_buffer;
+
+				for(double x = 0; x < apu_link->mic_buffer.size(); x += resample_rate)
+				{
+					temp_pos = x;
+					resampled_buffer.push_back(apu_link->mic_buffer[temp_pos]);
+				}
+
+				file_size = resampled_buffer.size() * 2;
+
+				//For Karaoke files, mix in external audio buffer from Music file
+				if(apu_link->mem->jukebox.current_category == 2)
+				{
+					resample_rate = apu_link->apu_stat.ext_audio.frequency / 11025.0;
+					if(apu_link->apu_stat.ext_audio.channels == 2) { resample_rate *= 2; }
+
+					s16* e_stream = (s16*) apu_link->apu_stat.ext_audio.buffer;
+					s32 temp_sample = 0;
+					double stream_pos = 0;
+					temp_pos = 0;
+
+					for(u32 x = 0; x < resampled_buffer.size(); x++)
+					{
+						temp_pos = stream_pos;
+						temp_sample = (resampled_buffer[x] + e_stream[temp_pos]) / 2;
+						resampled_buffer[x] = temp_sample;
+						stream_pos += resample_rate;
+					}
+				}
+					
 				//Build WAV header - Chunk ID - "RIFF" in ASCII
 				wav_header.push_back(0x52);
 				wav_header.push_back(0x49);
@@ -637,7 +672,7 @@ void agb_microphone_callback(void* _apu, u8 *_stream, int _length)
 				wav_header.push_back(0x00);
 
 				//Sampling Rate
-				u32 rate = apu_link->apu_stat.sample_rate;
+				u32 rate = target_freq;
 				wav_header.push_back(rate & 0xFF);
 				wav_header.push_back((rate >> 8) & 0xFF);
 				wav_header.push_back((rate >> 16) & 0xFF);
@@ -672,7 +707,7 @@ void agb_microphone_callback(void* _apu, u8 *_stream, int _length)
 
 				std::cout<<"APU::Writing microphone recording " << filename << "\n";
 				file.write(reinterpret_cast<char*> (&wav_header[0]), wav_header.size());
-				file.write(reinterpret_cast<char*> (&apu_link->mic_buffer[0]), file_size);
+				file.write(reinterpret_cast<char*> (&resampled_buffer[0]), file_size);
 				file.close();
 			}
 

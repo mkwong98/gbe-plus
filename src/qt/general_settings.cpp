@@ -122,6 +122,7 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	special_cart->addItem("AGB - 8M DACS");
 	special_cart->addItem("AGB - AM3");
 	special_cart->addItem("AGB - Jukebox");
+	special_cart->addItem("AGB - Play-Yan");
 	special_cart->addItem("NDS - IR Cart");
 
 	QHBoxLayout* special_cart_layout = new QHBoxLayout;
@@ -510,6 +511,38 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	stereo_enable_layout->addWidget(stereo_enable_label);
 	stereo_enable_set->setLayout(stereo_enable_layout);
 
+	//Sound settings - Enable microphone recording
+	QWidget* mic_enable_set = new QWidget(sound);
+	QLabel* mic_enable_label = new QLabel("Enable Microphone Recording");
+	mic_enable = new QCheckBox(mic_enable_set);
+	mic_enable->setToolTip("Enables stereo sound output.");
+	mic_enable->setChecked(true);
+
+	QHBoxLayout* mic_enable_layout = new QHBoxLayout;
+	mic_enable_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+	mic_enable_layout->addWidget(mic_enable);
+	mic_enable_layout->addWidget(mic_enable_label);
+	mic_enable_set->setLayout(mic_enable_layout);
+
+	//Sound settings - Audio Driver
+	QWidget* audio_driver_set = new QWidget(sound);
+	QLabel* audio_driver_label = new QLabel("Audio Driver : ");
+	audio_driver = new QComboBox(audio_driver_set);
+	audio_driver->setToolTip("Selects the audio driver for SDL.");
+	audio_driver->addItem("Default");
+
+	for(u32 x = 0; x < SDL_GetNumAudioDrivers(); x++)
+	{
+		std::string temp_str = SDL_GetAudioDriver(x);
+		audio_driver->addItem(QString::fromStdString(temp_str));
+	}
+
+	QHBoxLayout* audio_driver_layout = new QHBoxLayout;
+	audio_driver_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+	audio_driver_layout->addWidget(audio_driver_label);
+	audio_driver_layout->addWidget(audio_driver);
+	audio_driver_set->setLayout(audio_driver_layout);
+
 	//Sound settings - Volume
 	QWidget* volume_set = new QWidget(sound);
 	QLabel* volume_label = new QLabel("Volume : ");
@@ -532,6 +565,8 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	audio_layout->addWidget(sample_set);
 	audio_layout->addWidget(sound_on_set);
 	audio_layout->addWidget(stereo_enable_set);
+	audio_layout->addWidget(mic_enable_set);
+	audio_layout->addWidget(audio_driver_set);
 	audio_layout->addWidget(volume_set);
 	sound->setLayout(audio_layout);
 
@@ -756,6 +791,47 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	rumble_layout->addWidget(rumble_on);
 	rumble_layout->addWidget(rumble_label);
 	rumble_set->setLayout(rumble_layout);
+
+	//Advanced control settings - Enable motion controls
+	motion_set = new QWidget(controls);
+	QLabel* motion_label = new QLabel("Enable motion controls", motion_set);
+	motion_on = new QCheckBox(motion_set);
+
+	QHBoxLayout* motion_layout = new QHBoxLayout;
+	motion_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+	motion_layout->addWidget(motion_on);
+	motion_layout->addWidget(motion_label);
+	motion_set->setLayout(motion_layout);
+
+	//Control settings - Motion Dead Zone
+	QWidget* motion_dead_zone_set = new QWidget(controls);
+	QLabel* motion_dead_zone_label = new QLabel("Motion Dead Zone : ");
+	motion_dead_zone = new QDoubleSpinBox(motion_dead_zone_set);
+	motion_dead_zone->setToolTip("Specifies minimum amount of motion needed to trigger motion controls\nVaries per-game and per-controller. Adjust as needed");
+	motion_dead_zone->setMinimum(0.0);
+	motion_dead_zone->setSingleStep(0.1);
+	motion_dead_zone->setValue(1.0);
+
+	QHBoxLayout* motion_dead_zone_layout = new QHBoxLayout;
+	motion_dead_zone_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+	motion_dead_zone_layout->addWidget(motion_dead_zone_label);
+	motion_dead_zone_layout->addWidget(motion_dead_zone);
+	motion_dead_zone_set->setLayout(motion_dead_zone_layout);
+
+	//Control settings - Motion Scaler
+	QWidget* motion_scaler_set = new QWidget(controls);
+	QLabel* motion_scaler_label = new QLabel("Motion Scaler : ");
+	motion_scaler = new QDoubleSpinBox(motion_scaler_set);
+	motion_scaler->setToolTip("Multiplies input from motion controllers to adjust sensitivity\nVaries per-game and per-controller. Adjust as needed.");
+	motion_scaler->setMinimum(1.0);
+	motion_scaler->setSingleStep(0.1);
+	motion_scaler->setValue(10.0);
+
+	QHBoxLayout* motion_scaler_layout = new QHBoxLayout;
+	motion_scaler_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+	motion_scaler_layout->addWidget(motion_scaler_label);
+	motion_scaler_layout->addWidget(motion_scaler);
+	motion_scaler_set->setLayout(motion_scaler_layout);
 
 	//Advanced control settings - Context left
 	con_left_set = new QWidget(controls);
@@ -1062,6 +1138,9 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	advanced_controls_layout->addWidget(con_right_set);
 	advanced_controls_layout->addWidget(con_1_set);
 	advanced_controls_layout->addWidget(con_2_set);
+	advanced_controls_layout->addWidget(motion_set);
+	advanced_controls_layout->addWidget(motion_dead_zone_set);
+	advanced_controls_layout->addWidget(motion_scaler_set);
 
 	hotkey_controls_layout = new QVBoxLayout;
 	hotkey_controls_layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
@@ -1093,6 +1172,9 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	con_right_set->setVisible(false);
 	con_1_set->setVisible(false);
 	con_2_set->setVisible(false);
+	motion_set->setVisible(false);
+	motion_dead_zone_set->setVisible(false);
+	motion_scaler_set->setVisible(false);
 
 	hotkey_turbo_set->setVisible(false);
 	hotkey_mute_set->setVisible(false);
@@ -1110,7 +1192,6 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	vc_opacity_set->setVisible(false);
 	vc_timeout_set->setVisible(false);
 	vc_path_set->setVisible(false);
-
 
 	//Netplay - Enable Netplay
 	QWidget* enable_netplay_set = new QWidget(netplay);
@@ -1424,6 +1505,7 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	connect(volume, SIGNAL(valueChanged(int)), this, SLOT(volume_change()));
 	connect(freq, SIGNAL(currentIndexChanged(int)), this, SLOT(sample_rate_change()));
 	connect(sound_samples, SIGNAL(valueChanged(int)), this, SLOT(sample_size_change()));
+	connect(audio_driver, SIGNAL(currentIndexChanged(int)), this, SLOT(audio_driver_change()));
 	connect(sound_on, SIGNAL(stateChanged(int)), this, SLOT(mute()));
 	connect(dead_zone, SIGNAL(valueChanged(int)), this, SLOT(dead_zone_change()));
 	connect(input_device, SIGNAL(currentIndexChanged(int)), this, SLOT(input_device_change()));
@@ -1437,6 +1519,8 @@ gen_settings::gen_settings(QWidget *parent) : QDialog(parent)
 	connect(battle_chip_2, SIGNAL(currentIndexChanged(int)), this, SLOT(set_battle_chip()));
 	connect(battle_chip_3, SIGNAL(currentIndexChanged(int)), this, SLOT(set_battle_chip()));
 	connect(battle_chip_4, SIGNAL(currentIndexChanged(int)), this, SLOT(set_battle_chip()));
+	connect(motion_dead_zone, SIGNAL(valueChanged(double)), this, SLOT(update_motion_dead_zone()));
+	connect(motion_scaler, SIGNAL(valueChanged(double)), this, SLOT(update_motion_scaler()));
 	connect(vc_opacity, SIGNAL(valueChanged(int)), this, SLOT(update_vc_opacity()));
 	connect(vc_timeout, SIGNAL(valueChanged(int)), this, SLOT(update_vc_timeout()));
 	connect(sync_threshold, SIGNAL(valueChanged(int)), this, SLOT(update_sync_threshold()));
@@ -1886,6 +1970,24 @@ void gen_settings::set_ini_options()
 		case 48000: freq->setCurrentIndex(0); break;
 	}
 
+	//Audio driver
+	if(config::override_audio_driver.empty()) { audio_driver->setCurrentIndex(0); }
+	
+	else
+	{
+		for(u32 x = 0; x < SDL_GetNumAudioDrivers(); x++)
+		{
+			std::string driver_name = SDL_GetAudioDriver(x);
+
+			if(driver_name == config::override_audio_driver)
+			{
+				u32 index = (x + 1);
+				audio_driver->setCurrentIndex(index);
+				break;
+			}
+		}
+	}
+
 	//Sample size
 	sound_samples->setValue(config::sample_size);
 
@@ -1909,6 +2011,10 @@ void gen_settings::set_ini_options()
 	//Stereo sound option
 	if(config::use_stereo) { stereo_enable->setChecked(true); }
 	else { stereo_enable->setChecked(false); }
+
+	//Microphone recording option
+	if(config::use_microphone) { mic_enable->setChecked(true); }
+	else { mic_enable->setChecked(false); }
 
 	//Dead-zone
 	dead_zone->setValue(config::dead_zone);
@@ -1954,6 +2060,16 @@ void gen_settings::set_ini_options()
 	//Rumble
 	if(config::use_haptics) { rumble_on->setChecked(true); }
 	else { rumble_on->setChecked(false); }
+
+	//Motion Controls
+	if(config::use_motion) { motion_on->setChecked(true); }
+	else { motion_on->setChecked(false); }
+
+	//Motion Controls Dead Zone
+	motion_dead_zone->setValue(config::motion_dead_zone);
+
+	//Motion Scaler
+	motion_scaler->setValue(config::motion_scaler);
 
 	//Virtual Cursor Enable
 	if(config::vc_enable) { vc_on->setChecked(true); }
@@ -2379,6 +2495,24 @@ void gen_settings::sample_size_change()
 	config::sample_size = sound_samples->value();
 }
 
+/****** Changes the core's audio driver ******/
+void gen_settings::audio_driver_change()
+{
+	u32 index = audio_driver->currentIndex();
+
+	if(index > 0)
+	{
+		config::override_audio_driver = SDL_GetAudioDriver(index - 1);
+		setenv("SDL_AUDIODRIVER", config::override_audio_driver.c_str(), 1);
+	}
+
+	else
+	{
+		config::override_audio_driver = "";
+		setenv("SDL_AUDIODRIVER", "", 1);
+	}
+}
+
 /****** Sets a path via file browser ******/
 void gen_settings::set_paths(int index)
 {
@@ -2668,6 +2802,18 @@ void gen_settings::set_battle_chip()
 
 	index = battle_chip_4->currentIndex();
 	config::chip_list[3] = chip_list[index];
+}
+
+/****** Sets the Motion Dead Zone ******/
+void gen_settings::update_motion_dead_zone()
+{
+	config::motion_dead_zone = motion_dead_zone->value();
+}
+
+/****** Sets the Motion Scaler ******/
+void gen_settings::update_motion_scaler()
+{
+	config::motion_scaler = motion_scaler->value();
 }
 
 /****** Sets the Virtual Cursor Opacity ******/
@@ -3441,6 +3587,9 @@ void gen_settings::switch_control_layout()
 			advanced_controls_layout->addWidget(con_right_set);
 			advanced_controls_layout->addWidget(con_1_set);
 			advanced_controls_layout->addWidget(con_2_set);
+			advanced_controls_layout->addWidget(motion_set);
+			advanced_controls_layout->addWidget(motion_dead_zone_set);
+			advanced_controls_layout->addWidget(motion_scaler_set);
 			break;
 
 		case 2:
@@ -3808,7 +3957,7 @@ bool gen_settings::eventFilter(QObject* target, QEvent* event)
 /****** Selects folder ******/
 void gen_settings::select_folder() { data_folder->finish = true; }
 
-/****** Rejectss folder ******/
+/****** Rejects folder ******/
 void gen_settings::reject_folder()
 {
 	data_folder->finish = true;

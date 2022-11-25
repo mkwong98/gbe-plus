@@ -52,6 +52,7 @@ enum special_cart_types
 	AGB_8M_DACS,
 	AGB_AM3,
 	AGB_JUKEBOX,
+	AGB_PLAY_YAN,
 	NDS_IR_CART,
 };
 
@@ -112,6 +113,10 @@ namespace config
 	extern int joy_sdl_id;
 	extern bool use_haptics;
 
+	extern bool use_motion;
+	extern float motion_dead_zone;
+	extern float motion_scaler;
+
 	extern u32 flags;
 	extern bool pause_emu;
 	extern bool use_bios;
@@ -161,7 +166,6 @@ namespace config
 	extern u8 netplay_id;
 	extern std::string netplay_client_ip;
 
-
 	extern std::string gbma_server;
 	extern bool use_real_gbma_server;
 	extern u16 gbma_server_http_port;
@@ -173,6 +177,7 @@ namespace config
 	extern bool mute;
 	extern bool use_stereo;
 	extern bool use_microphone;
+	extern std::string override_audio_driver;
 	
 	extern u32 sys_width;
 	extern u32 sys_height;
@@ -203,6 +208,7 @@ namespace config
 	extern u8 mw_data[6];
 
 	extern bool auto_gen_am3_id;
+	extern bool use_am3_folder;
 
 	extern u32 jukebox_total_time;
 
