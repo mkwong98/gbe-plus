@@ -145,6 +145,7 @@ bool GB_LCD::load_manifest(std::string filename)
 
 	if (file.is_open())
 	{
+		std::vector<u16> imgIdxOffset;
 		//Cycle through whole file, line-by-line
 		while (getline(file, input_line))
 		{
@@ -199,6 +200,7 @@ bool GB_LCD::load_manifest(std::string filename)
 						img = h_flip_image(img);
 						himgs.push_back(img);
 					}
+					imgIdxOffset.push_back(cgfx_stat.imgs.size());
 					cgfx_stat.imgs.push_back(imgs);
 					cgfx_stat.himgs.push_back(himgs);
 				}
@@ -224,7 +226,7 @@ bool GB_LCD::load_manifest(std::string filename)
 						switch (tokenCnt)
 						{
 						case 0:
-							pt.imgIdx = stoi(token);
+							pt.imgIdx = imgIdxOffset[stoi(token)];
 							break;
 						case 1:
 							pt.tileStr = token;
@@ -439,7 +441,7 @@ bool GB_LCD::load_manifest(std::string filename)
 						switch (tokenCnt)
 						{
 						case 0:
-							bg.imgIdx = stoi(token);
+							bg.imgIdx = imgIdxOffset[stoi(token)];
 							break;
 						case 1:
 							bg.brightness = stof(token);

@@ -231,6 +231,21 @@ bool GB_LCD::lcd_read(u32 offset, std::string filename)
 	lcd_stat.hdma_type &= 0x1;
 	
 	file.close();
+
+	//CGFX setup
+	memset(cgfx_stat.vram_tile_used, 0, 768);
+	memset(cgfx_stat.vram_tile_idx, 0xFF, 768 * 2);
+
+	cgfx_stat.screen_data.rendered_tile.clear();
+	cgfx_stat.screen_data.rendered_palette.clear();
+	for (int x = 0; x < 144; x++)
+	{
+		cgfx_stat.screen_data.scanline[x].rendered_bg.clear();
+		cgfx_stat.screen_data.scanline[x].rendered_win.clear();
+		cgfx_stat.screen_data.scanline[x].rendered_obj.clear();
+	}
+	clear_buffers();
+
 	return true;
 }
 
