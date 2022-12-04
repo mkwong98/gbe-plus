@@ -81,6 +81,10 @@ void GB_LCD::processConditionNames(std::string names, std::vector<pack_cond_app>
 		}
 		pos = token.find("!");
 		app.negate = (pos == 0);
+		if (app.negate) 
+		{
+			token = token.substr(pos + 1, std::string::npos);
+		}
 		for (u16 i = 0; i < cgfx_stat.conds.size(); i++) {
 			if (cgfx_stat.conds[i].name == token) {
 				app.condIdx = i;
@@ -472,21 +476,29 @@ bool GB_LCD::load_manifest(std::string filename)
 					{
 						processConditionNames(condNames, &(bg.condApps));
 					}
-					if (bg.brightness < 1)
+					if (bg.brightness != 1)
 					{
-						//create a darken copy
+						u8 c;
+						u32 brightnessC;
 						SDL_Surface* brightnessMod = SDL_CreateRGBSurfaceWithFormat(0, cgfx_stat.imgs[bg.imgIdx][0]->w, cgfx_stat.imgs[bg.imgIdx][0]->h, 32, SDL_PIXELFORMAT_ARGB8888);
 						SDL_Surface* img = SDL_CreateRGBSurfaceWithFormat(0, cgfx_stat.imgs[bg.imgIdx][0]->w, cgfx_stat.imgs[bg.imgIdx][0]->h, 32, SDL_PIXELFORMAT_ARGB8888);
-						u8 c = 255 * bg.brightness;
-						u32 brightnessC = 0xFF000000 | c << 16 | c << 8 | c;
-						cgfx_stat.imgs[bg.imgIdx][0]->w;
+
+						if (bg.brightness < 1)
+						{
+							//create a darken copy
+							c = 255 * (1.0 - bg.brightness);
+							brightnessC = 0x00000000 | c << 24;
+						}
+						else 
+						{
+							//create a brighten copy
+							c = 255 * (bg.brightness - 1.0);
+							brightnessC = 0x00FFFFFF | c << 24;
+						}
 
 						SDL_FillRect(brightnessMod, NULL, brightnessC);
 						SDL_FillRect(img, NULL, 0x00000000);
-						SDL_SetSurfaceBlendMode(cgfx_stat.imgs[bg.imgIdx][0], SDL_BLENDMODE_NONE);
 						SDL_BlitSurface(cgfx_stat.imgs[bg.imgIdx][0], NULL, img, NULL);
-						SDL_SetSurfaceBlendMode(cgfx_stat.imgs[bg.imgIdx][0], SDL_BLENDMODE_BLEND);
-						SDL_SetSurfaceBlendMode(brightnessMod, SDL_BLENDMODE_MOD);
 						SDL_BlitSurface(brightnessMod, NULL, img, NULL);
 						SDL_FreeSurface(brightnessMod);
 

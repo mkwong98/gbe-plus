@@ -371,15 +371,22 @@ void GB_LCD::run_render_scanline()
 
 void GB_LCD::render_HD_strip(SDL_Surface* src, SDL_Rect* srcr, SDL_Surface* dst, SDL_Rect* dstr, double brightness, bool vflip)
 {
-	if (brightness < 1)
-	{
-		u8 c = 255 * brightness;
-		u32 brightnessC = 0xFF000000 | c << 16 | c << 8 | c;
+	if (brightness != 1) {
+		u8 c;
+		u32 brightnessC;
+		if (brightness < 1)
+		{
+			c = 255 * (1.0 - brightness);
+			brightnessC = 0x00000000 | c << 24;
+		}
+		else 
+		{
+			c = 255 * (brightness - 1.0);
+			brightnessC = 0x00FFFFFF | c << 24;
+		}
 		SDL_FillRect(cgfx_stat.brightnessMod, NULL, brightnessC);
 		SDL_FillRect(cgfx_stat.tempStrip, NULL, 0x00000000);
-		SDL_SetSurfaceBlendMode(src, SDL_BLENDMODE_NONE);
 		SDL_BlitSurface(src, srcr, cgfx_stat.tempStrip, NULL);
-		SDL_SetSurfaceBlendMode(src, SDL_BLENDMODE_BLEND);
 		SDL_BlitSurface(cgfx_stat.brightnessMod, NULL, cgfx_stat.tempStrip, NULL);
 		if (vflip)
 		{
