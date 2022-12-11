@@ -372,6 +372,14 @@ void GB_LCD::run_render_scanline()
 void GB_LCD::render_HD_strip(SDL_Surface* src, SDL_Rect* srcr, SDL_Surface* dst, SDL_Rect* dstr, double brightness, bool vflip)
 {
 	if (brightness != 1) {
+		SDL_SetSurfaceBlendMode(src, SDL_BLENDMODE_NONE);
+		//make a copy of the alpha values with all pixels white
+		SDL_BlitSurface(src, srcr, cgfx_stat.alphaCpy, NULL);
+		SDL_FillRect(cgfx_stat.brightnessMod, NULL, 0xFFFFFF);
+		SDL_SetSurfaceBlendMode(cgfx_stat.brightnessMod, SDL_BLENDMODE_ADD);
+		SDL_BlitSurface(cgfx_stat.brightnessMod, NULL, cgfx_stat.alphaCpy, NULL);
+
+		//create pixel values
 		u8 c;
 		u32 brightnessC;
 		if (brightness < 1)
@@ -379,35 +387,44 @@ void GB_LCD::render_HD_strip(SDL_Surface* src, SDL_Rect* srcr, SDL_Surface* dst,
 			c = 255 * (1.0 - brightness);
 			brightnessC = 0x00000000 | c << 24;
 		}
-		else 
+		else
 		{
 			c = 255 * (brightness - 1.0);
 			brightnessC = 0x00FFFFFF | c << 24;
 		}
+
 		SDL_FillRect(cgfx_stat.brightnessMod, NULL, brightnessC);
-		SDL_FillRect(cgfx_stat.tempStrip, NULL, 0x00000000);
-		SDL_BlitSurface(src, srcr, cgfx_stat.tempStrip, NULL);
+		SDL_SetSurfaceBlendMode(cgfx_stat.brightnessMod, SDL_BLENDMODE_BLEND);
+		SDL_BlitSurface(src, NULL, cgfx_stat.tempStrip, NULL);
 		SDL_BlitSurface(cgfx_stat.brightnessMod, NULL, cgfx_stat.tempStrip, NULL);
+
+		//merge pixel values to alpha
+		SDL_SetSurfaceBlendMode(cgfx_stat.tempStrip, SDL_BLENDMODE_MOD);
+		SDL_BlitSurface(cgfx_stat.tempStrip, NULL, cgfx_stat.alphaCpy, NULL);
+
+		//clean up
+		SDL_SetSurfaceBlendMode(src, SDL_BLENDMODE_BLEND);
+
 		if (vflip)
 		{
 			for (u8 i = 0; i < cgfx::scaling_factor; i++)
 			{
 				SDL_Rect r1;
-				r1.w = cgfx_stat.tempStrip->w;
+				r1.w = cgfx_stat.alphaCpy->w;
 				r1.h = 1;
 				r1.x = 0;
 				r1.y = 7 - i;
 				SDL_Rect r2;
-				r2.w = cgfx_stat.tempStrip->w;
+				r2.w = cgfx_stat.alphaCpy->w;
 				r2.h = 1;
 				r2.x = dstr->x;
 				r2.y = dstr->y + i;
-				SDL_BlitSurface(cgfx_stat.tempStrip, &r1, dst, &r2);
+				SDL_BlitSurface(cgfx_stat.alphaCpy, &r1, dst, &r2);
 			}
 		}
 		else
 		{
-			SDL_BlitSurface(cgfx_stat.tempStrip, NULL, dst, dstr);
+			SDL_BlitSurface(cgfx_stat.alphaCpy, NULL, dst, dstr);
 		}
 	}
 	else if (vflip)
@@ -621,59 +638,64 @@ pack_tile* DMG_LCD::get_tile_match(tile_strip* s, u16 cscanline)
 {
 	pack_tile* hdTile;
 	SDL_Rect loc;
-
-	for (u16 j = 0; j < cgfx_stat.screen_data.rendered_tile[s->pattern_id].pack_tile_match.size(); j++)
+	bool useDefault = false;
+	
+	do
 	{
-		hdTile = &(cgfx_stat.tiles[cgfx_stat.screen_data.rendered_tile[s->pattern_id].pack_tile_match[j]]);
-		if (hdTile->palette[0] == cgfx_stat.screen_data.rendered_palette[s->palette_id].code || hdTile->default)
+		for (u16 j = 0; j < cgfx_stat.screen_data.rendered_tile[s->pattern_id].pack_tile_match.size(); j++)
 		{
-			//check for conditions
-			bool allCondPassed = true;
-			for (u16 i = 0; i < hdTile->condApps.size(); i++)
+			hdTile = &(cgfx_stat.tiles[cgfx_stat.screen_data.rendered_tile[s->pattern_id].pack_tile_match[j]]);
+			if (hdTile->palette[0] == cgfx_stat.screen_data.rendered_palette[s->palette_id].code || (hdTile->default && useDefault))
 			{
-				pack_condition* c = &(cgfx_stat.conds[hdTile->condApps[i].condIdx]);
-				bool matchResult;
-				switch (c->type) {
-				case pack_condition::HMIRROR:
-					matchResult = s->hflip;
-					break;
-				case pack_condition::VMIRROR:
-					matchResult = s->vflip;
-					break;
-				case pack_condition::BGPRIORITY:
-					matchResult = s->bg_priority;
-					break;
-				case pack_condition::PALETTE0:
-					matchResult = (s->palette_sel == 0);
-					break;
-				case pack_condition::PALETTE1:
-					matchResult = (s->palette_sel == 1);
-					break;
+				//check for conditions
+				bool allCondPassed = true;
+				for (u16 i = 0; i < hdTile->condApps.size(); i++)
+				{
+					pack_condition* c = &(cgfx_stat.conds[hdTile->condApps[i].condIdx]);
+					bool matchResult;
+					switch (c->type) {
+					case pack_condition::HMIRROR:
+						matchResult = s->hflip;
+						break;
+					case pack_condition::VMIRROR:
+						matchResult = s->vflip;
+						break;
+					case pack_condition::BGPRIORITY:
+						matchResult = s->bg_priority;
+						break;
+					case pack_condition::PALETTE0:
+						matchResult = (s->palette_sel == 0);
+						break;
+					case pack_condition::PALETTE1:
+						matchResult = (s->palette_sel == 1);
+						break;
 
-				case pack_condition::TILENEARBY:
-					loc.x = s->x + (s->hflip ? -c->x : c->x);
-					loc.y = cscanline + (s->vflip ? -c->y : c->y);
-					loc.h = s->line;
-					matchResult = check_screen_tile_at_loc(&loc, c);
-					break;
+					case pack_condition::TILENEARBY:
+						loc.x = s->x + (s->hflip ? -c->x : c->x);
+						loc.y = cscanline + (s->vflip ? -c->y : c->y);
+						loc.h = s->line;
+						matchResult = check_screen_tile_at_loc(&loc, c);
+						break;
 
-				case pack_condition::SPRITENEARBY:
-					loc.x = s->x + (s->hflip ? -c->x : c->x);
-					loc.y = cscanline + (s->vflip ? -c->y : c->y);
-					loc.h = s->line;
-					matchResult = check_sprite_at_loc(&loc, c);
-					break;
+					case pack_condition::SPRITENEARBY:
+						loc.x = s->x + (s->hflip ? -c->x : c->x);
+						loc.y = cscanline + (s->vflip ? -c->y : c->y);
+						loc.h = s->line;
+						matchResult = check_sprite_at_loc(&loc, c);
+						break;
 
-				default:
-					matchResult = c->latest_result;
-					break;
+					default:
+						matchResult = c->latest_result;
+						break;
+					}
+					if (hdTile->condApps[i].negate) matchResult = !matchResult;
+					allCondPassed = allCondPassed && matchResult;
 				}
-				if (hdTile->condApps[i].negate) matchResult = !matchResult;
-				allCondPassed = allCondPassed && matchResult;
+				if (allCondPassed) return hdTile;
 			}
-			if(allCondPassed) return hdTile;
 		}
-	}
+		useDefault = !useDefault;
+	}while(useDefault);
 	return NULL;
 }
 
@@ -681,82 +703,88 @@ pack_tile* GBC_LCD::get_tile_match(tile_strip* s, u16 cscanline)
 {
 	pack_tile* hdTile;
 	SDL_Rect loc;
+	bool useDefault = false;
 
-	for (u8 j = 0; j < cgfx_stat.screen_data.rendered_tile[s->pattern_id].pack_tile_match.size(); j++)
+	do
 	{
-		hdTile = &(cgfx_stat.tiles[cgfx_stat.screen_data.rendered_tile[s->pattern_id].pack_tile_match[j]]);
-		if ((hdTile->palette[0] == cgfx_stat.screen_data.rendered_palette[s->palette_id].colour[0]
-			&& hdTile->palette[1] == cgfx_stat.screen_data.rendered_palette[s->palette_id].colour[1]
-			&& hdTile->palette[2] == cgfx_stat.screen_data.rendered_palette[s->palette_id].colour[2]
-			&& hdTile->palette[3] == cgfx_stat.screen_data.rendered_palette[s->palette_id].colour[3]
-			)
-			|| hdTile->default)
+		for (u8 j = 0; j < cgfx_stat.screen_data.rendered_tile[s->pattern_id].pack_tile_match.size(); j++)
 		{
-			//check for conditions
-			bool allCondPassed = true;
-			for (u16 i = 0; i < hdTile->condApps.size(); i++)
+			hdTile = &(cgfx_stat.tiles[cgfx_stat.screen_data.rendered_tile[s->pattern_id].pack_tile_match[j]]);
+			if ((hdTile->palette[0] == cgfx_stat.screen_data.rendered_palette[s->palette_id].colour[0]
+				&& hdTile->palette[1] == cgfx_stat.screen_data.rendered_palette[s->palette_id].colour[1]
+				&& hdTile->palette[2] == cgfx_stat.screen_data.rendered_palette[s->palette_id].colour[2]
+				&& hdTile->palette[3] == cgfx_stat.screen_data.rendered_palette[s->palette_id].colour[3]
+				)
+				|| (hdTile->default && useDefault))
 			{
-				pack_condition* c = &(cgfx_stat.conds[hdTile->condApps[i].condIdx]);
-				bool matchResult;
-				switch (c->type) {
-				case pack_condition::HMIRROR:
-					matchResult = s->hflip;
-					break;
-				case pack_condition::VMIRROR:
-					matchResult = s->vflip;
-					break;
-				case pack_condition::BGPRIORITY:
-					matchResult = s->bg_priority;
-					break;
-				case pack_condition::PALETTE0:
-					matchResult = (s->palette_sel == 0);
-					break;
-				case pack_condition::PALETTE1:
-					matchResult = (s->palette_sel == 1);
-					break;
-				case pack_condition::PALETTE2:
-					matchResult = (s->palette_sel == 2);
-					break;
-				case pack_condition::PALETTE3:
-					matchResult = (s->palette_sel == 3);
-					break;
-				case pack_condition::PALETTE4:
-					matchResult = (s->palette_sel == 4);
-					break;
-				case pack_condition::PALETTE5:
-					matchResult = (s->palette_sel == 5);
-					break;
-				case pack_condition::PALETTE6:
-					matchResult = (s->palette_sel == 6);
-					break;
-				case pack_condition::PALETTE7:
-					matchResult = (s->palette_sel == 7);
-					break;
+				//check for conditions
+				bool allCondPassed = true;
+				for (u16 i = 0; i < hdTile->condApps.size(); i++)
+				{
+					pack_condition* c = &(cgfx_stat.conds[hdTile->condApps[i].condIdx]);
+					bool matchResult;
+					switch (c->type) {
+					case pack_condition::HMIRROR:
+						matchResult = s->hflip;
+						break;
+					case pack_condition::VMIRROR:
+						matchResult = s->vflip;
+						break;
+					case pack_condition::BGPRIORITY:
+						matchResult = s->bg_priority;
+						break;
+					case pack_condition::PALETTE0:
+						matchResult = (s->palette_sel == 0);
+						break;
+					case pack_condition::PALETTE1:
+						matchResult = (s->palette_sel == 1);
+						break;
+					case pack_condition::PALETTE2:
+						matchResult = (s->palette_sel == 2);
+						break;
+					case pack_condition::PALETTE3:
+						matchResult = (s->palette_sel == 3);
+						break;
+					case pack_condition::PALETTE4:
+						matchResult = (s->palette_sel == 4);
+						break;
+					case pack_condition::PALETTE5:
+						matchResult = (s->palette_sel == 5);
+						break;
+					case pack_condition::PALETTE6:
+						matchResult = (s->palette_sel == 6);
+						break;
+					case pack_condition::PALETTE7:
+						matchResult = (s->palette_sel == 7);
+						break;
 
-				case pack_condition::TILENEARBY:
-					loc.x = s->x + (s->hflip ? -c->x : c->x);
-					loc.y = cscanline + (s->vflip ? -c->y : c->y);
-					loc.h = s->line;
-					matchResult = check_screen_tile_at_loc(&loc, c);
-					break;
+					case pack_condition::TILENEARBY:
+						loc.x = s->x + (s->hflip ? -c->x : c->x);
+						loc.y = cscanline + (s->vflip ? -c->y : c->y);
+						loc.h = s->line;
+						matchResult = check_screen_tile_at_loc(&loc, c);
+						break;
 
-				case pack_condition::SPRITENEARBY:
-					loc.x = s->x + (s->hflip ? -c->x : c->x);
-					loc.y = cscanline + (s->vflip ? -c->y : c->y);
-					loc.h = s->line;
-					matchResult = check_sprite_at_loc(&loc, c);
-					break;
+					case pack_condition::SPRITENEARBY:
+						loc.x = s->x + (s->hflip ? -c->x : c->x);
+						loc.y = cscanline + (s->vflip ? -c->y : c->y);
+						loc.h = s->line;
+						matchResult = check_sprite_at_loc(&loc, c);
+						break;
 
-				default:
-					matchResult = c->latest_result;
-					break;
+					default:
+						matchResult = c->latest_result;
+						break;
+					}
+					if (hdTile->condApps[i].negate) matchResult = !matchResult;
+					allCondPassed = allCondPassed && matchResult;
 				}
-				if (hdTile->condApps[i].negate) matchResult = !matchResult;
-				allCondPassed = allCondPassed && matchResult;
+				if (allCondPassed) return hdTile;
 			}
-			if (allCondPassed) return hdTile;
 		}
-	}
+		useDefault = !useDefault;
+	} while (useDefault);
+
 	return NULL;
 }
 

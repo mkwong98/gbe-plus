@@ -113,6 +113,7 @@ struct dmg_cgfx_data
 	std::vector <pack_tile> tiles;
 	std::array < std::vector <pack_background>, 60> bgs;
 	SDL_Surface* brightnessMod;
+	SDL_Surface* alphaCpy;
 	SDL_Surface* tempStrip;
 	u32 frameCnt;
 

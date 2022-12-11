@@ -47,6 +47,7 @@ void GB_LCD::clear_manifest() {
 	}
 
 	SDL_FreeSurface(cgfx_stat.brightnessMod);
+	SDL_FreeSurface(cgfx_stat.alphaCpy);
 	SDL_FreeSurface(cgfx_stat.tempStrip);
 }
 
@@ -481,8 +482,17 @@ bool GB_LCD::load_manifest(std::string filename)
 						u8 c;
 						u32 brightnessC;
 						SDL_Surface* brightnessMod = SDL_CreateRGBSurfaceWithFormat(0, cgfx_stat.imgs[bg.imgIdx][0]->w, cgfx_stat.imgs[bg.imgIdx][0]->h, 32, SDL_PIXELFORMAT_ARGB8888);
+						SDL_Surface* alphaCpy = SDL_CreateRGBSurfaceWithFormat(0, cgfx_stat.imgs[bg.imgIdx][0]->w, cgfx_stat.imgs[bg.imgIdx][0]->h, 32, SDL_PIXELFORMAT_ARGB8888);
 						SDL_Surface* img = SDL_CreateRGBSurfaceWithFormat(0, cgfx_stat.imgs[bg.imgIdx][0]->w, cgfx_stat.imgs[bg.imgIdx][0]->h, 32, SDL_PIXELFORMAT_ARGB8888);
 
+						SDL_SetSurfaceBlendMode(cgfx_stat.imgs[bg.imgIdx][0], SDL_BLENDMODE_NONE);
+						//make a copy of the alpha values with all pixels white
+						SDL_BlitSurface(cgfx_stat.imgs[bg.imgIdx][0], NULL, alphaCpy, NULL);
+						SDL_FillRect(brightnessMod, NULL, 0xFFFFFF);
+						SDL_SetSurfaceBlendMode(brightnessMod, SDL_BLENDMODE_ADD);
+						SDL_BlitSurface(brightnessMod, NULL, alphaCpy, NULL);
+
+						//create pixel values
 						if (bg.brightness < 1)
 						{
 							//create a darken copy
@@ -495,17 +505,25 @@ bool GB_LCD::load_manifest(std::string filename)
 							c = 255 * (bg.brightness - 1.0);
 							brightnessC = 0x00FFFFFF | c << 24;
 						}
-
+						
 						SDL_FillRect(brightnessMod, NULL, brightnessC);
-						SDL_FillRect(img, NULL, 0x00000000);
+						SDL_SetSurfaceBlendMode(brightnessMod, SDL_BLENDMODE_BLEND);
 						SDL_BlitSurface(cgfx_stat.imgs[bg.imgIdx][0], NULL, img, NULL);
 						SDL_BlitSurface(brightnessMod, NULL, img, NULL);
+
+						//merge pixel values to alpha
+						SDL_SetSurfaceBlendMode(img, SDL_BLENDMODE_MOD);
+						SDL_BlitSurface(img, NULL, alphaCpy, NULL);
+
+						//clean up
+						SDL_SetSurfaceBlendMode(cgfx_stat.imgs[bg.imgIdx][0], SDL_BLENDMODE_BLEND);
+						SDL_FreeSurface(img);
 						SDL_FreeSurface(brightnessMod);
 
 						std::vector<SDL_Surface*> imgs;
 						std::vector<SDL_Surface*> himgs;
-						imgs.push_back(img);
-						img = h_flip_image(img);
+						imgs.push_back(alphaCpy);
+						img = h_flip_image(alphaCpy);
 						himgs.push_back(img);
 
 						bg.imgIdx = cgfx_stat.imgs.size();
@@ -529,7 +547,7 @@ bool GB_LCD::load_manifest(std::string filename)
 	reset_buffers();
 
 	cgfx_stat.brightnessMod = SDL_CreateRGBSurfaceWithFormat(0, cgfx::scaling_factor * 8, cgfx::scaling_factor, 32, SDL_PIXELFORMAT_ARGB8888);
-	SDL_SetSurfaceBlendMode(cgfx_stat.brightnessMod, SDL_BLENDMODE_MOD);
+	cgfx_stat.alphaCpy = SDL_CreateRGBSurfaceWithFormat(0, cgfx::scaling_factor * 8, cgfx::scaling_factor, 32, SDL_PIXELFORMAT_ARGB8888);
 	cgfx_stat.tempStrip = SDL_CreateRGBSurfaceWithFormat(0, cgfx::scaling_factor * 8, cgfx::scaling_factor, 32, SDL_PIXELFORMAT_ARGB8888);
 
 	srcrect.w = cgfx::scaling_factor;
@@ -563,7 +581,7 @@ SDL_Surface* GB_LCD::h_flip_image(SDL_Surface* s)
 			*dstP = *srcP;
 			srcP++;
 		}
-		dstP += s->w;
+		dstP += s->w * 2;
 	}
 	SDL_UnlockSurface(r);
 	SDL_UnlockSurface(s);
