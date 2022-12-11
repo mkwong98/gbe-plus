@@ -1,0 +1,35 @@
+HD Packs
+
+This emulator can utilize data in HD packs to display user defined graphics in place of the original. 
+
+1. HD pack file structure
+HD packs should be placed in a folder named "HdPacks" located in the same directory as the emulator. The content of a HD pack consists of a text file named "hires.txt" which defines how the graphics should be replaced and multiple image files in png format. These file are stored inside a folder with the same name as the ROM file. 
+For example:
+C:\gbe\HdPacks\gameName1\hires.txt
+C:\gbe\HdPacks\gameName1\image1.png
+C:\gbe\HdPacks\gameName1\pic.png
+
+2. Editing hires.txt 
+The file contains mulitple single line instructions. Each instruction has a tag followed by one or more values separated by comma and a list of conditions optionally affixed to the beginning.
+
+<scale> tag
+Syntax: <scale>[scaling factor - integer]
+Defines the resolution of the replacement graphics. Normally the size of one tile is 8x8 pixels. A scale of 3 means the size of the replacement tile is 24x24 pixels.
+Example: <scale>3
+
+<img> tag
+Syntax: <img>[file name - string]
+The name of an image file which contains replacement graphics.
+Example: <img>image1.png
+
+<tile> tag
+Syntax: <tile>[img index - integer], [tile data - hex], [palette data - hex], [x - integer], [y - integer], [brightness - float (default: 1.0, range: 0.0 - 2.0)], [default tile - Y or N]
+Defines which and how tiles should be replaced. When multiple <tile> tags are applicable, the first <tile> tag is selected.
+[img index] defines which image file should be used. The img index of 0 refers to the image file defined by the first <img> tag and img index of 1 refers to the second <img> tag etc.
+[tile data] defines the pixel pattern of the tile to be replaced. The size of the pixel pattern is 16 bytes and this is encoded as 32 hexadecimal digits. 
+[palette data] defines the colours used by the tile. This is a value of 2 hexadecimal digits for GameBoy and a value of 16 hexadecimal digits for GameBoy Color.
+[x] defines the horizontal distance of the replacement tile from the left edge of the image.
+[y] defines the vertical distance of the replacement tile from the top edge of the image.
+[brightness] defines any modification to the brightness of the replacement tile. Brightness of 0.0 is completely black and 2.0 is completely white.
+[default tile] "Y" specifies if a tile has the same tile data as this instruction but does not have a match then this instruction is applied regardless of palette data.
+Example: <tile>2,00004040606070707878707060604040,C0,8,0,1,N
