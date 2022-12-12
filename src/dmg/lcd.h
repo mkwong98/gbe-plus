@@ -137,7 +137,6 @@ class GB_LCD
 	virtual void collect_obj_scanline() = 0;
 	void render_full_screen();
 
-	void run_render_scanline();
 	virtual void render_bg_scanline(bool raw) = 0;
 	virtual void render_win_scanline(bool raw) = 0;
 	virtual void render_obj_scanline(bool raw) = 0;

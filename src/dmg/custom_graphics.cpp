@@ -615,8 +615,6 @@ void GB_LCD::new_rendered_screen_data() {
 
 void GB_LCD::new_rendered_scanline_data(u8 lineNo)
 {
-	srcrect.y = cgfx::scaling_factor * lcd_stat.current_scanline;
-	hdrect.y = srcrect.y;
 	cgfx_stat.screen_data.scanline[lineNo].lcdc = mem->read_u8(REG_LCDC);
 	cgfx_stat.screen_data.scanline[lineNo].rendered_bg.clear();
 	cgfx_stat.screen_data.scanline[lineNo].rendered_win.clear();

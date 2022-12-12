@@ -121,7 +121,6 @@ struct dmg_cgfx_data
 	u8 vram_tile_used[768];
 	u16 vram_tile_idx[768];
 	rendered_screen screen_data;
-
 };
 
 #endif // GB_CGFX_DATA

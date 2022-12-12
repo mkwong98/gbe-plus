@@ -354,21 +354,6 @@ SDL_Surface* GB_LCD::render_raw_layer(u8 layer)
 	return tempscreen;
 }
 
-
-/****** Render pixels for a given scanline (per-scanline) ******/
-void GB_LCD::run_render_scanline() 
-{
-	//resolve global conditions
-	resolve_global_condition();
-
-	//Draw background pixel data
-	render_bg_scanline(false);
-	//Draw window pixel data
-	render_win_scanline(false);
-	//Draw sprite pixel data
-	render_obj_scanline(false);
-}
-
 void GB_LCD::render_HD_strip(SDL_Surface* src, SDL_Rect* srcr, SDL_Surface* dst, SDL_Rect* dstr, double brightness, bool vflip)
 {
 	if (brightness != 1) {
@@ -793,7 +778,7 @@ pack_tile* GBC_LCD::get_tile_match(tile_strip* s, u16 cscanline)
 /****** Renders pixels for the BG (per-scanline) - DMG version ******/
 void DMG_LCD::render_bg_scanline(bool raw)
 {
-	u16 scanline = raw ? rawrect.y : lcd_stat.current_scanline;
+	u16 scanline = raw ? rawrect.y : lcd_stat.renderY;
 	SDL_Rect* r = raw ? &rawrect : &srcrect;
 
 	pack_tile* hdTile;
@@ -806,7 +791,7 @@ void DMG_LCD::render_bg_scanline(bool raw)
 		rawrect.x = pixel_counter;
 
 		//look for hd 
-		if (!raw) hdTile = get_tile_match(&p, lcd_stat.current_scanline);
+		if (!raw) hdTile = get_tile_match(&p, lcd_stat.renderY);
 		else hdTile = NULL;
 
 		if (hdTile)
@@ -851,7 +836,7 @@ void DMG_LCD::render_bg_scanline(bool raw)
 /****** Renders pixels for the BG (per-scanline) - GBC version ******/
 void GBC_LCD::render_bg_scanline(bool raw)
 {
-	u16 scanline = raw ? rawrect.y : lcd_stat.current_scanline;
+	u16 scanline = raw ? rawrect.y : lcd_stat.renderY;
 	SDL_Rect* r = raw ? &rawrect : &srcrect;
 	bool lowP = (cgfx_stat.screen_data.scanline[scanline].lcdc & 0x01) == 0;
 	u8 layer;
@@ -862,7 +847,7 @@ void GBC_LCD::render_bg_scanline(bool raw)
 		s16 pixel_counter;
 
 		//look for hd 
-		if (!raw) hdTile = get_tile_match(&p, lcd_stat.current_scanline);
+		if (!raw) hdTile = get_tile_match(&p, lcd_stat.renderY);
 		else hdTile = NULL;
 
 		if (hdTile)
@@ -918,7 +903,7 @@ void GBC_LCD::render_bg_scanline(bool raw)
 //****** Renders pixels for the Window (per-scanline) - DMG version ******/
 void DMG_LCD::render_win_scanline(bool raw)
 {
-	u16 scanline = raw ? rawrect.y : lcd_stat.current_scanline;
+	u16 scanline = raw ? rawrect.y : lcd_stat.renderY;
 	SDL_Rect* r = raw ? &rawrect : &srcrect;
 
 	pack_tile* hdTile;
@@ -930,7 +915,7 @@ void DMG_LCD::render_win_scanline(bool raw)
 		rawrect.x = pixel_counter;
 
 		//look for hd 
-		if (!raw) hdTile = get_tile_match(&p, lcd_stat.current_scanline);
+		if (!raw) hdTile = get_tile_match(&p, lcd_stat.renderY);
 		else hdTile = NULL;
 
 		if (hdTile)
@@ -983,7 +968,7 @@ void DMG_LCD::render_win_scanline(bool raw)
 /****** Renders pixels for the Window (per-scanline) - GBC version ******/
 void GBC_LCD::render_win_scanline(bool raw)
 {
-	u16 scanline = raw ? rawrect.y : lcd_stat.current_scanline;
+	u16 scanline = raw ? rawrect.y : lcd_stat.renderY;
 	SDL_Rect* r = raw ? &rawrect : &srcrect;
 	bool lowP = (cgfx_stat.screen_data.scanline[scanline].lcdc & 0x01) == 0;
 	u8 layer;
@@ -995,7 +980,7 @@ void GBC_LCD::render_win_scanline(bool raw)
 		u8 pixel_counter;
 
 		//look for hd 
-		if (!raw) hdTile = get_tile_match(&p, lcd_stat.current_scanline);
+		if (!raw) hdTile = get_tile_match(&p, lcd_stat.renderY);
 		else hdTile = NULL;
 
 		if (hdTile)
@@ -1082,7 +1067,7 @@ void GBC_LCD::render_win_scanline(bool raw)
 /****** Renders pixels for OBJs (per-scanline) - DMG version ******/
 void DMG_LCD::render_obj_scanline(bool raw)
 {
-	u16 scanline = raw ? rawrect.y : lcd_stat.current_scanline;
+	u16 scanline = raw ? rawrect.y : lcd_stat.renderY;
 	SDL_Rect* r = raw ? &rawrect : &srcrect;
 
 	pack_tile* hdTile;
@@ -1092,7 +1077,7 @@ void DMG_LCD::render_obj_scanline(bool raw)
 		u8 pixel_counter = p.x;
 
 		//look for hd 
-		if (!raw) hdTile = get_tile_match(&p, lcd_stat.current_scanline);
+		if (!raw) hdTile = get_tile_match(&p, lcd_stat.renderY);
 		else hdTile = NULL;
 
 		if (hdTile)
@@ -1148,7 +1133,7 @@ void DMG_LCD::render_obj_scanline(bool raw)
 /****** Renders pixels for OBJs (per-scanline) - GBC version ******/
 void GBC_LCD::render_obj_scanline(bool raw)
 {
-	u16 scanline = raw ? rawrect.y : lcd_stat.current_scanline;
+	u16 scanline = raw ? rawrect.y : lcd_stat.renderY;
 	SDL_Rect* r = raw ? &rawrect : &srcrect;
 
 	pack_tile* hdTile;
@@ -1159,7 +1144,7 @@ void GBC_LCD::render_obj_scanline(bool raw)
 		u8 pixel_counter = p.x;
 
 		//look for hd 
-		if (!raw) hdTile = get_tile_match(&p, lcd_stat.current_scanline);
+		if (!raw) hdTile = get_tile_match(&p, lcd_stat.renderY);
 		else hdTile = NULL;
 
 		if (hdTile)
@@ -1399,7 +1384,6 @@ void GB_LCD::step_sub(int cpu_clock)
 			
 					//Render scanline when first entering Mode 0
 					collect_scanline_data();
-					run_render_scanline();
 
 					//HBlank STAT INT
 					if(mem->memory_map[REG_STAT] & 0x08) { mem->memory_map[IF_FLAG] |= 2; }
@@ -1915,6 +1899,22 @@ void GBC_LCD::collect_obj_scanline() {
 }
 
 void GB_LCD::render_full_screen() {
+	//resolve global conditions
+	resolve_global_condition();
+
+	for (lcd_stat.renderY = 0; lcd_stat.renderY < 144; lcd_stat.renderY++)
+	{
+		srcrect.y = cgfx::scaling_factor * lcd_stat.renderY;
+		hdrect.y = srcrect.y;
+
+		//Draw background pixel data
+		render_bg_scanline(false);
+		//Draw window pixel data
+		render_win_scanline(false);
+		//Draw sprite pixel data
+		render_obj_scanline(false);
+	}
+
 	SDL_FillRect(finalscreen, NULL, 0xFFFFFFFF);
 	if (!lcd_stat.frame_delay)
 	{
