@@ -398,7 +398,7 @@ void GB_LCD::render_HD_strip(SDL_Surface* src, SDL_Rect* srcr, SDL_Surface* dst,
 				r1.w = cgfx_stat.alphaCpy->w;
 				r1.h = 1;
 				r1.x = 0;
-				r1.y = 7 - i;
+				r1.y = cgfx::scaling_factor - i - 1;
 				SDL_Rect r2;
 				r2.w = cgfx_stat.alphaCpy->w;
 				r2.h = 1;
@@ -420,7 +420,7 @@ void GB_LCD::render_HD_strip(SDL_Surface* src, SDL_Rect* srcr, SDL_Surface* dst,
 			r1.w = cgfx_stat.tempStrip->w;
 			r1.h = 1;
 			r1.x = srcr->x;
-			r1.y = srcr->y + 7 - i;
+			r1.y = srcr->y + cgfx::scaling_factor - i - 1;
 			SDL_Rect r2;
 			r2.w = cgfx_stat.tempStrip->w;
 			r2.h = 1;
