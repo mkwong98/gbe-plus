@@ -1934,8 +1934,8 @@ void GB_LCD::render_full_screen() {
 				if (allCondPassed)
 				{
 					SDL_Rect srcR;
-					srcR.x = cgfx_stat.bgs[i][n].offsetX + (lcd_stat.bg_scroll_x * cgfx_stat.bgs[i][n].hscroll);
-					srcR.y = cgfx_stat.bgs[i][n].offsetY + (lcd_stat.bg_scroll_y * cgfx_stat.bgs[i][n].vscroll);
+					srcR.x = cgfx_stat.bgs[i][n].offsetX + (lcd_stat.bg_scroll_x * cgfx_stat.bgs[i][n].hscroll * cgfx::scaling_factor);
+					srcR.y = cgfx_stat.bgs[i][n].offsetY + (lcd_stat.bg_scroll_y * cgfx_stat.bgs[i][n].vscroll * cgfx::scaling_factor);
 					srcR.w = cgfx_stat.imgs[cgfx_stat.bgs[i][n].imgIdx][0]->w;
 					srcR.h = cgfx_stat.imgs[cgfx_stat.bgs[i][n].imgIdx][0]->h;
 
