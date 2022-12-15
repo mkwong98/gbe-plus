@@ -195,8 +195,7 @@ void GB_LCD::reset_buffers()
 
 void GB_LCD::clear_buffers()
 {
-	SDL_FillRect(buffers[0], NULL, 0xFFFFFFFF);
-	for (u8 i = 1; i < 5; i++) {
+	for (u8 i = 0; i < 5; i++) {
 		SDL_FillRect(buffers[i], NULL, 0x00000000);
 	}
 	SDL_FillRect(tempscreen, NULL, 0x00000000);
