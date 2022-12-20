@@ -316,6 +316,10 @@ bool GB_LCD::load_manifest(std::string filename)
 								pc.type = pack_condition::MEMORYCHECKCONSTANT;
 							else if (token == "frameRange")
 								pc.type = pack_condition::FRAMERANGE;
+							else if (token == "bgPalValueMatch")
+								pc.type = pack_condition::BGPALVAL;
+							else if (token == "spPalValueMatch")
+								pc.type = pack_condition::SPPALVAL;
 							break;
 						case 2:
 							switch (pc.type)
@@ -333,6 +337,20 @@ bool GB_LCD::load_manifest(std::string filename)
 								break;
 							case pack_condition::FRAMERANGE:
 								pc.divisor = stoi(token);
+								break;
+							case pack_condition::BGPALVAL:
+							case pack_condition::SPPALVAL:
+								if (token.length() == 2)
+								{
+									pc.palette[0] = std::stoul(token, nullptr, 16);
+								}
+								else
+								{
+									for (u16 i = 0; i < 4; i++)
+									{
+										pc.palette[i] = std::stoul(token.substr(i * 4, 4), nullptr, 16);
+									}
+								}
 								break;
 							default:
 								break;
@@ -353,6 +371,10 @@ bool GB_LCD::load_manifest(std::string filename)
 								break;
 							case pack_condition::FRAMERANGE:
 								pc.compareVal = stoi(token);
+								break;
+							case pack_condition::BGPALVAL:
+							case pack_condition::SPPALVAL:
+								pc.palIdx = stoi(token);
 								break;
 							default:
 								break;
@@ -488,7 +510,7 @@ bool GB_LCD::load_manifest(std::string filename)
 						SDL_SetSurfaceBlendMode(cgfx_stat.imgs[bg.imgIdx][0], SDL_BLENDMODE_NONE);
 						//make a copy of the alpha values with all pixels white
 						SDL_BlitSurface(cgfx_stat.imgs[bg.imgIdx][0], NULL, alphaCpy, NULL);
-						SDL_FillRect(brightnessMod, NULL, 0xFFFFFF);
+						SDL_FillRect(brightnessMod, NULL, 0xFFFFFFFF);
 						SDL_SetSurfaceBlendMode(brightnessMod, SDL_BLENDMODE_ADD);
 						SDL_BlitSurface(brightnessMod, NULL, alphaCpy, NULL);
 
@@ -505,7 +527,6 @@ bool GB_LCD::load_manifest(std::string filename)
 							c = 255 * (bg.brightness - 1.0);
 							brightnessC = 0x00FFFFFF | c << 24;
 						}
-						
 						SDL_FillRect(brightnessMod, NULL, brightnessC);
 						SDL_SetSurfaceBlendMode(brightnessMod, SDL_BLENDMODE_BLEND);
 						SDL_BlitSurface(cgfx_stat.imgs[bg.imgIdx][0], NULL, img, NULL);

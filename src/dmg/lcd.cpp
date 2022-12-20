@@ -359,7 +359,7 @@ void GB_LCD::render_HD_strip(SDL_Surface* src, SDL_Rect* srcr, SDL_Surface* dst,
 		SDL_SetSurfaceBlendMode(src, SDL_BLENDMODE_NONE);
 		//make a copy of the alpha values with all pixels white
 		SDL_BlitSurface(src, srcr, cgfx_stat.alphaCpy, NULL);
-		SDL_FillRect(cgfx_stat.brightnessMod, NULL, 0xFFFFFF);
+		SDL_FillRect(cgfx_stat.brightnessMod, NULL, 0xFFFFFFFF);
 		SDL_SetSurfaceBlendMode(cgfx_stat.brightnessMod, SDL_BLENDMODE_ADD);
 		SDL_BlitSurface(cgfx_stat.brightnessMod, NULL, cgfx_stat.alphaCpy, NULL);
 
@@ -526,6 +526,40 @@ bool GBC_LCD::check_tile_condition_palette_match(tile_strip* s, pack_condition* 
 		&& cgfx_stat.screen_data.rendered_palette[s->palette_id].colour[3] == c->palette[3]);	
 }
 
+bool DMG_LCD::resolve_pal_value(pack_condition* c)
+{
+	switch (c->type){
+	case pack_condition::BGPALVAL:
+		return c->palette[0] == cgfx_stat.screen_data.rendered_palette[bgId].code;
+		break;
+	case pack_condition::SPPALVAL:
+		return c->palette[0] == cgfx_stat.screen_data.rendered_palette[(c->palIdx == 0 ? objId1 : objId2)].code;
+		break;
+	}
+	return false;
+}
+
+
+bool GBC_LCD::resolve_pal_value(pack_condition* c)
+{
+	switch (c->type) {
+	case pack_condition::BGPALVAL:
+		return cgfx_stat.screen_data.rendered_palette[bgId[c->palIdx]].colour[0] == c->palette[0]
+			&& cgfx_stat.screen_data.rendered_palette[bgId[c->palIdx]].colour[1] == c->palette[1]
+			&& cgfx_stat.screen_data.rendered_palette[bgId[c->palIdx]].colour[2] == c->palette[2]
+			&& cgfx_stat.screen_data.rendered_palette[bgId[c->palIdx]].colour[3] == c->palette[3];
+		break;
+	case pack_condition::SPPALVAL:
+		return cgfx_stat.screen_data.rendered_palette[objId[c->palIdx]].colour[0] == c->palette[0]
+			&& cgfx_stat.screen_data.rendered_palette[objId[c->palIdx]].colour[1] == c->palette[1]
+			&& cgfx_stat.screen_data.rendered_palette[objId[c->palIdx]].colour[2] == c->palette[2]
+			&& cgfx_stat.screen_data.rendered_palette[objId[c->palIdx]].colour[3] == c->palette[3];
+		break;
+	}
+	return false;
+}
+
+
 
 void GB_LCD::resolve_global_condition()
 {
@@ -610,6 +644,11 @@ void GB_LCD::resolve_global_condition()
 
 		case pack_condition::FRAMERANGE:
 			c->latest_result = cgfx_stat.frameCnt % c->divisor >= c->compareVal;
+			break;
+
+		case pack_condition::BGPALVAL:
+		case pack_condition::SPPALVAL:
+			c->latest_result = resolve_pal_value(c);
 			break;
 		default:
 			break;

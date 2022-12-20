@@ -38,6 +38,8 @@ struct pack_condition
 	static const u8 MEMORYCHECK = 15;
 	static const u8 MEMORYCHECKCONSTANT = 16;
 	static const u8 FRAMERANGE = 17;
+	static const u8 BGPALVAL = 18;
+	static const u8 SPPALVAL = 19;
 
 	static const u8 EQ = 0;
 	static const u8 NE = 1;
@@ -65,6 +67,9 @@ struct pack_condition
 	//frame range
 	u32 divisor;
 	u32 compareVal;
+
+	//pal check
+	u8 palIdx;
 
 	bool latest_result;
 	

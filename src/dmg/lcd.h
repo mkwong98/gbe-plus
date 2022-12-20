@@ -49,6 +49,7 @@ class GB_LCD
 	bool check_sprite_at_loc(SDL_Rect* loc, pack_condition* c);
 	virtual bool check_tile_condition_palette_match(tile_strip* s, pack_condition* c) = 0;
 	void resolve_global_condition();
+	virtual bool resolve_pal_value(pack_condition* c) = 0;
 
 	void new_rendered_screen_data();
 	void new_rendered_scanline_data(u8 lineNo);
@@ -152,6 +153,7 @@ class DMG_LCD : public GB_LCD
 public:
 	pack_tile* get_tile_match(tile_strip* s, u16 cscanline);
 	bool check_tile_condition_palette_match(tile_strip* s, pack_condition* c);
+	bool resolve_pal_value(pack_condition* c);
 
 protected:
 	void collect_scanline_data();
@@ -177,6 +179,7 @@ public:
 	void step_sub(int cpu_clock);
 	pack_tile* get_tile_match(tile_strip* s, u16 cscanline);
 	bool check_tile_condition_palette_match(tile_strip* s, pack_condition* c);
+	bool resolve_pal_value(pack_condition* c);
 
 protected:
 	//GBC color palette updates
