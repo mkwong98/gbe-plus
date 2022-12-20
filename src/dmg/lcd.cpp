@@ -379,7 +379,7 @@ void GB_LCD::render_HD_strip(SDL_Surface* src, SDL_Rect* srcr, SDL_Surface* dst,
 
 		SDL_FillRect(cgfx_stat.brightnessMod, NULL, brightnessC);
 		SDL_SetSurfaceBlendMode(cgfx_stat.brightnessMod, SDL_BLENDMODE_BLEND);
-		SDL_BlitSurface(src, NULL, cgfx_stat.tempStrip, NULL);
+		SDL_BlitSurface(src, srcr, cgfx_stat.tempStrip, NULL);
 		SDL_BlitSurface(cgfx_stat.brightnessMod, NULL, cgfx_stat.tempStrip, NULL);
 
 		//merge pixel values to alpha
