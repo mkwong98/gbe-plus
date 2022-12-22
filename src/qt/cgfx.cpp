@@ -580,14 +580,14 @@ void gbe_cgfx::update_selection()
 	//draw a box when dragging mouse
 	QPainter painter(&raw_image);
 
-	if (mouse_drag) {
-		painter.setPen(QPen(QColor(255, 0, 0)));
-		painter.drawRect(rect_x->value() * 2 + 1, rect_y->value() * 2 + 1, rect_w->value() * 2 - 1, rect_h->value() * 2 - 1);
-		painter.setPen(QPen(QColor(0, 255, 255)));
-		painter.drawRect(rect_x->value() * 2, rect_y->value() * 2, rect_w->value() * 2 - 1, rect_h->value() * 2 - 1);
-	}
 	if (rect_w->value() > 0 && rect_h->value() > 0)
 	{
+		if (mouse_drag) {
+			painter.setPen(QPen(QColor(255, 0, 0)));
+			painter.drawRect(rect_x->value() * 2 + 1, rect_y->value() * 2 + 1, rect_w->value() * 2 - 1, rect_h->value() * 2 - 1);
+			painter.setPen(QPen(QColor(0, 255, 255)));
+			painter.drawRect(rect_x->value() * 2, rect_y->value() * 2, rect_w->value() * 2 - 1, rect_h->value() * 2 - 1);
+		}
 
 		//hightlight selected tiles
 		for (int y = 0; y < 144; y++) 

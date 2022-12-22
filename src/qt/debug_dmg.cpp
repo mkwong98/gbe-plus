@@ -874,27 +874,17 @@ dmg_debug::dmg_debug(QWidget *parent) : QDialog(parent)
 void dmg_debug::closeEvent(QCloseEvent* event) { close_debug(); }
 
 /****** Closes the debugging window ******/
-void dmg_debug::close_debug() 
+void dmg_debug::close_debug()
 {
 	hide();
 
-	if(!qt_gui::draw_surface->cgfx->pause) { qt_gui::draw_surface->findChild<QAction*>("pause_action")->setEnabled(true); }
+	if (!qt_gui::draw_surface->cgfx->pause) { qt_gui::draw_surface->findChild<QAction*>("pause_action")->setEnabled(true); }
 
-	if(main_menu::gbe_plus->db_unit.last_command != "c")
-	{
-		main_menu::gbe_plus->db_unit.debug_mode = false;
-		main_menu::gbe_plus->db_unit.last_command = "dq";
-	}
+	main_menu::gbe_plus->db_unit.debug_mode = false;
+	main_menu::gbe_plus->db_unit.last_command = "dq";
 
-	else
-	{
-		main_menu::gbe_plus->db_unit.debug_mode = false;
-		main_menu::gbe_plus->db_unit.last_command = "dq";
-
-		pause = false;
-		config::pause_emu = old_pause;
-		qt_gui::draw_surface->pause_emu();
-	}
+	pause = false;
+	config::pause_emu = old_pause;
 }
 
 /****** Refresh the display data ******/
