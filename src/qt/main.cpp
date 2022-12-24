@@ -14,7 +14,7 @@
 
 int main(int argc, char* args[])
 {
-	std::cout<<"GBE+ 1.6 [Qt]\n";
+	std::cout<<"GBE-HD\n";
 
 	config::use_external_interfaces = true;
 
@@ -31,7 +31,7 @@ int main(int argc, char* args[])
 	QIcon icon(QString::fromStdString(config::cfg_path + "data/icons/gbe_plus.png")); 
 
 	window.resize(450, 300);
-	window.setWindowTitle("GBE+");
+	window.setWindowTitle("GBE-HD");
 	window.setWindowIcon(icon);
 	window.show();
  

@@ -76,6 +76,7 @@
     <LibraryPath>C:\Qt\Qt5.12.12\5.12.12\msvc2017\lib;C:\Users\user\Documents\GitHub\SDL2-2.0.22\lib\x86;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <TargetName>gbe-hd</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -87,6 +88,7 @@
     <IncludePath>C:\Users\user\Documents\GitHub\glew-2.1.0\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtOpenGL;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtWidgets;C:\Users\user\Documents\GitHub\gbe-plus\src;C:\Users\user\Documents\GitHub\SDL2-2.0.22\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib;C:\Users\user\Documents\GitHub\SDL2-2.0.22\lib\x64;$(LibraryPath)</LibraryPath>
     <CodeAnalysisRuleSet>Unused code set.ruleset</CodeAnalysisRuleSet>
+    <TargetName>gbe-hd</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

@@ -249,7 +249,7 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 
 	QImage logo(QString::fromStdString(config::cfg_path + "data/icons/gbe_plus.png"));
 	logo = logo.scaled(128, 128);
-	QLabel* emu_desc = new QLabel("A GB/GBC emulator with enhancements");
+	QLabel* emu_desc = new QLabel("A heavily cut version of GBE+ with enhancement pack support.");
 	QLabel* emu_copyright = new QLabel("Copyright D.S. Baxter 2014-2021");
 	QLabel* emu_proj_copyright = new QLabel("Copyright GBE+ Team 2014-2021");
 	QLabel* emu_license = new QLabel("This program is licensed under the GNU GPLv2");
