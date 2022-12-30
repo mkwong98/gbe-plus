@@ -695,6 +695,7 @@ pack_tile* DMG_LCD::get_tile_match(tile_strip* s, u16 cscanline)
 
 					case pack_condition::TILENEARBY:
 						loc.x = s->x + (s->hflip ? -c->x : c->x);
+						if (loc.x < 0) loc.x += 256;
 						loc.y = cscanline + (s->vflip ? -c->y : c->y);
 						loc.h = s->line;
 						matchResult = check_screen_tile_at_loc(&loc, c);
@@ -783,6 +784,7 @@ pack_tile* GBC_LCD::get_tile_match(tile_strip* s, u16 cscanline)
 
 					case pack_condition::TILENEARBY:
 						loc.x = s->x + (s->hflip ? -c->x : c->x);
+						if (loc.x < 0) loc.x += 256;
 						loc.y = cscanline + (s->vflip ? -c->y : c->y);
 						loc.h = s->line;
 						matchResult = check_screen_tile_at_loc(&loc, c);
