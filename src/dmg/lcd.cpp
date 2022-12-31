@@ -481,14 +481,21 @@ void GB_LCD::clear_HD_strip(SDL_Surface* src, SDL_Rect* srcr, SDL_Surface* dst, 
 
 bool GB_LCD::check_screen_tile_at_loc(SDL_Rect* loc, pack_condition* c)
 {
+	if (loc->y >= 144) return false;
 	bool matchResult = check_line_tile_at_loc(&(cgfx_stat.screen_data.scanline[loc->y].rendered_bg), loc, c);
-	if (!matchResult)
-		matchResult = check_line_tile_at_loc(&(cgfx_stat.screen_data.scanline[loc->y].rendered_win), loc, c);
+	if (!matchResult) {
+		//window layer does not loop
+		if (loc->x < 160)
+			matchResult = check_line_tile_at_loc(&(cgfx_stat.screen_data.scanline[loc->y].rendered_win), loc, c);
+		else
+			matchResult = false;
+	}
 	return matchResult;
 }
 
 bool GB_LCD::check_sprite_at_loc(SDL_Rect* loc, pack_condition* c)
 {
+	if (loc->y >= 144) return false;
 	return check_line_tile_at_loc(&(cgfx_stat.screen_data.scanline[loc->y].rendered_obj), loc, c);
 }
 
@@ -697,6 +704,7 @@ pack_tile* DMG_LCD::get_tile_match(tile_strip* s, u16 cscanline)
 						loc.x = s->x + (s->hflip ? -c->x : c->x);
 						if (loc.x < 0) loc.x += 256;
 						loc.y = cscanline + (s->vflip ? -c->y : c->y);
+						if (loc.y < 0) loc.y += 256;
 						loc.h = s->line;
 						matchResult = check_screen_tile_at_loc(&loc, c);
 						break;
@@ -786,6 +794,7 @@ pack_tile* GBC_LCD::get_tile_match(tile_strip* s, u16 cscanline)
 						loc.x = s->x + (s->hflip ? -c->x : c->x);
 						if (loc.x < 0) loc.x += 256;
 						loc.y = cscanline + (s->vflip ? -c->y : c->y);
+						if (loc.y < 0) loc.y += 256;
 						loc.h = s->line;
 						matchResult = check_screen_tile_at_loc(&loc, c);
 						break;
