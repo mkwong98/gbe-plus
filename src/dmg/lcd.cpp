@@ -1123,7 +1123,7 @@ void DMG_LCD::render_obj_scanline(bool raw)
 	for (u8 i = 0; i < cgfx_stat.screen_data.scanline[scanline].rendered_obj.size(); i++) {
 		u8 tile_pixel = 0;
 		tile_strip p = cgfx_stat.screen_data.scanline[scanline].rendered_obj[i];
-		u8 pixel_counter = p.x;
+		s16 pixel_counter = p.x;
 
 		//look for hd 
 		if (!raw) hdTile = get_tile_match(&p, lcd_stat.renderY);

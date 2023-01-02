@@ -86,8 +86,8 @@ class GB_LCD
 	struct oam_entries
 	{
 		//X-Y Coordinates
-		u8 x;
-		u8 y;
+		s16 x;
+		s16 y;
 	
 		//Horizonal and vertical flipping options
 		bool h_flip;

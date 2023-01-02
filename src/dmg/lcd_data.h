@@ -95,7 +95,7 @@ struct palette
 
 struct tile_strip
 {
-	u8 x;
+	s16 x;
 	u16 pattern_id;
 	u16 palette_id;
 	u8 palette_sel;
