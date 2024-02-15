@@ -36,7 +36,6 @@ public:
 
 	static dmg_midi_driver* midi;
 
-
 	dmg_midi_driver();
 	~dmg_midi_driver();
 	void init();
@@ -44,12 +43,17 @@ public:
 	void dutyChange(u8 sq, u8 duty);
 	void playSound(u8 sq, u8 vol, double freq, bool left, bool right);
 	void stopSound(u8 sq);
+	void playNoise(u8 nr43v, u8 vol, bool left, bool right);
+	void stopNoise();
 	void pause();
 	void unpause();
 	void sq1SweepTo(double freq);
 	void changeVolume(u8 sq, u8 vol);
+	void changeNoiseVolume(u8 vol);
 	void addReplacement(u8 sq, u8 duty, u8 insID, bool useHarmonic);
+	void addNoiseReplacement(u8 nr43v, u8 insID);
 	bool checkHasReplace(u8 sq);
+	bool checkNoiseHasReplace();
 
 private:
 	const u8 NOTE_ON = 0x90;
@@ -67,6 +71,7 @@ private:
 		bool useHarmonic;
 		bool hasReplacement;
 	} instrument[2][4];
+	u8 noise[256];
 
 	double freqChart[128][2];
 
@@ -79,7 +84,8 @@ private:
 		bool playing;
 		bool hasReplace;
 	} channel[4];
-
+	u8 currentNoise;
+	bool replaceNoise;
 
 	RtMidiOut* midiout;
 	void sendMidiMessage(u8 status, u8 data1, u8 data2, u8 len);

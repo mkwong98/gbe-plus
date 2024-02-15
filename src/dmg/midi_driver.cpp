@@ -2,7 +2,7 @@
 #include "common\config.h"
 #include "common\util.h"
 
-dmg_midi_driver* dmg_midi_driver::midi;
+dmg_midi_driver* dmg_midi_driver::midi = 0;
 
 dmg_midi_driver::dmg_midi_driver() {
 	try {
@@ -25,12 +25,18 @@ dmg_midi_driver::dmg_midi_driver() {
 			}
 		}
 
+		for (u16 i = 0; i < 256; i++) {
+			noise[i] = 0;
+		}
+
 		for (u8 i = 0; i < 4; i++) {
 			channel[i].pitch = 0;
 			channel[i].playing = false;
 			channel[i].volume = 0;
 			channel[i].duty = 0;
 		}
+		currentNoise = 0;
+		replaceNoise = false;
 	}
 	catch (RtMidiError& error) {
 		midiout = 0;
@@ -58,6 +64,7 @@ void dmg_midi_driver::init() {
 				//panoramic is fixed to left, left, right, right
 				sendMidiMessage(CONTROLLER_CHANGE | i, CONTROLLER_PANORAMIC, (i & 0x02 ? 0x7F : 0), 2);
 			}
+
 			//config::osd_message = "init midi ";
 			//config::osd_count = 180;
 
@@ -191,7 +198,7 @@ void dmg_midi_driver::playSound(u8 sq, u8 vol, double freq, bool left, bool righ
 	}
 }
 
-/****** play sound ******/
+/****** stop sound ******/
 void dmg_midi_driver::stopSound(u8 sq) {
 	sendNoteOff(sq);
 	sendNoteOff(sq + 2);
@@ -211,6 +218,9 @@ void dmg_midi_driver::pause() {
 			}
 		}
 	}
+	if (replaceNoise) {
+		sendMidiMessage(NOTE_OFF | 9, currentNoise, 0, 2);
+	}
 }
 
 /****** unpause play sound ******/
@@ -218,12 +228,6 @@ void dmg_midi_driver::unpause() {
 	//send note on base on the playing flag
 	for (u8 i = 0; i < 4; i++) {
 		if (channel[i].playing) {
-			if (instrument[i & 0x01][channel[i].duty].useHarmonic) {
-				sendMidiMessage(CONTROLLER_CHANGE | i, CONTROLLER_VOLUME, channel[i].volume / 3, 2);
-			}
-			else {
-				sendMidiMessage(CONTROLLER_CHANGE | i, CONTROLLER_VOLUME, channel[i].volume, 2);
-			}
 			sendMidiMessage(NOTE_ON | i, channel[i].pitch, 0x7F, 2);
 			if (instrument[i & 0x01][channel[i].duty].useHarmonic) {
 				if (channel[i].pitch <= 115)
@@ -232,6 +236,9 @@ void dmg_midi_driver::unpause() {
 					sendMidiMessage(NOTE_ON | i, channel[i].pitch - 12, 0x7F, 2);
 			}
 		}
+	}
+	if (replaceNoise) {
+		sendMidiMessage(NOTE_ON | 9, currentNoise, 0x7F, 2);
 	}
 }
 
@@ -278,7 +285,12 @@ void dmg_midi_driver::changeVolume(u8 sq, u8 vol) {
 	u8 v = volumeConvert(vol);
 	for (u8 i = 0; i <= 2; i += 2) {
 		if (channel[sq + i].playing) {
-			sendMidiMessage(CONTROLLER_CHANGE | (sq + i), CONTROLLER_VOLUME, v, 2);
+			if (instrument[sq][channel[sq + i].duty].useHarmonic) {
+				sendMidiMessage(CONTROLLER_CHANGE | (sq + i), CONTROLLER_VOLUME, v / 3, 2);
+			}
+			else {
+				sendMidiMessage(CONTROLLER_CHANGE | (sq + i), CONTROLLER_VOLUME, v, 2);
+			}
 			channel[sq + i].volume = v;
 		}
 	}
@@ -302,5 +314,52 @@ bool dmg_midi_driver::checkHasReplace(u8 sq) {
 
 	return channel[sq].hasReplace;
 }
+
+/****** add noise replacement for a specific nr43 value ******/
+void dmg_midi_driver::addNoiseReplacement(u8 nr43v, u8 insID) {
+	noise[nr43v] = insID;
+}
+
+/****** play noise replacement ******/
+void dmg_midi_driver::playNoise(u8 nr43v, u8 vol, bool left, bool right) {
+	if (replaceNoise) stopNoise();
+	if (noise[nr43v] && (left || right)) {
+		sendMidiMessage(CONTROLLER_CHANGE | 9, CONTROLLER_VOLUME, volumeConvert(vol), 2);
+		if (left && right) {
+			sendMidiMessage(CONTROLLER_CHANGE | 9, CONTROLLER_PANORAMIC, 0x40, 2);
+		}
+		else if (left) {
+			sendMidiMessage(CONTROLLER_CHANGE | 9, CONTROLLER_PANORAMIC, 0, 2);
+		}
+		else {
+			sendMidiMessage(CONTROLLER_CHANGE | 9, CONTROLLER_PANORAMIC, 0, 2);
+		}
+		sendMidiMessage(NOTE_ON | 9, noise[nr43v], 0x7F, 2);
+		currentNoise = nr43v;
+		replaceNoise = true;
+	}
+}
+
+/****** change the volume of noise channel ******/
+void dmg_midi_driver::changeNoiseVolume(u8 vol) {
+	sendMidiMessage(CONTROLLER_CHANGE | 9, CONTROLLER_VOLUME, volumeConvert(vol), 2);
+}
+
+
+/****** stop noise replacement ******/
+void dmg_midi_driver::stopNoise() {
+	if (replaceNoise){
+		//config::osd_message = "stop noise " + util::to_str(currentNoise);
+		//config::osd_count = 180;
+		sendMidiMessage(NOTE_OFF | 9, currentNoise, 0, 2);
+		replaceNoise = false;
+	}
+}
+
+/****** query whether this value in NR43 has replacement ******/
+bool dmg_midi_driver::checkNoiseHasReplace() {
+	return replaceNoise;
+}
+
 
 

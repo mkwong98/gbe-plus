@@ -515,6 +515,8 @@ void DMG_APU::generate_channel_4_samples(s16* stream, int length)
 						else if((apu_stat.channel[3].envelope_direction == 1) && (apu_stat.channel[3].volume < 0xF)) { apu_stat.channel[3].volume++; }
 
 						apu_stat.channel[3].envelope_counter = 0;
+
+						dmg_midi_driver::midi->changeNoiseVolume(apu_stat.channel[3].volume);
 					}
 				}
 
@@ -568,6 +570,11 @@ void DMG_APU::generate_channel_4_samples(s16* stream, int length)
 
 				//Or generate low wave
 				else { stream[x] = -32768; }
+
+				//mute if has midi replacement
+				if (dmg_midi_driver::midi->checkNoiseHasReplace()) {
+					stream[x] = -32768;
+				}
 			}
 
 			//Continuously generate sound if necessary
@@ -585,6 +592,8 @@ void DMG_APU::generate_channel_4_samples(s16* stream, int length)
 
 				//Set NR52 flag
 				mem->memory_map[NR52] &= ~0x8;
+
+				dmg_midi_driver::midi->stopNoise();
 			}
 		}
 	}

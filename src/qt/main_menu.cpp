@@ -291,12 +291,14 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 void main_menu::open_file()
 {
 	SDL_PauseAudio(1);
-	dmg_midi_driver::midi->pause();
+	if(dmg_midi_driver::midi)
+		dmg_midi_driver::midi->pause();
 
 	QString filename = QFileDialog::getOpenFileName(this, tr("Open"), "", tr("GBx files (*.gb *.gbc)"));
 	if (filename.isNull()) { 
 		SDL_PauseAudio(0); 
-		dmg_midi_driver::midi->unpause();
+		if (dmg_midi_driver::midi)
+			dmg_midi_driver::midi->unpause();
 		return;
 	}
 
@@ -304,7 +306,8 @@ void main_menu::open_file()
 
 
 	SDL_PauseAudio(0);
-	dmg_midi_driver::midi->unpause();
+	if (dmg_midi_driver::midi)
+		dmg_midi_driver::midi->unpause();
 
 	//Search the recent files list and add this path to it
 	bool add_recent = true;

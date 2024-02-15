@@ -18,6 +18,7 @@
 
 #include "common.h"
 #include "common/config.h"
+#include "common/util.h"
 #include "gamepad.h"
 #include "lcd_data.h"
 #include "custom_graphics_data.h"

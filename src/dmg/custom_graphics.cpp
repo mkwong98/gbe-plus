@@ -598,6 +598,42 @@ bool GB_LCD::load_manifest(std::string filename)
 					}
 					dmg_midi_driver::midi->addReplacement(sq, duty, instID, useHarmonic);
 				}
+				else if (tagName == "noise")
+				{
+				std::string token;
+				u8 tokenCnt = 0;
+				u8 nr43v;
+				u8 instID;
+				while (strRest.length() > 0)
+				{
+					pos = strRest.find(",");
+					if (pos != std::string::npos)
+					{
+						token = util::trimfnc(strRest.substr(0, pos));
+						strRest = strRest.substr(pos + 1, std::string::npos);
+					}
+					else
+					{
+						token = util::trimfnc(strRest);
+						strRest = "";
+					}
+
+					switch (tokenCnt)
+					{
+					case 0:
+						nr43v = std::stoul(token, nullptr, 16);
+						break;
+					case 1:
+						instID = stoi(token);
+						break;
+					default:
+						break;
+					}
+
+					tokenCnt++;
+				}
+				dmg_midi_driver::midi->addNoiseReplacement(nr43v, instID);
+				}
 			}
 		}
 		file.close();

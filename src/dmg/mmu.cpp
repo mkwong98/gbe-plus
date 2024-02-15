@@ -900,7 +900,11 @@ void GB_MMU::write_u8(u16 address, u8 value)
 		}
 
 		//Set NR52 flag
-		if(apu_stat->channel[3].playing) { memory_map[NR52] |= 0x8; }
+		if (apu_stat->channel[3].playing) {
+			memory_map[NR52] |= 0x8;
+			if (apu_stat->sound_on)
+				dmg_midi_driver::midi->playNoise(memory_map[NR43], apu_stat->channel[3].volume, apu_stat->channel[3].so1_output, apu_stat->channel[3].so2_output);
+		}
 	}
 
 	//NR50 S01-S02 volume
