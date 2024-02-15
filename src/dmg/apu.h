@@ -42,6 +42,7 @@ class DMG_APU
 	void generate_channel_2_samples(s16* stream, int length);
 	void generate_channel_3_samples(s16* stream, int length);
 	void generate_channel_4_samples(s16* stream, int length);
+
 }; 
 
 /****** SDL Audio Callback ******/ 

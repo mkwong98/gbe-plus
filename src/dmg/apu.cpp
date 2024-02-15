@@ -16,12 +16,14 @@
 /****** APU Constructor ******/
 DMG_APU::DMG_APU()
 {
+	dmg_midi_driver::midi = new dmg_midi_driver();
 	reset();
 }
 
 /****** APU Destructor ******/
 DMG_APU::~DMG_APU()
 {
+	delete dmg_midi_driver::midi;
 	SDL_CloseAudio();
 	std::cout<<"APU::Shutdown\n";
 }
@@ -87,6 +89,8 @@ void DMG_APU::reset()
 /****** Initialize APU with SDL ******/
 bool DMG_APU::init()
 {
+	dmg_midi_driver::midi->init();
+
 	//Initialize audio subsystem
 	if(SDL_InitSubSystem(SDL_INIT_AUDIO) == -1)
 	{
@@ -102,7 +106,7 @@ bool DMG_APU::init()
 	desired_spec.callback = dmg_audio_callback;
 	desired_spec.userdata = this;
 
-    	//Open SDL audio for desired specifications
+    //Open SDL audio for desired specifications
 	if(SDL_OpenAudio(&desired_spec, NULL) < 0) 
 	{ 
 		std::cout<<"APU::Failed to open audio\n";
@@ -115,6 +119,7 @@ bool DMG_APU::init()
 		apu_stat.sample_rate *= 4;
 
 		SDL_PauseAudio(0);
+		dmg_midi_driver::midi->unpause();
 		std::cout<<"APU::Initialized\n";
 		return true;
 	}
@@ -174,6 +179,7 @@ bool DMG_APU::apu_write(std::string filename)
 /****** Gets the size of APU data for serialization ******/
 u32 DMG_APU::size() { return sizeof(apu_stat); }
 
+
 /******* Generate samples for GB sound channel 1 ******/
 void DMG_APU::generate_channel_1_samples(s16* stream, int length)
 {
@@ -209,6 +215,7 @@ void DMG_APU::generate_channel_1_samples(s16* stream, int length)
 						{ 
 							apu_stat.channel[0].volume = apu_stat.channel[0].sweep_shift = apu_stat.channel[0].envelope_step = apu_stat.channel[0].sweep_time = 0; 
 							apu_stat.channel[0].playing = false; 
+							dmg_midi_driver::midi->stopSound(0);
 						}
 
 						else 
@@ -218,6 +225,7 @@ void DMG_APU::generate_channel_1_samples(s16* stream, int length)
 							mem->memory_map[NR13] = (apu_stat.channel[0].raw_frequency & 0xFF);
 							mem->memory_map[NR14] &= ~0x7;
 							mem->memory_map[NR14] |= ((apu_stat.channel[0].raw_frequency >> 8) & 0x7);
+							dmg_midi_driver::midi->sq1SweepTo(apu_stat.channel[0].output_frequency);
 						}
 					}
 
@@ -234,6 +242,7 @@ void DMG_APU::generate_channel_1_samples(s16* stream, int length)
 							mem->memory_map[NR13] = (apu_stat.channel[0].raw_frequency & 0xFF);
 							mem->memory_map[NR14] &= ~0x7;
 							mem->memory_map[NR14] |= ((apu_stat.channel[0].raw_frequency >> 8) & 0x7);
+							dmg_midi_driver::midi->sq1SweepTo(apu_stat.channel[0].output_frequency);
 						}
 					}
 
@@ -255,6 +264,8 @@ void DMG_APU::generate_channel_1_samples(s16* stream, int length)
 					else if((apu_stat.channel[0].envelope_direction == 1) && (apu_stat.channel[0].volume < 0xF)) { apu_stat.channel[0].volume++; }
 
 					apu_stat.channel[0].envelope_counter = 0;
+
+					dmg_midi_driver::midi->changeVolume(0, apu_stat.channel[0].volume);
 				}
 			}
 
@@ -276,6 +287,9 @@ void DMG_APU::generate_channel_1_samples(s16* stream, int length)
 
 				//Generate low wave form if duty cycle is off OR volume is muted
 				else { stream[x] = -32768; }
+				
+				//mute if has midi replacement
+				if(dmg_midi_driver::midi->checkHasReplace(0)) stream[x] = -32768;
 			}
 
 			//Continuously generate sound if necessary
@@ -293,6 +307,8 @@ void DMG_APU::generate_channel_1_samples(s16* stream, int length)
 
 				//Set NR52 flag
 				mem->memory_map[NR52] &= ~0x1;
+
+				dmg_midi_driver::midi->stopSound(0);
 			}
 		}
 	}
@@ -331,6 +347,8 @@ void DMG_APU::generate_channel_2_samples(s16* stream, int length)
 					else if((apu_stat.channel[1].envelope_direction == 1) && (apu_stat.channel[1].volume < 0xF)) { apu_stat.channel[1].volume++; }
 
 					apu_stat.channel[1].envelope_counter = 0;
+
+					dmg_midi_driver::midi->changeVolume(1, apu_stat.channel[1].volume);
 				}
 			}
 
@@ -352,6 +370,9 @@ void DMG_APU::generate_channel_2_samples(s16* stream, int length)
 
 				//Generate low wave form if duty cycle is off OR volume is muted
 				else { stream[x] = -32768; }
+
+				//mute if has midi replacement
+				if (dmg_midi_driver::midi->checkHasReplace(1)) stream[x] = -32768;
 			}
 
 			//Continuously generate sound if necessary
@@ -369,6 +390,7 @@ void DMG_APU::generate_channel_2_samples(s16* stream, int length)
 
 				//Set NR52 flag
 				mem->memory_map[NR52] &= ~0x2;
+				dmg_midi_driver::midi->stopSound(1);
 			}
 		}
 	}

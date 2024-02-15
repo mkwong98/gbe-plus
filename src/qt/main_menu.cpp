@@ -16,6 +16,7 @@
 #include "common/config.h"
 #include "common/cgfx_common.h"
 #include "common/util.h"
+#include "dmg/midi_driver.h"
 
 /****** Main menu constructor ******/
 main_menu::main_menu(QWidget *parent) : QWidget(parent)
@@ -290,14 +291,20 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 void main_menu::open_file()
 {
 	SDL_PauseAudio(1);
+	dmg_midi_driver::midi->pause();
 
 	QString filename = QFileDialog::getOpenFileName(this, tr("Open"), "", tr("GBx files (*.gb *.gbc)"));
-	if (filename.isNull()) { SDL_PauseAudio(0); return; }
+	if (filename.isNull()) { 
+		SDL_PauseAudio(0); 
+		dmg_midi_driver::midi->unpause();
+		return;
+	}
 
 	set_rom_file(filename.toStdString());
 
 
 	SDL_PauseAudio(0);
+	dmg_midi_driver::midi->unpause();
 
 	//Search the recent files list and add this path to it
 	bool add_recent = true;
@@ -643,6 +650,7 @@ void main_menu::pause()
 void main_menu::pause_emu()
 {
 	SDL_PauseAudio(1);
+	dmg_midi_driver::midi->pause();
 
 	while(config::pause_emu) 
 	{
@@ -651,6 +659,7 @@ void main_menu::pause_emu()
 	}
 
 	SDL_PauseAudio(0);
+	dmg_midi_driver::midi->unpause();
 
 	//If CGFX or debugger is open, continue pause
 	if(cgfx->pause || dmg_debugger->pause) { pause(); }
@@ -814,6 +823,7 @@ void main_menu::show_debugger()
 		findChild<QAction*>("pause_action")->setEnabled(false);
 
 		SDL_PauseAudio(1);
+		dmg_midi_driver::midi->pause();
 		main_menu::dmg_debugger->old_pause = config::pause_emu;
 		main_menu::dmg_debugger->pause = true;
 		config::pause_emu = false;

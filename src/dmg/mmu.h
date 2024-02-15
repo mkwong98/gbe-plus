@@ -22,6 +22,7 @@
 #include "lcd_data.h"
 #include "custom_graphics_data.h"
 #include "apu_data.h"
+#include "midi_driver.h"
 
 class GB_MMU
 {

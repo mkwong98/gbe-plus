@@ -396,28 +396,26 @@ void GB_MMU::write_u8(u16 address, u8 value)
 		memory_map[address] = value;
 		apu_stat->channel[0].duty_cycle = (value >> 6) & 0x3;
 
+		apu_stat->channel[0].duty_cycle_start = 0;
 		switch(apu_stat->channel[0].duty_cycle)
 		{
 			case 0x0: 
-				apu_stat->channel[0].duty_cycle_start = 0;
 				apu_stat->channel[0].duty_cycle_end = 1;
 				break;
 
 			case 0x1: 
-				apu_stat->channel[0].duty_cycle_start = 0;
 				apu_stat->channel[0].duty_cycle_end = 2;
 				break;
 
 			case 0x2: 
-				apu_stat->channel[0].duty_cycle_start = 0;
 				apu_stat->channel[0].duty_cycle_end = 4;
 				break;
 
 			case 0x3: 
-				apu_stat->channel[0].duty_cycle_start = 0;
 				apu_stat->channel[0].duty_cycle_end = 6;
 				break;
 		}
+		dmg_midi_driver::midi->dutyChange(0, apu_stat->channel[0].duty_cycle);
 	}
 
 	//NR12 - Envelope, Volume
@@ -550,7 +548,11 @@ void GB_MMU::write_u8(u16 address, u8 value)
 		}
 
 		//Set NR52 flag
-		if(apu_stat->channel[0].playing) { memory_map[NR52] |= 0x1; }
+		if(apu_stat->channel[0].playing) { 
+			memory_map[NR52] |= 0x1; 
+			if(apu_stat->sound_on) 
+				dmg_midi_driver::midi->playSound(0, apu_stat->channel[0].volume, apu_stat->channel[0].output_frequency, apu_stat->channel[0].so1_output, apu_stat->channel[0].so2_output);
+		}
 	}
 
 	//NR21 - Duration, Duty Cycle
@@ -559,28 +561,26 @@ void GB_MMU::write_u8(u16 address, u8 value)
 		memory_map[address] = value;
 		apu_stat->channel[1].duty_cycle = (value >> 6) & 0x3;
 
+		apu_stat->channel[1].duty_cycle_start = 0;
 		switch(apu_stat->channel[1].duty_cycle)
 		{
 			case 0x0: 
-				apu_stat->channel[1].duty_cycle_start = 0;
 				apu_stat->channel[1].duty_cycle_end = 1;
 				break;
 
 			case 0x1: 
-				apu_stat->channel[1].duty_cycle_start = 0;
 				apu_stat->channel[1].duty_cycle_end = 2;
 				break;
 
 			case 0x2: 
-				apu_stat->channel[1].duty_cycle_start = 0;
 				apu_stat->channel[1].duty_cycle_end = 4;
 				break;
 
 			case 0x3: 
-				apu_stat->channel[1].duty_cycle_start = 0;
 				apu_stat->channel[1].duty_cycle_end = 6;
 				break;
 		}
+		dmg_midi_driver::midi->dutyChange(1, apu_stat->channel[1].duty_cycle);
 	}
 
 	//NR22 - Envelope, Volume
@@ -696,7 +696,11 @@ void GB_MMU::write_u8(u16 address, u8 value)
 		}
 
 		//Set NR52 flag
-		if(apu_stat->channel[1].playing) { memory_map[NR52] |= 0x2; }
+		if(apu_stat->channel[1].playing) { 
+			memory_map[NR52] |= 0x2; 
+			if (apu_stat->sound_on)
+				dmg_midi_driver::midi->playSound(1, apu_stat->channel[1].volume, apu_stat->channel[1].output_frequency, apu_stat->channel[1].so1_output, apu_stat->channel[1].so2_output);
+		}
 	}
 
 	//NR30 - Sound3 Enable/Disable
@@ -2560,5 +2564,7 @@ void GB_MMU::set_lcd_data(dmg_lcd_data* ex_lcd_stat) { lcd_stat = ex_lcd_stat; }
 void GB_MMU::set_cgfx_data(dmg_cgfx_data* ex_cgfx_stat) { cgfx_stat = ex_cgfx_stat; }
 
 /****** Points the MMU to an apu_data structure (FROM THE APU ITSELF) ******/
-void GB_MMU::set_apu_data(dmg_apu_data* ex_apu_stat) { apu_stat = ex_apu_stat; }
+void GB_MMU::set_apu_data(dmg_apu_data* ex_apu_stat) { 
+	apu_stat = ex_apu_stat; 
+}
 

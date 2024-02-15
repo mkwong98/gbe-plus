@@ -18,6 +18,7 @@
 #include "common/cgfx_common.h"
 
 #include "core.h"
+#include "midi_driver.h"
 
 /****** Core Constructor ******/
 DMG_core::DMG_core()
@@ -232,85 +233,7 @@ void GB_core::run_core()
 		}
 
 		//Run the CPU
-		if(core_cpu->running)
-		{
-			core_cpu->cycles = 0;
-
-			//Handle Interrupts
-			core_cpu->handle_interrupts();
-
-			//Halt CPU if necessary
-			if(core_cpu->halt == true)
-			{
-				//Normal HALT mode
-				if(core_cpu->interrupt || !core_cpu->skip_instruction) { core_cpu->cycles += 4; }
-
-				//HALT bug
-				else if(core_cpu->skip_instruction)
-				{
-					//Exit HALT mode
-					core_cpu->halt = false;
-					core_cpu->skip_instruction = false;
-
-					//Execute next opcode, but do not increment PC
-					core_cpu->opcode = core_mmu->read_u8(core_cpu->reg.pc);
-					core_cpu->exec_op(core_cpu->opcode);
-				}
-			}
-
-			//Process Opcodes
-			else 
-			{
-				core_cpu->opcode = core_mmu->read_u8(core_cpu->reg.pc++);
-				core_cpu->exec_op(core_cpu->opcode);
-			}
-
-			//Update LCD
-			core_cpu->controllers.video->step(core_cpu->get_cycles());
-
-			//Update DIV timer - Every 4 M clocks
-			core_cpu->div_counter += core_cpu->cycles;
-		
-			if(core_cpu->div_counter >= 256) 
-			{
-				core_cpu->div_counter -= 256;
-				core_mmu->memory_map[REG_DIV]++;
-			}
-
-			//Update TIMA timer
-			if(core_mmu->memory_map[REG_TAC] & 0x4) 
-			{
-				if(core_mmu->div_reset)
-				{
-					core_mmu->div_reset = false;
-					core_cpu->tima_counter = 0;
-				}
-
-				core_cpu->tima_counter += core_cpu->cycles;
-
-				switch(core_mmu->memory_map[REG_TAC] & 0x3)
-				{
-					case 0x00: core_cpu->tima_speed = 1024; break;
-					case 0x01: core_cpu->tima_speed = 16; break;
-					case 0x02: core_cpu->tima_speed = 64; break;
-					case 0x03: core_cpu->tima_speed = 256; break;
-				}
-	
-				if(core_cpu->tima_counter >= core_cpu->tima_speed)
-				{
-					core_mmu->memory_map[REG_TIMA]++;
-					core_cpu->tima_counter -= core_cpu->tima_speed;
-
-					if(core_mmu->memory_map[REG_TIMA] == 0)
-					{
-						core_mmu->memory_map[IF_FLAG] |= 0x04;
-						core_mmu->memory_map[REG_TIMA] = core_mmu->memory_map[REG_TMA];
-					}	
-
-				}
-			}
-
-		}
+		if(core_cpu->running) { step();}
 
 		//Stop emulation
 		else { stop(); }
@@ -379,6 +302,12 @@ void GB_core::step()
 		//Update TIMA timer
 		if(core_mmu->memory_map[REG_TAC] & 0x4) 
 		{	
+			if (core_mmu->div_reset)
+			{
+				core_mmu->div_reset = false;
+				core_cpu->tima_counter = 0;
+			}
+
 			core_cpu->tima_counter += core_cpu->cycles;
 
 			switch(core_mmu->memory_map[REG_TAC] & 0x3)
@@ -497,6 +426,7 @@ void GB_core::handle_hotkey(SDL_Event& event)
 	{
 		config::pause_emu = true;
 		SDL_PauseAudio(1);
+		dmg_midi_driver::midi->pause();
 		std::cout<<"EMU::Paused\n";
 
 		//Delay until pause key is hit again
@@ -507,6 +437,7 @@ void GB_core::handle_hotkey(SDL_Event& event)
 			{
 				config::pause_emu = false;
 				SDL_PauseAudio(0);
+				dmg_midi_driver::midi->unpause();
 				std::cout<<"EMU::Unpaused\n";
 			}
 		}

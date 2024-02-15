@@ -31,6 +31,12 @@
     <Filter Include="Header Files\common">
       <UniqueIdentifier>{8a3df64a-a2c6-4fb8-9a6a-3b4d6b569dbd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\rtmidi">
+      <UniqueIdentifier>{61a9cece-b5b2-4e9e-80bd-e1a1508e2d5b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\rtmidi">
+      <UniqueIdentifier>{d3302119-5fd2-402b-b3c0-4aebc2935236}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dmg\apu.cpp">
@@ -144,6 +150,15 @@
     <ClCompile Include="src\qt\debug_dmg.cpp">
       <Filter>Source Files\qt</Filter>
     </ClCompile>
+    <ClCompile Include="src\rtmidi\RtMidi.cpp">
+      <Filter>Source Files\rtmidi</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rtmidi\rtmidi_c.cpp">
+      <Filter>Source Files\rtmidi</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dmg\midi_driver.cpp">
+      <Filter>Source Files\dmg</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dmg\apu.h">
@@ -207,6 +222,15 @@
       <Filter>Header Files\common</Filter>
     </ClInclude>
     <ClInclude Include="src\dmg\z80.h">
+      <Filter>Header Files\dmg</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rtmidi\RtMidi.h">
+      <Filter>Header Files\rtmidi</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rtmidi\rtmidi_c.h">
+      <Filter>Header Files\rtmidi</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dmg\midi_driver.h">
       <Filter>Header Files\dmg</Filter>
     </ClInclude>
   </ItemGroup>

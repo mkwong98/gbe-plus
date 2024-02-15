@@ -16,6 +16,7 @@
 #include "common/cgfx_common.h"
 #include "lcd.h"
 #include "common/config.h"
+#include "midi_driver.h"
 
 void GB_LCD::clear_manifest() {
 	cgfx_stat.packVersion = "";
@@ -552,6 +553,50 @@ bool GB_LCD::load_manifest(std::string filename)
 						cgfx_stat.himgs.push_back(himgs);
 					}
 					cgfx_stat.bgs[bg.priority].push_back(bg);
+				}
+				else if (tagName == "midi") 
+				{
+					std::string token;
+					u8 tokenCnt = 0;
+					u8 sq;
+					u8 duty;
+					u8 instID;
+					bool useHarmonic;
+					while (strRest.length() > 0)
+					{
+						pos = strRest.find(",");
+						if (pos != std::string::npos)
+						{
+							token = util::trimfnc(strRest.substr(0, pos));
+							strRest = strRest.substr(pos + 1, std::string::npos);
+						}
+						else
+						{
+							token = util::trimfnc(strRest);
+							strRest = "";
+						}
+
+						switch (tokenCnt)
+						{
+						case 0:
+							sq = stoi(token);
+							break;
+						case 1:
+							duty = stoi(token);
+							break;
+						case 2:
+							instID = stoi(token);
+							break;
+						case 3:
+							useHarmonic = (token == "Y" || token == "y");
+							break;
+						default:
+							break;
+						}
+
+						tokenCnt++;
+					}
+					dmg_midi_driver::midi->addReplacement(sq, duty, instID, useHarmonic);
 				}
 			}
 		}
