@@ -793,7 +793,12 @@ void GB_MMU::write_u8(u16 address, u8 value)
 		}
 
 		//Set NR52 flag
-		if(apu_stat->channel[2].playing) { memory_map[NR52] |= 0x4; }
+		if(apu_stat->channel[2].playing) { 
+			memory_map[NR52] |= 0x4; 
+			if (apu_stat->sound_on)
+				dmg_midi_driver::midi->playWave(apu_stat->channel[2].volume, apu_stat->channel[2].output_frequency, apu_stat->channel[2].so1_output, apu_stat->channel[2].so2_output);
+
+		}
 	}
 
 	//NR42 - Envelope, Volume
@@ -2570,5 +2575,6 @@ void GB_MMU::set_cgfx_data(dmg_cgfx_data* ex_cgfx_stat) { cgfx_stat = ex_cgfx_st
 /****** Points the MMU to an apu_data structure (FROM THE APU ITSELF) ******/
 void GB_MMU::set_apu_data(dmg_apu_data* ex_apu_stat) { 
 	apu_stat = ex_apu_stat; 
+	dmg_midi_driver::midi->waveRam = (u32*)&(memory_map[0xFF30]);
 }
 

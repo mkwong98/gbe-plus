@@ -600,39 +600,80 @@ bool GB_LCD::load_manifest(std::string filename)
 				}
 				else if (tagName == "noise")
 				{
-				std::string token;
-				u8 tokenCnt = 0;
-				u8 nr43v;
-				u8 instID;
-				while (strRest.length() > 0)
-				{
-					pos = strRest.find(",");
-					if (pos != std::string::npos)
+					std::string token;
+					u8 tokenCnt = 0;
+					u8 nr43v;
+					u8 instID;
+					while (strRest.length() > 0)
 					{
-						token = util::trimfnc(strRest.substr(0, pos));
-						strRest = strRest.substr(pos + 1, std::string::npos);
-					}
-					else
-					{
-						token = util::trimfnc(strRest);
-						strRest = "";
-					}
+						pos = strRest.find(",");
+						if (pos != std::string::npos)
+						{
+							token = util::trimfnc(strRest.substr(0, pos));
+							strRest = strRest.substr(pos + 1, std::string::npos);
+						}
+						else
+						{
+							token = util::trimfnc(strRest);
+							strRest = "";
+						}
 
-					switch (tokenCnt)
-					{
-					case 0:
-						nr43v = std::stoul(token, nullptr, 16);
-						break;
-					case 1:
-						instID = stoi(token);
-						break;
-					default:
-						break;
-					}
+						switch (tokenCnt)
+						{
+						case 0:
+							nr43v = std::stoul(token, nullptr, 16);
+							break;
+						case 1:
+							instID = stoi(token);
+							break;
+						default:
+							break;
+						}
 
-					tokenCnt++;
+						tokenCnt++;
+					}
+					dmg_midi_driver::midi->addNoiseReplacement(nr43v, instID);
 				}
-				dmg_midi_driver::midi->addNoiseReplacement(nr43v, instID);
+				else if (tagName == "wave")
+				{
+					std::string token;
+					u8 tokenCnt = 0;
+					u32 waveForm[4];
+					u8 instID;
+					bool useHarmonic;
+					while (strRest.length() > 0)
+					{
+						pos = strRest.find(",");
+						if (pos != std::string::npos)
+						{
+							token = util::trimfnc(strRest.substr(0, pos));
+							strRest = strRest.substr(pos + 1, std::string::npos);
+						}
+						else
+						{
+							token = util::trimfnc(strRest);
+							strRest = "";
+						}
+
+						switch (tokenCnt)
+						{
+						case 0:
+							for(u8 i = 0; i < 4; i++)
+								waveForm[i] = std::stoul(token.substr(i * 8, 8), nullptr, 16);
+							break;
+						case 1:
+							instID = stoi(token);
+							break;
+						case 2:
+							useHarmonic = (token == "Y" || token == "y");
+							break;
+						default:
+							break;
+						}
+
+						tokenCnt++;
+					}
+					dmg_midi_driver::midi->addWaveReplacement(waveForm, instID, useHarmonic);
 				}
 			}
 		}

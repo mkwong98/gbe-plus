@@ -453,6 +453,8 @@ void DMG_APU::generate_channel_3_samples(s16* stream, int length)
 					apu_stat.waveram_sample >>= apu_stat.channel[2].volume;
 					stream[x] = output_status ? (-32768 + (4369 * apu_stat.waveram_sample)) : -32768;
 				}
+				//mute if has midi replacement
+				if (dmg_midi_driver::midi->checkWaveHasReplace()) stream[x] = -32768;
 			}
 
 			//Continuously generate sound if necessary
@@ -470,8 +472,10 @@ void DMG_APU::generate_channel_3_samples(s16* stream, int length)
 
 				//Set NR52 flag
 				mem->memory_map[NR52] &= ~0x4;
+				dmg_midi_driver::midi->stopWave();
 			}
 		}
+
 	}
 
 	//Otherwise, generate silence

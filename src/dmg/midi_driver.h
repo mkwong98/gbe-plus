@@ -30,11 +30,26 @@ struct dmg_midi_replacement {
 	bool hasReplacement;
 };
 
+struct dmg_midi_wave {
+	u8 instID;
+	bool useHarmonic;
+	u32 waveRam[4];
+};
+
+struct dmg_midi_channel {
+	u8 pitch;
+	u8 volume;
+	u8 duty;
+	bool playing;
+	bool hasReplace;
+};
+
 class dmg_midi_driver
 {
 public:
 
 	static dmg_midi_driver* midi;
+	u32* waveRam;
 
 	dmg_midi_driver();
 	~dmg_midi_driver();
@@ -45,6 +60,8 @@ public:
 	void stopSound(u8 sq);
 	void playNoise(u8 nr43v, u8 vol, bool left, bool right);
 	void stopNoise();
+	void playWave(u8 vol, double freq, bool left, bool right);
+	void stopWave();
 	void pause();
 	void unpause();
 	void sq1SweepTo(double freq);
@@ -52,8 +69,10 @@ public:
 	void changeNoiseVolume(u8 vol);
 	void addReplacement(u8 sq, u8 duty, u8 insID, bool useHarmonic);
 	void addNoiseReplacement(u8 nr43v, u8 insID);
+	void addWaveReplacement(u32* waveForm, u8 insID, bool useHarmonic);
 	bool checkHasReplace(u8 sq);
 	bool checkNoiseHasReplace();
+	bool checkWaveHasReplace();
 
 private:
 	const u8 NOTE_ON = 0x90;
@@ -66,26 +85,18 @@ private:
 	const u8 CONTROLLER_PANORAMIC = 10;
 
 
-	struct dmg_midi_replacement {
-		u8 instID;
-		bool useHarmonic;
-		bool hasReplacement;
-	} instrument[2][4];
+	dmg_midi_replacement instrument[2][4];
 	u8 noise[256];
+	std::vector<dmg_midi_wave> wave;
 
 	double freqChart[128][2];
 
-	//midi Channels, 2 left and 2 right
-	struct midi_channels
-	{
-		u8 pitch;
-		u8 volume;
-		u8 duty;
-		bool playing;
-		bool hasReplace;
-	} channel[4];
+	//midi Channels, sq: 2 left and 2 right, wave: 1 left and 1 right
+	dmg_midi_channel channel[6];
+	u32 currentWaveID;
 	u8 currentNoise;
 	bool replaceNoise;
+	bool noiseHalf;
 
 	RtMidiOut* midiout;
 	void sendMidiMessage(u8 status, u8 data1, u8 data2, u8 len);
@@ -94,6 +105,7 @@ private:
 	void setInstrument(u8 c, u8 duty);
 	u8 frequencyToPitch(double freq);
 	u8 volumeConvert(u8 vol);
+	bool channelUseHarmonic(u8 c);
 };
 
 #endif // GB_MIDI_DATA
