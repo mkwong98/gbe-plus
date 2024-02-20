@@ -2,6 +2,8 @@
 #include "common\config.h"
 #include "common\util.h"
 
+
+
 dmg_midi_driver* dmg_midi_driver::midi = 0;
 
 dmg_midi_driver::dmg_midi_driver() {
@@ -31,6 +33,7 @@ dmg_midi_driver::dmg_midi_driver() {
 
 		for (u8 i = 0; i < 6; i++) {
 			channel[i].pitch = 0;
+			channel[i].sweepPitch = 0;
 			channel[i].playing = false;
 			channel[i].volume = 0;
 			channel[i].duty = 0;
@@ -38,6 +41,9 @@ dmg_midi_driver::dmg_midi_driver() {
 		currentNoise = 0;
 		replaceNoise = false;
 		noiseHalf = false;
+
+		//logfile.open("midilog.csv", std::ios::out);
+
 	}
 	catch (RtMidiError& error) {
 		midiout = 0;
@@ -47,12 +53,13 @@ dmg_midi_driver::dmg_midi_driver() {
 dmg_midi_driver::~dmg_midi_driver()
 {
 	if (midiout) {
-		for (u8 i = 0; i < 4; i++) {
+		for (u8 i = 0; i < 6; i++) {
 			sendNoteOff(i);
 		}
 		midiout->closePort();
 		delete midiout;
 	}
+	//logfile.close();
 }
 
 /****** initialize ******/
@@ -60,7 +67,6 @@ void dmg_midi_driver::init() {
 	if (midiout) {
 		//init midi
 		if (midiout->getPortCount()) {
-
 			for (u8 i = 0; i < 4; i++) {
 				if (config::use_stereo) {
 					//panoramic is fixed to left, left, right, right
@@ -81,10 +87,6 @@ void dmg_midi_driver::init() {
 				sendMidiMessage(CONTROLLER_CHANGE | 4, CONTROLLER_PANORAMIC, 0x40, 2);
 				sendMidiMessage(CONTROLLER_CHANGE | 5, CONTROLLER_PANORAMIC, 0x40, 2);
 			}
-
-			//config::osd_message = "init midi ";
-			//config::osd_count = 180;
-
 		}
 		else {
 			delete midiout;
@@ -98,10 +100,7 @@ void dmg_midi_driver::addReplacement(u8 sq, u8 duty, u8 insID, bool useHarmonic)
 	instrument[sq][duty].instID = insID;
 	instrument[sq][duty].hasReplacement = true;
 	instrument[sq][duty].useHarmonic = useHarmonic;
-	//config::osd_message = "add rep " + util::to_str(sq) + " " + util::to_str(duty) + " " + util::to_str(instrument[sq][duty].useHarmonic);
-	//config::osd_count = 180;
 }
-
 
 /****** Send message to midi device ******/
 void dmg_midi_driver::sendMidiMessage(u8 status, u8 data1, u8 data2, u8 len) {
@@ -110,11 +109,17 @@ void dmg_midi_driver::sendMidiMessage(u8 status, u8 data1, u8 data2, u8 len) {
 	if (len >= 1) message.push_back(data1);
 	if (len >= 2) message.push_back(data2);
 	midiout->sendMessage(&message);
+
+	//if ((m.status & 0x0f) == 0)
+	//	logfile << "Message," << util::to_hex_str(m.status) << "," << util::to_str(m.data[0]) << "," << util::to_str(m.data[1]) << "," << util::to_str(m.dataLen) << "\n";
+
 }
 
 /****** Stop a playing note on specific channel ******/
 void dmg_midi_driver::sendNoteOff(u8 c) {
 	if (channel[c].playing){
+		//if(c == 0)
+		//	logfile << "NoteOff," << util::to_str(c) << "," << util::to_str(channel[c].pitch) << "," << util::to_str(channel[c].sweepPitch) << "\n";
 		sendMidiMessage(NOTE_OFF | c, channel[c].pitch, 0, 2);
 		if (channelUseHarmonic(c)) {
 			if (channel[c].pitch <= 115)
@@ -128,6 +133,9 @@ void dmg_midi_driver::sendNoteOff(u8 c) {
 
 /****** Start playing a note on specific channel ******/
 void dmg_midi_driver::sendNoteOn(u8 c, u8 v, u8 p) {
+	//if (c == 0)
+	//	logfile << "NoteON," << util::to_str(c) << "," << util::to_str(p) << "\n";
+
 	bool useH = channelUseHarmonic(c);
 	if (useH) {
 		sendMidiMessage(CONTROLLER_CHANGE | c, CONTROLLER_VOLUME, v / 3, 2);
@@ -137,22 +145,19 @@ void dmg_midi_driver::sendNoteOn(u8 c, u8 v, u8 p) {
 	}
 	sendMidiMessage(NOTE_ON | c, p, 0x40, 2);
 	if (useH) {
-		//config::osd_message = "useH " + util::to_str(c) + " " + util::to_str(channel[c].duty) + " " + util::to_str(instrument[c][channel[c].duty].useHarmonic);
-		//config::osd_count = 180;
 		if (p <= 115)
 			sendMidiMessage(NOTE_ON | c, p + 12, 0x40, 2);
 		if (p >= 12)
 			sendMidiMessage(NOTE_ON | c, p - 12, 0x40, 2);
 	}
 	channel[c].pitch = p;
+	channel[c].sweepPitch = p;
 	channel[c].volume = v;
 	channel[c].playing = true;
 }
 
 /****** set the instrument for a channel ******/
 void dmg_midi_driver::setInstrument(u8 sq, u8 duty) {
-	//config::osd_message = "setInstrument " + util::to_str(c) + ", " + util::to_str(duty);
-	//config::osd_count = 180;
 	for (u8 i = 0; i <= 2; i += 2) {
 		sendMidiMessage(PROGRAM_CHANGE | (sq + i), instrument[sq][duty].instID, 0, 1);
 		channel[sq + i].duty = duty;
@@ -162,9 +167,11 @@ void dmg_midi_driver::setInstrument(u8 sq, u8 duty) {
 
 /****** set instrument on duty change******/
 void dmg_midi_driver::dutyChange(u8 sq, u8 duty) {
-	//config::osd_message = "duty change " + util::to_str(sq) + ", " + util::to_str(duty);
-	//config::osd_count = 180;
-	if(channel[sq].duty != duty) stopSound(sq);
+	if (channel[sq].duty != duty) stopSound(sq);
+
+	//if(sq == 0 && channel[sq].duty != duty)
+	//	logfile << "duty" << " " << util::to_str(sq) << " " << util::to_str(duty) << "\n";
+
 	if (instrument[sq][duty].hasReplacement) {
 		setInstrument(sq, duty);
 	}
@@ -178,7 +185,7 @@ void dmg_midi_driver::dutyChange(u8 sq, u8 duty) {
 
 /****** play sound ******/
 void dmg_midi_driver::playSound(u8 sq, u8 vol, double freq, bool left, bool right){	
-	if (!channel[sq].hasReplace) return;
+	if (blocking || !channel[sq].hasReplace) return;
 
 	//find pitch from frequency
 	u8 p = frequencyToPitch(freq);
@@ -189,34 +196,52 @@ void dmg_midi_driver::playSound(u8 sq, u8 vol, double freq, bool left, bool righ
 
 		//keep the pitch data for later, in case of envlope up
 		channel[sq].pitch = p;
+		channel[sq].sweepPitch = p;
 		channel[sq + 2].pitch = p;
+		channel[sq + 2].sweepPitch = p;
 		return;
 	}
 
 	u8 v = volumeConvert(vol);
 
-	//config::osd_message = "playSound " + util::to_str(sq) + ", " + util::to_str(v) + ", " + util::to_str(p);
-	//config::osd_count = 180;
+	////check is playing already before starting
+	//if (sq == 0)
+	//	logfile << "playsound," << util::to_str(sq) << "," << util::to_str(p) << "\n";
 
-	//check is playing already before starting
+	if (sq == 0 && channel[0].sweepPitch != channel[0].pitch) {
+		clearSweep();
+	}
+
+	blocking = true;
+	bool needWork;
 	for (u8 i = 0; i <= 2; i += 2) {
-		if ((left && i == 0) || (right && i == 2)) {
-			bool needWork = true;
-			if (channel[sq + i].playing) {
-				if (channel[sq + i].volume != v || channel[sq + i].pitch != p)
-					sendNoteOff(sq + i);
-				else
-					needWork = false;
+		needWork = true;
+		if ((i == 0 && !left) || i == 2 && !right) {
+			needWork = false;
+			if (channel[sq + i].playing) sendNoteOff(sq + i);
+		}
+		else if(channel[sq + i].playing) {
+			if (channel[sq + i].pitch == p && channel[sq + i].volume == v) {
+				needWork = false;
 			}
-			if (needWork) {
-				sendNoteOn(sq + i, v, p);
+			else {
+				sendNoteOff(sq + i);
 			}
 		}
+		if (needWork) {
+			sendNoteOn(sq + i, v, p);
+		}
 	}
+	blocking = false;
 }
 
 /****** stop sound ******/
 void dmg_midi_driver::stopSound(u8 sq) {
+	//if (sq == 0)
+	//	logfile << "stopsound," << util::to_str(sq) << "\n";
+	if (sq == 0 && channel[0].sweepPitch != channel[0].pitch) {
+		clearSweep();
+	}
 	sendNoteOff(sq);
 	sendNoteOff(sq + 2);
 }
@@ -261,18 +286,71 @@ void dmg_midi_driver::unpause() {
 
 
 /****** handle sweep up or down ******/
-void dmg_midi_driver::sq1SweepTo(double freq) {
+void dmg_midi_driver::sq1SweepTo(u8 vol, double freq, bool left, bool right) {
+	if (blocking) return;
 	u8 p = frequencyToPitch(freq);
-	u16 dif;
-	for (u8 i = 0; i <= 2; i += 2) {
-		if (channel[i].playing) {
-			dif = 0x2000 + p - channel[i].pitch;
-			sendMidiMessage(PITCH_BEND | i, dif & 0x007F, dif >> 7, 2);
-			channel[i].pitch = p;
+	if ((channel[0].playing && channel[0].sweepPitch != p) || (channel[2].playing && channel[2].sweepPitch != p)) {
+		u8 dif;
+		//logfile << "sweep," << "," << util::to_str(channel[0].sweepPitch) << "," << util::to_str(p) << "\n";
+		if (channel[0].playing) {
+			if (p > channel[0].sweepPitch) 
+				dif = p - channel[0].sweepPitch;
+			else
+				dif = channel[0].sweepPitch - p;
+		}
+		else if (channel[2].playing) {
+			if (p > channel[2].sweepPitch)
+				dif = p - channel[2].sweepPitch;
+			else
+				dif = channel[2].sweepPitch - p;
+		}
+		//play sound if the difference is over 2
+		if (dif <= 2) {
+			sweep(p);
+		}
+		else {
+			playSound(0, vol, freq, left, right);
 		}
 	}
-	//config::osd_message = "sweep " + util::to_str(p);
-	//config::osd_count = 180;
+}
+
+/******** reverse pitch bend ********/
+void dmg_midi_driver::clearSweep() {
+	//logfile << "clear sweep," << "," << util::to_str(channel[0].sweepPitch) << "," << util::to_str(channel[0].pitch) << "\n";
+	sweep(channel[0].pitch);
+}
+
+/******* send pitch bend until p ******/
+void dmg_midi_driver::sweep(u8 p) {
+	blocking = true;
+	u8 dif;
+	for (u8 i = 0; i <= 2; i += 2) {
+		if (channel[i].playing) {
+			if (p > channel[i].sweepPitch) {
+				dif = p - channel[i].sweepPitch;
+				if (dif > 1) {
+					sendMidiMessage(PITCH_BEND | i, 0, 0x40, 2);
+					channel[i].sweepPitch += 2;
+				}
+				else if (dif == 1) {
+					sendMidiMessage(PITCH_BEND | i, 0, 0x30, 2);
+					channel[i].sweepPitch++;
+				}
+			}
+			else if (p < channel[i].sweepPitch) {
+				dif = channel[i].sweepPitch - p;
+				if (dif > 1) {
+					sendMidiMessage(PITCH_BEND | i, 0, 0x00, 2);
+					channel[i].sweepPitch -= 2;
+				}
+				else {
+					sendMidiMessage(PITCH_BEND | i, 0, 0x10, 2);
+					channel[i].sweepPitch--;
+				}
+			}
+		}
+	}
+	blocking = false;
 }
 
 /****** convert frequency to pitch ******/
@@ -299,6 +377,10 @@ u8 dmg_midi_driver::frequencyToPitch(double freq) {
 
 /****** set volume ******/
 void dmg_midi_driver::changeVolume(u8 sq, u8 vol) {
+	if (vol == 0) {
+		stopSound(sq);
+		return;
+	}
 	u8 v = volumeConvert(vol);
 	for (u8 i = 0; i <= 2; i += 2) {
 		if (channel[sq + i].playing) {
@@ -311,8 +393,6 @@ void dmg_midi_driver::changeVolume(u8 sq, u8 vol) {
 			channel[sq + i].volume = v;
 		}
 	}
-	//config::osd_message = "envelope " + util::to_str(v);
-	//config::osd_count = 180;
 }
 
 
@@ -326,9 +406,6 @@ u8 dmg_midi_driver::volumeConvert(u8 vol) {
 
 /****** query whether the channel has replacement ******/
 bool dmg_midi_driver::checkHasReplace(u8 sq) {
-	//config::osd_message = "checkHasReplace " + util::to_str(sq);
-	//config::osd_count = 180;
-
 	return channel[sq].hasReplace;
 }
 
@@ -374,8 +451,6 @@ void dmg_midi_driver::changeNoiseVolume(u8 vol) {
 /****** stop noise replacement ******/
 void dmg_midi_driver::stopNoise() {
 	if (replaceNoise){
-		//config::osd_message = "stop noise " + util::to_str(currentNoise);
-		//config::osd_count = 180;
 		sendMidiMessage(NOTE_OFF | 9, currentNoise, 0, 2);
 		replaceNoise = false;
 	}
@@ -393,12 +468,11 @@ void dmg_midi_driver::playWave(u8 vol, double freq, bool left, bool right) {
 
 	u32 newWaveID;
 	for (u32 i = 0; i < wave.size(); i++) {
-		if (memcmp(wave[i].waveRam, waveRam, 16)) {
+		if (memcmp(wave[i].waveRam, waveRam, 16) == 0) {
 			newWaveID = i;
 			break;
 		}
 		else if (i == wave.size() - 1) {
-			//no match
 			return;
 		}
 	}
@@ -412,27 +486,32 @@ void dmg_midi_driver::playWave(u8 vol, double freq, bool left, bool right) {
 		return;
 	}
 
-	u8 v = volumeConvert(0x0F >> vol);
+	bool waveChanged = newWaveID != currentWaveID;
+	currentWaveID = newWaveID;
+
+	u8 v = volumeConvert(0x0F >> vol) * wave[currentWaveID].volume / 100;
 
 	//check is playing already before starting
+	bool needWork;
 	for (u8 i = 4; i <= 5; i++) {
-		if ((left && i == 4) || (right && i == 5)) {
-			bool needWork = true;
-			if (channel[i].playing) {
-				if (channel[i].volume != v || channel[i].pitch != p || newWaveID != currentWaveID)
-					sendNoteOff(i);
-				else
-					needWork = false;
+		needWork = true;
+		if ((i == 4 && !left) || i == 5 && !right) {
+			needWork = false;
+			sendNoteOff(i);
+		}
+		else if (channel[i].playing) {
+			if (channel[i].volume != v || channel[i].pitch != p || waveChanged) {
+				sendNoteOff(i);
 			}
-			if (needWork) {
-				//config::osd_message = "playWave " + util::to_str(i) + " " + util::to_str(v) + " " + util::to_str(p);
-				//config::osd_count = 180;
-				sendMidiMessage(PROGRAM_CHANGE | i, wave[newWaveID].instID, 0, 1);
-				sendNoteOn(i, v, p);
+			else {
+				needWork = false;
 			}
 		}
+		if (needWork) {
+			sendMidiMessage(PROGRAM_CHANGE | i, wave[currentWaveID].instID, 0, 1);
+			sendNoteOn(i, v, p);
+		}
 	}
-	currentWaveID = newWaveID;
 }
 
 /****** stop wave replacement ******/
@@ -451,18 +530,21 @@ bool dmg_midi_driver::channelUseHarmonic(u8 c) {
 }
 
 /****** add a wave replacement ******/
-void dmg_midi_driver::addWaveReplacement(u32* waveForm, u8 insID, bool useHarmonic) {
+void dmg_midi_driver::addWaveReplacement(u8* waveForm, u8 insID, bool useHarmonic, u8 vol) {
 	dmg_midi_wave w;
 	w.instID = insID;
 	w.useHarmonic = useHarmonic;
-	for(u8 i = 0; i < 4; i++)
+	w.volume = vol;
+	for(u8 i = 0; i < 16; i++)
 		w.waveRam[i] = waveForm[i];
 
 	wave.push_back(w);
-	//config::osd_message = "add Wave " + util::to_str(waveForm[0]);
-	//config::osd_count = 180;
 }
 
 bool dmg_midi_driver::checkWaveHasReplace() {
 	return channel[4].playing;
 }
+
+//void dmg_midi_driver::log(std::string a) {
+//	logfile << a.c_str() << "\n";
+//}

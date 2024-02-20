@@ -225,7 +225,8 @@ void DMG_APU::generate_channel_1_samples(s16* stream, int length)
 							mem->memory_map[NR13] = (apu_stat.channel[0].raw_frequency & 0xFF);
 							mem->memory_map[NR14] &= ~0x7;
 							mem->memory_map[NR14] |= ((apu_stat.channel[0].raw_frequency >> 8) & 0x7);
-							dmg_midi_driver::midi->sq1SweepTo(apu_stat.channel[0].output_frequency);
+							dmg_midi_driver::midi->sq1SweepTo(apu_stat.channel[0].volume, apu_stat.channel[0].output_frequency, apu_stat.channel[0].so1_output, apu_stat.channel[0].so2_output);
+							//dmg_midi_driver::midi->log("sweep up");
 						}
 					}
 
@@ -242,7 +243,8 @@ void DMG_APU::generate_channel_1_samples(s16* stream, int length)
 							mem->memory_map[NR13] = (apu_stat.channel[0].raw_frequency & 0xFF);
 							mem->memory_map[NR14] &= ~0x7;
 							mem->memory_map[NR14] |= ((apu_stat.channel[0].raw_frequency >> 8) & 0x7);
-							dmg_midi_driver::midi->sq1SweepTo(apu_stat.channel[0].output_frequency);
+							dmg_midi_driver::midi->sq1SweepTo(apu_stat.channel[0].volume, apu_stat.channel[0].output_frequency, apu_stat.channel[0].so1_output, apu_stat.channel[0].so2_output);
+							//dmg_midi_driver::midi->log("sweep down");
 						}
 					}
 
@@ -290,6 +292,13 @@ void DMG_APU::generate_channel_1_samples(s16* stream, int length)
 				
 				//mute if has midi replacement
 				if(dmg_midi_driver::midi->checkHasReplace(0)) stream[x] = -32768;
+				else {
+					dmg_midi_driver::midi->playSound(0, apu_stat.channel[0].volume, apu_stat.channel[0].output_frequency, apu_stat.channel[0].so1_output, apu_stat.channel[0].so2_output);
+					if (dmg_midi_driver::midi->checkHasReplace(0)) {
+						//dmg_midi_driver::midi->log("missed replacement");
+						stream[x] = -32768;
+					}
+				}
 			}
 
 			//Continuously generate sound if necessary
@@ -308,6 +317,7 @@ void DMG_APU::generate_channel_1_samples(s16* stream, int length)
 				//Set NR52 flag
 				mem->memory_map[NR52] &= ~0x1;
 
+				//dmg_midi_driver::midi->log("duration end");
 				dmg_midi_driver::midi->stopSound(0);
 			}
 		}
@@ -317,6 +327,7 @@ void DMG_APU::generate_channel_1_samples(s16* stream, int length)
 	else 
 	{
 		for(int x = 0; x < length; x++) { stream[x] = -32768; }
+		dmg_midi_driver::midi->stopSound(0);
 	}
 }
 
@@ -373,6 +384,10 @@ void DMG_APU::generate_channel_2_samples(s16* stream, int length)
 
 				//mute if has midi replacement
 				if (dmg_midi_driver::midi->checkHasReplace(1)) stream[x] = -32768;
+				else {
+					dmg_midi_driver::midi->playSound(1, apu_stat.channel[1].volume, apu_stat.channel[1].output_frequency, apu_stat.channel[1].so1_output, apu_stat.channel[1].so2_output);
+					if (dmg_midi_driver::midi->checkHasReplace(1)) stream[x] = -32768;
+				}
 			}
 
 			//Continuously generate sound if necessary
@@ -399,6 +414,7 @@ void DMG_APU::generate_channel_2_samples(s16* stream, int length)
 	else 
 	{
 		for(int x = 0; x < length; x++) { stream[x] = -32768; }
+		dmg_midi_driver::midi->stopSound(1);
 	}
 }
 
@@ -454,7 +470,15 @@ void DMG_APU::generate_channel_3_samples(s16* stream, int length)
 					stream[x] = output_status ? (-32768 + (4369 * apu_stat.waveram_sample)) : -32768;
 				}
 				//mute if has midi replacement
-				if (dmg_midi_driver::midi->checkWaveHasReplace()) stream[x] = -32768;
+				if (dmg_midi_driver::midi->checkWaveHasReplace()) {
+					stream[x] = -32768;
+				}
+				else {
+					dmg_midi_driver::midi->playWave(apu_stat.channel[2].volume, apu_stat.channel[2].output_frequency, apu_stat.channel[2].so1_output, apu_stat.channel[2].so2_output);
+					if (dmg_midi_driver::midi->checkWaveHasReplace()) {
+						stream[x] = -32768;
+					}
+				}
 			}
 
 			//Continuously generate sound if necessary
@@ -482,6 +506,7 @@ void DMG_APU::generate_channel_3_samples(s16* stream, int length)
 	else 
 	{
 		for(int x = 0; x < length; x++) { stream[x] = -32768; }
+		dmg_midi_driver::midi->stopWave();
 	}
 }
 
@@ -579,6 +604,12 @@ void DMG_APU::generate_channel_4_samples(s16* stream, int length)
 				if (dmg_midi_driver::midi->checkNoiseHasReplace()) {
 					stream[x] = -32768;
 				}
+				else {
+					dmg_midi_driver::midi->playNoise(mem->memory_map[NR43], apu_stat.channel[3].volume, apu_stat.channel[3].so1_output, apu_stat.channel[3].so2_output);
+					if (dmg_midi_driver::midi->checkNoiseHasReplace()) {
+						stream[x] = -32768;
+					}
+				}
 			}
 
 			//Continuously generate sound if necessary
@@ -606,6 +637,7 @@ void DMG_APU::generate_channel_4_samples(s16* stream, int length)
 	else 
 	{
 		for(int x = 0; x < length; x++) { stream[x] = -32768; }
+		dmg_midi_driver::midi->stopNoise();
 	}
 }
 

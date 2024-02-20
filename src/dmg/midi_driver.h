@@ -5,6 +5,9 @@
 #include "rtmidi/RtMidi.h"
 #include "common.h"
 
+#include <fstream>
+#include <sstream>
+
 
 /*
 0 = Acoustic Grand Piano
@@ -33,11 +36,13 @@ struct dmg_midi_replacement {
 struct dmg_midi_wave {
 	u8 instID;
 	bool useHarmonic;
-	u32 waveRam[4];
+	u8 waveRam[16];
+	u8 volume;
 };
 
 struct dmg_midi_channel {
 	u8 pitch;
+	u8 sweepPitch;
 	u8 volume;
 	u8 duty;
 	bool playing;
@@ -49,7 +54,7 @@ class dmg_midi_driver
 public:
 
 	static dmg_midi_driver* midi;
-	u32* waveRam;
+	u8* waveRam;
 
 	dmg_midi_driver();
 	~dmg_midi_driver();
@@ -64,15 +69,17 @@ public:
 	void stopWave();
 	void pause();
 	void unpause();
-	void sq1SweepTo(double freq);
+	void sq1SweepTo(u8 vol, double freq, bool left, bool right);
 	void changeVolume(u8 sq, u8 vol);
 	void changeNoiseVolume(u8 vol);
 	void addReplacement(u8 sq, u8 duty, u8 insID, bool useHarmonic);
 	void addNoiseReplacement(u8 nr43v, u8 insID);
-	void addWaveReplacement(u32* waveForm, u8 insID, bool useHarmonic);
+	void addWaveReplacement(u8* waveForm, u8 insID, bool useHarmonic, u8 vol);
 	bool checkHasReplace(u8 sq);
 	bool checkNoiseHasReplace();
 	bool checkWaveHasReplace();
+
+	//void log(std::string a);
 
 private:
 	const u8 NOTE_ON = 0x90;
@@ -97,6 +104,7 @@ private:
 	u8 currentNoise;
 	bool replaceNoise;
 	bool noiseHalf;
+	bool blocking;
 
 	RtMidiOut* midiout;
 	void sendMidiMessage(u8 status, u8 data1, u8 data2, u8 len);
@@ -106,6 +114,9 @@ private:
 	u8 frequencyToPitch(double freq);
 	u8 volumeConvert(u8 vol);
 	bool channelUseHarmonic(u8 c);
+	void clearSweep();
+	void sweep(u8 p);
+	//std::ofstream logfile;
 };
 
 #endif // GB_MIDI_DATA

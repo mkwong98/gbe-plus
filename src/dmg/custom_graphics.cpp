@@ -638,8 +638,9 @@ bool GB_LCD::load_manifest(std::string filename)
 				{
 					std::string token;
 					u8 tokenCnt = 0;
-					u32 waveForm[4];
+					u8 waveForm[16];
 					u8 instID;
+					u8 vol;
 					bool useHarmonic;
 					while (strRest.length() > 0)
 					{
@@ -658,8 +659,8 @@ bool GB_LCD::load_manifest(std::string filename)
 						switch (tokenCnt)
 						{
 						case 0:
-							for(u8 i = 0; i < 4; i++)
-								waveForm[i] = std::stoul(token.substr(i * 8, 8), nullptr, 16);
+							for(u8 i = 0; i < 16; i++)
+								waveForm[i] = std::stoul(token.substr(i * 2, 2), nullptr, 16);
 							break;
 						case 1:
 							instID = stoi(token);
@@ -667,13 +668,16 @@ bool GB_LCD::load_manifest(std::string filename)
 						case 2:
 							useHarmonic = (token == "Y" || token == "y");
 							break;
+						case 3:
+							vol = stoi(token);
+							break;
 						default:
 							break;
 						}
 
 						tokenCnt++;
 					}
-					dmg_midi_driver::midi->addWaveReplacement(waveForm, instID, useHarmonic);
+					dmg_midi_driver::midi->addWaveReplacement(waveForm, instID, useHarmonic, vol);
 				}
 			}
 		}
