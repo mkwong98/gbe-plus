@@ -291,7 +291,8 @@ void DMG_APU::generate_channel_1_samples(s16* stream, int length)
 				else { stream[x] = -32768; }
 				
 				//mute if has midi replacement
-				if(dmg_midi_driver::midi->checkHasReplace(0)) stream[x] = -32768;
+				if (apu_stat.channel[0].volume == 0) dmg_midi_driver::midi->stopSound(0);
+				else if(dmg_midi_driver::midi->checkHasReplace(0)) stream[x] = -32768;
 				else {
 					dmg_midi_driver::midi->playSound(0, apu_stat.channel[0].volume, apu_stat.channel[0].output_frequency, apu_stat.channel[0].so1_output, apu_stat.channel[0].so2_output);
 					if (dmg_midi_driver::midi->checkHasReplace(0)) {
@@ -383,7 +384,8 @@ void DMG_APU::generate_channel_2_samples(s16* stream, int length)
 				else { stream[x] = -32768; }
 
 				//mute if has midi replacement
-				if (dmg_midi_driver::midi->checkHasReplace(1)) stream[x] = -32768;
+				if (apu_stat.channel[1].volume == 0) dmg_midi_driver::midi->stopSound(1);
+				else if (dmg_midi_driver::midi->checkHasReplace(1)) stream[x] = -32768;
 				else {
 					dmg_midi_driver::midi->playSound(1, apu_stat.channel[1].volume, apu_stat.channel[1].output_frequency, apu_stat.channel[1].so1_output, apu_stat.channel[1].so2_output);
 					if (dmg_midi_driver::midi->checkHasReplace(1)) stream[x] = -32768;
@@ -469,8 +471,10 @@ void DMG_APU::generate_channel_3_samples(s16* stream, int length)
 					apu_stat.waveram_sample >>= apu_stat.channel[2].volume;
 					stream[x] = output_status ? (-32768 + (4369 * apu_stat.waveram_sample)) : -32768;
 				}
+
 				//mute if has midi replacement
-				if (dmg_midi_driver::midi->checkWaveHasReplace()) {
+				if (apu_stat.channel[2].volume == 4 || !output_status) dmg_midi_driver::midi->stopWave();
+				else if (dmg_midi_driver::midi->checkWaveHasReplace()) {
 					stream[x] = -32768;
 				}
 				else {
@@ -601,7 +605,8 @@ void DMG_APU::generate_channel_4_samples(s16* stream, int length)
 				else { stream[x] = -32768; }
 
 				//mute if has midi replacement
-				if (dmg_midi_driver::midi->checkNoiseHasReplace()) {
+				if (apu_stat.channel[3].volume == 0) dmg_midi_driver::midi->stopNoise();
+				else if (dmg_midi_driver::midi->checkNoiseHasReplace()) {
 					stream[x] = -32768;
 				}
 				else {

@@ -110,16 +110,16 @@ void dmg_midi_driver::sendMidiMessage(u8 status, u8 data1, u8 data2, u8 len) {
 	if (len >= 2) message.push_back(data2);
 	midiout->sendMessage(&message);
 
-	//if ((m.status & 0x0f) == 0)
-	//	logfile << "Message," << util::to_hex_str(m.status) << "," << util::to_str(m.data[0]) << "," << util::to_str(m.data[1]) << "," << util::to_str(m.dataLen) << "\n";
+	//if ((status & 0x0f) == 4)
+	//	logfile << "Message," << util::to_hex_str(status) << "," << util::to_str(data1) << "," << util::to_str(data2) << "," << util::to_str(len) << "\n";
 
 }
 
 /****** Stop a playing note on specific channel ******/
 void dmg_midi_driver::sendNoteOff(u8 c) {
 	if (channel[c].playing){
-		//if(c == 0)
-		//	logfile << "NoteOff," << util::to_str(c) << "," << util::to_str(channel[c].pitch) << "," << util::to_str(channel[c].sweepPitch) << "\n";
+		//if(c == 4)
+		//	logfile << "NoteOff," << util::to_str(c) << "," << util::to_str(channel[c].pitch) << "\n";
 		sendMidiMessage(NOTE_OFF | c, channel[c].pitch, 0, 2);
 		if (channelUseHarmonic(c)) {
 			if (channel[c].pitch <= 115)
@@ -133,7 +133,7 @@ void dmg_midi_driver::sendNoteOff(u8 c) {
 
 /****** Start playing a note on specific channel ******/
 void dmg_midi_driver::sendNoteOn(u8 c, u8 v, u8 p) {
-	//if (c == 0)
+	//if (c == 4)
 	//	logfile << "NoteON," << util::to_str(c) << "," << util::to_str(p) << "\n";
 
 	bool useH = channelUseHarmonic(c);
@@ -491,6 +491,8 @@ void dmg_midi_driver::playWave(u8 vol, double freq, bool left, bool right) {
 
 	u8 v = volumeConvert(0x0F >> vol) * wave[currentWaveID].volume / 100;
 
+	//logfile << "Playwave" << "\n";
+
 	//check is playing already before starting
 	bool needWork;
 	for (u8 i = 4; i <= 5; i++) {
@@ -508,7 +510,8 @@ void dmg_midi_driver::playWave(u8 vol, double freq, bool left, bool right) {
 			}
 		}
 		if (needWork) {
-			sendMidiMessage(PROGRAM_CHANGE | i, wave[currentWaveID].instID, 0, 1);
+			if (waveChanged)
+				sendMidiMessage(PROGRAM_CHANGE | i, wave[currentWaveID].instID, 0, 1);
 			sendNoteOn(i, v, p);
 		}
 	}
@@ -516,6 +519,7 @@ void dmg_midi_driver::playWave(u8 vol, double freq, bool left, bool right) {
 
 /****** stop wave replacement ******/
 void dmg_midi_driver::stopWave() {
+	//logfile << "Stopwave" << "\n";
 	sendNoteOff(4);
 	sendNoteOff(5);
 }
