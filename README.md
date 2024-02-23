@@ -1,3 +1,6 @@
+gbe-hd is a heavily cut version of gbe+ with the goal of replacing the HD pack feature with one which resembles the HD pack in Mesen. Many features are cut or broken in the process. This implementation of the HD pack feature is not compatible with existing GBE+ HD packs. Output to midi is added to the HD pack feature.
+
+From the original:
 # gbe-plus
 
 GB Enhanced+ is a DMG/GBC/GBA emulator and experimental NDS emulator. It is the successor to the original GB Enhanced project with a focus on enhancements and emulating as much of the Game Boy as possible.
