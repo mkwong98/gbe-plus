@@ -30,6 +30,7 @@ struct dmg_midi_message {
 struct dmg_midi_replacement {
 	u8 instID;
 	bool useHarmonic;
+	u8 volume;
 	bool hasReplacement;
 };
 
@@ -37,6 +38,11 @@ struct dmg_midi_wave {
 	u8 instID;
 	bool useHarmonic;
 	u8 waveRam[16];
+	u8 volume;
+};
+
+struct dmg_midi_noise {
+	u8 instID;
 	u8 volume;
 };
 
@@ -72,8 +78,8 @@ public:
 	void sq1SweepTo(u8 vol, double freq, bool left, bool right);
 	void changeVolume(u8 sq, u8 vol);
 	void changeNoiseVolume(u8 vol);
-	void addReplacement(u8 sq, u8 duty, u8 insID, bool useHarmonic);
-	void addNoiseReplacement(u8 nr43v, u8 insID);
+	void addReplacement(u8 sq, u8 duty, u8 insID, bool useHarmonic, u8 vol);
+	void addNoiseReplacement(u8 nr43v, u8 insID, u8 vol);
 	void addWaveReplacement(u8* waveForm, u8 insID, bool useHarmonic, u8 vol);
 	bool checkHasReplace(u8 sq);
 	bool checkNoiseHasReplace();
@@ -93,7 +99,7 @@ private:
 
 
 	dmg_midi_replacement instrument[2][4];
-	u8 noise[256];
+	dmg_midi_noise noise[256];
 	std::vector<dmg_midi_wave> wave;
 
 	double freqChart[128][2];

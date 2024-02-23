@@ -28,7 +28,7 @@ dmg_midi_driver::dmg_midi_driver() {
 		}
 
 		for (u16 i = 0; i < 256; i++) {
-			noise[i] = 0;
+			noise[i].instID = 0;
 		}
 
 		for (u8 i = 0; i < 6; i++) {
@@ -39,6 +39,7 @@ dmg_midi_driver::dmg_midi_driver() {
 			channel[i].duty = 0;
 		}
 		currentNoise = 0;
+		currentWaveID = 0xFFFFFFFF;
 		replaceNoise = false;
 		noiseHalf = false;
 
@@ -96,10 +97,11 @@ void dmg_midi_driver::init() {
 }
 
 /****** add mapping to instrument ******/
-void dmg_midi_driver::addReplacement(u8 sq, u8 duty, u8 insID, bool useHarmonic) {
+void dmg_midi_driver::addReplacement(u8 sq, u8 duty, u8 insID, bool useHarmonic, u8 vol) {
 	instrument[sq][duty].instID = insID;
 	instrument[sq][duty].hasReplacement = true;
 	instrument[sq][duty].useHarmonic = useHarmonic;
+	instrument[sq][duty].volume = vol;
 }
 
 /****** Send message to midi device ******/
@@ -202,7 +204,7 @@ void dmg_midi_driver::playSound(u8 sq, u8 vol, double freq, bool left, bool righ
 		return;
 	}
 
-	u8 v = volumeConvert(vol);
+	u16 v = volumeConvert(vol) * instrument[sq][channel[sq].duty].volume / 100;
 
 	////check is playing already before starting
 	//if (sq == 0)
@@ -410,17 +412,18 @@ bool dmg_midi_driver::checkHasReplace(u8 sq) {
 }
 
 /****** add noise replacement for a specific nr43 value ******/
-void dmg_midi_driver::addNoiseReplacement(u8 nr43v, u8 insID) {
-	noise[nr43v] = insID;
+void dmg_midi_driver::addNoiseReplacement(u8 nr43v, u8 insID, u8 vol) {
+	noise[nr43v].instID = insID;
+	noise[nr43v].volume = vol;
 }
 
 /****** play noise replacement ******/
 void dmg_midi_driver::playNoise(u8 nr43v, u8 vol, bool left, bool right) {
 	if (replaceNoise) stopNoise();
-	if (noise[nr43v] && (left || right)) {
+	if (noise[nr43v].instID && (left || right)) {
 		sendMidiMessage(CONTROLLER_CHANGE | 9, CONTROLLER_VOLUME, volumeConvert(vol), 2);
 		//full velocity when centre, half otherwise
-		u8 velocity;
+		u16 velocity;
 		if ((left && right) || !config::use_stereo) {
 			sendMidiMessage(CONTROLLER_CHANGE | 9, CONTROLLER_PANORAMIC, 0x40, 2);
 			velocity = 0x40;
@@ -436,10 +439,14 @@ void dmg_midi_driver::playNoise(u8 nr43v, u8 vol, bool left, bool right) {
 				sendMidiMessage(CONTROLLER_CHANGE | 9, CONTROLLER_PANORAMIC, 0x7F, 2);
 			}
 		}
-		sendMidiMessage(NOTE_ON | 9, noise[nr43v], velocity, 2);
+		velocity = velocity * noise[nr43v].volume / 100;
+		sendMidiMessage(NOTE_ON | 9, noise[nr43v].instID, velocity, 2);
 		currentNoise = nr43v;
 		replaceNoise = true;
 	}
+	//if(!noise[nr43v])
+	//	logfile << "unmatched noise:" << util::to_hex_strXX(nr43v) << "\n";
+
 }
 
 /****** change the volume of noise channel ******/
@@ -464,7 +471,14 @@ bool dmg_midi_driver::checkNoiseHasReplace() {
 
 /****** play wave replacement ******/
 void dmg_midi_driver::playWave(u8 vol, double freq, bool left, bool right) {
-	if (!wave.size()) return;
+	if (!wave.size()) {
+		//logfile << "unmatched wave:" << util::to_hex_strXX(waveRam[0]) << util::to_hex_strXX(waveRam[1]) << util::to_hex_strXX(waveRam[2]) << util::to_hex_strXX(waveRam[3]);
+		//logfile << util::to_hex_strXX(waveRam[4]) << util::to_hex_strXX(waveRam[5]) << util::to_hex_strXX(waveRam[6]) << util::to_hex_strXX(waveRam[7]);
+		//logfile << util::to_hex_strXX(waveRam[8]) << util::to_hex_strXX(waveRam[9]) << util::to_hex_strXX(waveRam[10]) << util::to_hex_strXX(waveRam[11]);
+		//logfile << util::to_hex_strXX(waveRam[12]) << util::to_hex_strXX(waveRam[13]) << util::to_hex_strXX(waveRam[14]) << util::to_hex_strXX(waveRam[15]) << "\n";
+
+		return;
+	}
 
 	u32 newWaveID;
 	for (u32 i = 0; i < wave.size(); i++) {
@@ -473,6 +487,11 @@ void dmg_midi_driver::playWave(u8 vol, double freq, bool left, bool right) {
 			break;
 		}
 		else if (i == wave.size() - 1) {
+			//logfile << "unmatched wave:" << util::to_hex_strXX(waveRam[0]) << util::to_hex_strXX(waveRam[1]) << util::to_hex_strXX(waveRam[2]) << util::to_hex_strXX(waveRam[3]);
+			//logfile << util::to_hex_strXX(waveRam[4]) << util::to_hex_strXX(waveRam[5]) << util::to_hex_strXX(waveRam[6]) << util::to_hex_strXX(waveRam[7]);
+			//logfile << util::to_hex_strXX(waveRam[8]) << util::to_hex_strXX(waveRam[9]) << util::to_hex_strXX(waveRam[10]) << util::to_hex_strXX(waveRam[11]) ;
+			//logfile << util::to_hex_strXX(waveRam[12]) << util::to_hex_strXX(waveRam[13]) << util::to_hex_strXX(waveRam[14]) << util::to_hex_strXX(waveRam[15]) << "\n";
+
 			return;
 		}
 	}
@@ -489,9 +508,7 @@ void dmg_midi_driver::playWave(u8 vol, double freq, bool left, bool right) {
 	bool waveChanged = newWaveID != currentWaveID;
 	currentWaveID = newWaveID;
 
-	u8 v = volumeConvert(0x0F >> vol) * wave[currentWaveID].volume / 100;
-
-	//logfile << "Playwave" << "\n";
+	u16 v = volumeConvert(0x0F >> vol) * wave[currentWaveID].volume / 100;
 
 	//check is playing already before starting
 	bool needWork;
@@ -546,7 +563,7 @@ void dmg_midi_driver::addWaveReplacement(u8* waveForm, u8 insID, bool useHarmoni
 }
 
 bool dmg_midi_driver::checkWaveHasReplace() {
-	return channel[4].playing;
+	return channel[4].playing || channel[5].playing;
 }
 
 //void dmg_midi_driver::log(std::string a) {

@@ -562,6 +562,7 @@ bool GB_LCD::load_manifest(std::string filename)
 					u8 duty;
 					u8 instID;
 					bool useHarmonic;
+					u8 vol = 100;
 					while (strRest.length() > 0)
 					{
 						pos = strRest.find(",");
@@ -590,13 +591,16 @@ bool GB_LCD::load_manifest(std::string filename)
 						case 3:
 							useHarmonic = (token == "Y" || token == "y");
 							break;
+						case 4:
+							vol = stoi(token);
+							break;
 						default:
 							break;
 						}
 
 						tokenCnt++;
 					}
-					dmg_midi_driver::midi->addReplacement(sq, duty, instID, useHarmonic);
+					dmg_midi_driver::midi->addReplacement(sq, duty, instID, useHarmonic, vol);
 				}
 				else if (tagName == "noise")
 				{
@@ -604,6 +608,7 @@ bool GB_LCD::load_manifest(std::string filename)
 					u8 tokenCnt = 0;
 					u8 nr43v;
 					u8 instID;
+					u8 vol = 100;
 					while (strRest.length() > 0)
 					{
 						pos = strRest.find(",");
@@ -626,13 +631,16 @@ bool GB_LCD::load_manifest(std::string filename)
 						case 1:
 							instID = stoi(token);
 							break;
+						case 2:
+							vol = stoi(token);
+							break;
 						default:
 							break;
 						}
 
 						tokenCnt++;
 					}
-					dmg_midi_driver::midi->addNoiseReplacement(nr43v, instID);
+					dmg_midi_driver::midi->addNoiseReplacement(nr43v, instID, vol);
 				}
 				else if (tagName == "wave")
 				{
@@ -640,7 +648,7 @@ bool GB_LCD::load_manifest(std::string filename)
 					u8 tokenCnt = 0;
 					u8 waveForm[16];
 					u8 instID;
-					u8 vol;
+					u8 vol = 100;
 					bool useHarmonic;
 					while (strRest.length() > 0)
 					{
