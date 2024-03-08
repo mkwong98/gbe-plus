@@ -290,13 +290,13 @@ main_menu::main_menu(QWidget *parent) : QWidget(parent)
 /****** Open game file ******/
 void main_menu::open_file()
 {
-	SDL_PauseAudio(1);
+	Mix_PauseAudio(1);
 	if(dmg_midi_driver::midi)
 		dmg_midi_driver::midi->pause();
 
 	QString filename = QFileDialog::getOpenFileName(this, tr("Open"), "", tr("GBx files (*.gb *.gbc)"));
 	if (filename.isNull()) { 
-		SDL_PauseAudio(0); 
+		Mix_PauseAudio(0);
 		if (dmg_midi_driver::midi)
 			dmg_midi_driver::midi->unpause();
 		return;
@@ -305,7 +305,7 @@ void main_menu::open_file()
 	set_rom_file(filename.toStdString());
 
 
-	SDL_PauseAudio(0);
+	Mix_PauseAudio(0);
 	if (dmg_midi_driver::midi)
 		dmg_midi_driver::midi->unpause();
 
@@ -652,7 +652,7 @@ void main_menu::pause()
 /****** Pauses the emulator ******/
 void main_menu::pause_emu()
 {
-	SDL_PauseAudio(1);
+	Mix_PauseAudio(1);
 	dmg_midi_driver::midi->pause();
 
 	while(config::pause_emu) 
@@ -661,7 +661,7 @@ void main_menu::pause_emu()
 		QApplication::processEvents();
 	}
 
-	SDL_PauseAudio(0);
+	Mix_PauseAudio(0);
 	dmg_midi_driver::midi->unpause();
 
 	//If CGFX or debugger is open, continue pause
@@ -825,7 +825,7 @@ void main_menu::show_debugger()
 		//Show DMG-GBC debugger
 		findChild<QAction*>("pause_action")->setEnabled(false);
 
-		SDL_PauseAudio(1);
+		Mix_PauseAudio(1);
 		dmg_midi_driver::midi->pause();
 		main_menu::dmg_debugger->old_pause = config::pause_emu;
 		main_menu::dmg_debugger->pause = true;

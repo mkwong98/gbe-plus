@@ -256,6 +256,10 @@ u32 GBC_MMU::size()
 /****** Read byte from memory ******/
 u8 DMG_MMU::read_u8(u16 address)
 {
+	u8 result;
+	if (dmg_custom_sound::soundex->handleRead(address, &result)) {
+		return result;
+	}
 	//Read from RP
 	if (address == REG_RP)
 	{
@@ -267,6 +271,11 @@ u8 DMG_MMU::read_u8(u16 address)
 
 u8 GBC_MMU::read_u8(u16 address)
 {
+	u8 result;
+	if (dmg_custom_sound::soundex->handleRead(address, &result)) {
+		return result;
+	}
+
 	//Read from VRAM, GBC uses banking
 	if ((address >= 0x8000) && (address <= 0x9FFF))
 	{
@@ -377,6 +386,10 @@ u16 GB_MMU::read_u16(u16 address)
 /****** Write Byte To Memory ******/
 void GB_MMU::write_u8(u16 address, u8 value) 
 {
+	if (dmg_custom_sound::soundex->handleWrite(address, &value)) {
+		return;
+	}
+
 	if(cart.mbc_type != ROM_ONLY) 
 	{
 		mbc_write(address, value);

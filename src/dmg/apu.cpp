@@ -17,6 +17,7 @@
 DMG_APU::DMG_APU()
 {
 	dmg_midi_driver::midi = new dmg_midi_driver();
+	dmg_custom_sound::soundex = new dmg_custom_sound();
 	reset();
 }
 
@@ -24,14 +25,20 @@ DMG_APU::DMG_APU()
 DMG_APU::~DMG_APU()
 {
 	delete dmg_midi_driver::midi;
-	SDL_CloseAudio();
+	delete dmg_custom_sound::soundex;
+	Mix_CloseAudio();
+	Mix_Quit();
+	
+	//SDL_CloseAudio();
+	SDL_QuitSubSystem(SDL_INIT_AUDIO);
 	std::cout<<"APU::Shutdown\n";
 }
 
 /****** Reset APU ******/
 void DMG_APU::reset()
 {
-	SDL_CloseAudio();
+	//SDL_CloseAudio();
+	Mix_CloseAudio();
 
 	apu_stat.sound_on = false;
 	apu_stat.stereo = false;
@@ -106,8 +113,11 @@ bool DMG_APU::init()
 	desired_spec.callback = dmg_audio_callback;
 	desired_spec.userdata = this;
 
+	Mix_Init(MIX_INIT_OGG);
+
     //Open SDL audio for desired specifications
-	if(SDL_OpenAudio(&desired_spec, NULL) < 0) 
+	if(Mix_OpenAudio(desired_spec.freq, desired_spec.format, desired_spec.channels, desired_spec.samples) < 0)
+	//if (SDL_OpenAudio(&desired_spec, NULL) < 0)
 	{ 
 		std::cout<<"APU::Failed to open audio\n";
 		return false; 
@@ -115,14 +125,21 @@ bool DMG_APU::init()
 
 	else
 	{
+		dmg_custom_sound::soundex->loadFiles();
+		u16 format;
+		Mix_QuerySpec(&actualFreq, &format, &actualChannels);
+		dmg_custom_sound::soundex->updateVolume(config::volume);
+		Mix_SetPostMix(dmg_audio_callback, this);
+		apu_stat.sample_rate = actualFreq;
 		apu_stat.channel_master_volume = (config::volume >> 2);
-		apu_stat.sample_rate *= 4;
+		apu_stat.sample_rate *= 2;
 
-		SDL_PauseAudio(0);
+		Mix_PauseAudio(0);
 		dmg_midi_driver::midi->unpause();
 		std::cout<<"APU::Initialized\n";
 		return true;
 	}
+
 }
 
 /****** Read APU data from save state ******/
@@ -158,6 +175,8 @@ bool DMG_APU::apu_read(u32 offset, std::string filename)
 	apu_stat.channel[1].raw_frequency &= 0x7FF;
 	apu_stat.channel[2].raw_frequency &= 0x7FF;
 	apu_stat.channel[3].raw_frequency &= 0x7FF;
+
+	Mix_HaltMusic();
 
 	return true;
 }
@@ -646,19 +665,19 @@ void DMG_APU::generate_channel_4_samples(s16* stream, int length)
 /****** SDL Audio Callback ******/ 
 void dmg_audio_callback(void* _apu, u8 *_stream, int _length)
 {
-	s16* stream = (s16*) _stream;
-	int length = _length/2;
-	length *= 4;
+	DMG_APU* apu_link = (DMG_APU*)_apu;
 
-	//Set correct length for stereo
-	if(config::use_stereo) { length /= 2; }
+	s16* stream = (s16*) _stream;
+	int length = _length / 2;
+	//Set correct length for actual number of channels
+	length /= apu_link->actualChannels;
+	length *= 2;
 
 	std::vector<s16> channel_1_stream(length);
 	std::vector<s16> channel_2_stream(length);
 	std::vector<s16> channel_3_stream(length);
 	std::vector<s16> channel_4_stream(length);
 
-	DMG_APU* apu_link = (DMG_APU*) _apu;
 	apu_link->generate_channel_1_samples(&channel_1_stream[0], length);
 	apu_link->generate_channel_2_samples(&channel_2_stream[0], length);
 	apu_link->generate_channel_3_samples(&channel_3_stream[0], length);
@@ -667,7 +686,7 @@ void dmg_audio_callback(void* _apu, u8 *_stream, int _length)
 	double volume_ratio = apu_link->apu_stat.channel_master_volume / 128.0;
 
 	//Custom software mixing
-	for(u32 x = 0; x < length; x++)
+	for(u32 x = 0; x < length; x+=2)
 	{
 		//Mono audio
 		if(!config::use_stereo)
@@ -677,14 +696,18 @@ void dmg_audio_callback(void* _apu, u8 *_stream, int _length)
 			out_sample *= apu_link->apu_stat.channel_left_volume;
 			out_sample /= 4;
 
-			stream[x / 4] = out_sample;
+			if (apu_link->actualChannels == 1) {
+				stream[x / 2] += out_sample;
+			}
+			else if(apu_link->actualChannels == 2) {
+				stream[x] += out_sample;
+				stream[x + 1] += out_sample;
+			}
 		}
 
 		//Stereo audio
 		else
 		{
-			u32 index = (x / 4) * 2;
-
 			//Left sample
 			s32 ch1 = apu_link->apu_stat.channel[0].so1_output ? channel_1_stream[x] : -32768;
 			s32 ch2 = apu_link->apu_stat.channel[1].so1_output ? channel_2_stream[x] : -32768;
@@ -696,7 +719,7 @@ void dmg_audio_callback(void* _apu, u8 *_stream, int _length)
 			out_sample *= apu_link->apu_stat.channel_left_volume;
 			out_sample /= 4;
 
-			stream[index] = out_sample;
+			stream[x] += out_sample;
 
 			//Right sample
 			ch1 = apu_link->apu_stat.channel[0].so2_output ? channel_1_stream[x] : -32768;
@@ -709,7 +732,7 @@ void dmg_audio_callback(void* _apu, u8 *_stream, int _length)
 			out_sample *= apu_link->apu_stat.channel_right_volume;
 			out_sample /= 4;
 
-			stream[index + 1] = out_sample;
+			stream[x + 1] += out_sample;
 		}
 	} 
 }

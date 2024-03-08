@@ -17,6 +17,7 @@
 #include "lcd.h"
 #include "common/config.h"
 #include "midi_driver.h"
+#include "custom_sound.h"
 
 void GB_LCD::clear_manifest() {
 	cgfx_stat.packVersion = "";
@@ -563,6 +564,7 @@ bool GB_LCD::load_manifest(std::string filename)
 					u8 instID;
 					bool useHarmonic;
 					u8 vol = 100;
+
 					while (strRest.length() > 0)
 					{
 						pos = strRest.find(",");
@@ -686,6 +688,167 @@ bool GB_LCD::load_manifest(std::string filename)
 						tokenCnt++;
 					}
 					dmg_midi_driver::midi->addWaveReplacement(waveForm, instID, useHarmonic, vol);
+				}
+				else if (tagName == "writeaddress")
+				{
+					std::string token;
+					u8 tokenCnt = 0;
+					u16 address = 0;
+					u8 function = 0;
+					u8 type = 0;
+					u8 value = 0;
+					u8 valueMask = 0xFF;
+					while (strRest.length() > 0)
+					{
+						pos = strRest.find(",");
+						if (pos != std::string::npos)
+						{
+							token = util::trimfnc(strRest.substr(0, pos));
+							strRest = strRest.substr(pos + 1, std::string::npos);
+						}
+						else
+						{
+							token = util::trimfnc(strRest);
+							strRest = "";
+						}
+
+						switch (tokenCnt)
+						{
+						case 0:
+							address = std::stoul(token, nullptr, 16);
+							break;
+						case 1:
+							function = stoi(token);
+							break;
+						case 2:
+							type = stoi(token);
+							break;
+						case 3:
+							value = std::stoul(token, nullptr, 16);
+							break;
+						case 4:
+							valueMask = std::stoul(token, nullptr, 16);
+							break;
+						default:
+							break;
+						}
+						tokenCnt++;
+					}
+					dmg_custom_sound::soundex->addWAddress(address, function, type, value, valueMask);
+				}
+				else if (tagName == "readaddress")
+				{
+					std::string token;
+					u8 tokenCnt = 0;
+					u16 address = 0;
+					u8 function = 0;
+					u8 type = 0;
+					u8 value = 0;
+					u8 valueMask = 0xFF;
+					u32 loopPoint = 0;
+					while (strRest.length() > 0)
+					{
+						pos = strRest.find(",");
+						if (pos != std::string::npos)
+						{
+							token = util::trimfnc(strRest.substr(0, pos));
+							strRest = strRest.substr(pos + 1, std::string::npos);
+						}
+						else
+						{
+							token = util::trimfnc(strRest);
+							strRest = "";
+						}
+
+						switch (tokenCnt)
+						{
+						case 0:
+							address = std::stoul(token, nullptr, 16);
+							break;
+						case 1:
+							function = stoi(token);
+							break;
+						case 2:
+							type = stoi(token);
+							break;
+						case 3:
+							value = std::stoul(token, nullptr, 16);
+							break;
+						case 4:
+							valueMask = std::stoul(token, nullptr, 16);
+							break;
+						default:
+							break;
+						}
+						tokenCnt++;
+					}
+					dmg_custom_sound::soundex->addRAddress(address, function, type, value, valueMask);
+				}
+				else if (tagName == "bgm")
+				{
+					std::string token;
+					u8 tokenCnt = 0;
+					u8 id;
+					std::string musicFileName;
+					while (strRest.length() > 0)
+					{
+						pos = strRest.find(",");
+						if (pos != std::string::npos)
+						{
+							token = util::trimfnc(strRest.substr(0, pos));
+							strRest = strRest.substr(pos + 1, std::string::npos);
+						}
+						else
+						{
+							token = util::trimfnc(strRest);
+							strRest = "";
+						}
+
+						switch (tokenCnt)
+						{
+						case 0:
+							id = std::stoul(token, nullptr, 16);
+							break;
+						case 1:
+							musicFileName = token;
+							break;
+						}
+						tokenCnt++;
+					}
+					dmg_custom_sound::soundex->addBgm(id, get_game_cgfx_folder() + musicFileName);
+				}
+				else if (tagName == "sfx")
+				{
+					std::string token;
+					u8 tokenCnt = 0;
+					u8 id;
+					std::string soundFileName;
+					while (strRest.length() > 0)
+					{
+						pos = strRest.find(",");
+						if (pos != std::string::npos)
+						{
+							token = util::trimfnc(strRest.substr(0, pos));
+							strRest = strRest.substr(pos + 1, std::string::npos);
+						}
+						else
+						{
+							token = util::trimfnc(strRest);
+							strRest = "";
+						}
+
+						switch (tokenCnt)
+						{
+						case 0:
+							id = std::stoul(token, nullptr, 16);
+							break;
+						case 1:
+							soundFileName = token;
+							break;
+						}
+						tokenCnt++;
+					}
+					dmg_custom_sound::soundex->addSfx(id, get_game_cgfx_folder() + soundFileName);
 				}
 			}
 		}

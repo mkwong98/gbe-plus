@@ -425,7 +425,7 @@ void GB_core::handle_hotkey(SDL_Event& event)
 	else if((event.type == SDL_KEYDOWN) && (event.key.keysym.sym == SDLK_PAUSE))
 	{
 		config::pause_emu = true;
-		SDL_PauseAudio(1);
+		Mix_PauseAudio(1);
 		dmg_midi_driver::midi->pause();
 		std::cout<<"EMU::Paused\n";
 
@@ -436,7 +436,7 @@ void GB_core::handle_hotkey(SDL_Event& event)
 			if((SDL_PollEvent(&event)) && (event.type == SDL_KEYDOWN) && (event.key.keysym.sym == SDLK_PAUSE))
 			{
 				config::pause_emu = false;
-				SDL_PauseAudio(0);
+				Mix_PauseAudio(0);
 				dmg_midi_driver::midi->unpause();
 				std::cout<<"EMU::Unpaused\n";
 			}
@@ -485,6 +485,7 @@ void GB_core::update_volume(u8 volume)
 {
 	config::volume = volume;
 	core_cpu->controllers.audio.apu_stat.channel_master_volume = (config::volume >> 2);
+	dmg_custom_sound::soundex->updateVolume(config::volume);
 }
 
 /****** Feeds key input from an external source (useful for TAS) ******/

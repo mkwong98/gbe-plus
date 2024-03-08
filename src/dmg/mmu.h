@@ -24,6 +24,7 @@
 #include "custom_graphics_data.h"
 #include "apu_data.h"
 #include "midi_driver.h"
+#include "custom_sound.h"
 
 class GB_MMU
 {

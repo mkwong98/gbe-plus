@@ -159,6 +159,9 @@
     <ClCompile Include="src\dmg\midi_driver.cpp">
       <Filter>Source Files\dmg</Filter>
     </ClCompile>
+    <ClCompile Include="src\dmg\custom_sound.cpp">
+      <Filter>Source Files\dmg</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dmg\apu.h">
@@ -231,6 +234,9 @@
       <Filter>Header Files\rtmidi</Filter>
     </ClInclude>
     <ClInclude Include="src\dmg\midi_driver.h">
+      <Filter>Header Files\dmg</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dmg\custom_sound.h">
       <Filter>Header Files\dmg</Filter>
     </ClInclude>
   </ItemGroup>

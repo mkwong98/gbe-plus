@@ -102,6 +102,10 @@ void dmg_midi_driver::addReplacement(u8 sq, u8 duty, u8 insID, bool useHarmonic,
 	instrument[sq][duty].hasReplacement = true;
 	instrument[sq][duty].useHarmonic = useHarmonic;
 	instrument[sq][duty].volume = vol;
+	//SDL_ShowSimpleMessageBox(0,
+	//	"",
+	//	util::to_str(vol).c_str(),
+	//	0);
 }
 
 /****** Send message to midi device ******/
